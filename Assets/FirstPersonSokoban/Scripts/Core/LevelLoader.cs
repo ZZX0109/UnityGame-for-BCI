@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FirstPersonSokoban.Interaction;
 using FirstPersonSokoban.PlayerSystem;
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Core
@@ -34,17 +35,19 @@ namespace FirstPersonSokoban.Core
             levelRoot = new GameObject(definition.Name + " · Generated");
             boxes.Clear();
             goals.Clear();
+            LabMaterials palette = levelRoot.AddComponent<LabMaterials>();
+            palette.Initialize();
 
             GameObject floorPrefab = LoadPrefab("Floor");
             GameObject wallPrefab = LoadPrefab("Wall");
             GameObject boxPrefab = LoadPrefab("Box");
             GameObject goalPrefab = LoadPrefab("Goal");
 
-            Material boxNormal = Resources.Load<Material>("Materials/Box");
-            Material boxGoal = Resources.Load<Material>("Materials/BoxComplete");
-            Material boxDenied = Resources.Load<Material>("Materials/BoxDenied");
-            Material goalActive = Resources.Load<Material>("Materials/Goal");
-            Material goalComplete = Resources.Load<Material>("Materials/GoalComplete");
+            Material boxNormal = palette.Module;
+            Material boxGoal = palette.ModuleComplete;
+            Material boxDenied = palette.ModuleDenied;
+            Material goalActive = palette.GoalActive;
+            Material goalComplete = palette.GoalComplete;
 
             for (int y = 0; y < definition.Height; y++)
             for (int x = 0; x < definition.Width; x++)
@@ -55,15 +58,18 @@ namespace FirstPersonSokoban.Core
 
                 if (tile == TileType.Wall)
                 {
-                    Object.Instantiate(wallPrefab, world, Quaternion.identity, levelRoot.transform);
+                    GameObject wall = Object.Instantiate(wallPrefab, world, Quaternion.identity, levelRoot.transform);
+                    LabEnvironment.StyleWall(wall, palette);
                     continue;
                 }
 
-                Object.Instantiate(floorPrefab, world, Quaternion.identity, levelRoot.transform);
+                GameObject floor = Object.Instantiate(floorPrefab, world, Quaternion.identity, levelRoot.transform);
+                LabEnvironment.StyleFloor(floor, palette);
                 if (tile == TileType.Goal)
                 {
                     GameObject goalObject = Object.Instantiate(goalPrefab, world, Quaternion.identity, levelRoot.transform);
                     GoalView view = goalObject.GetComponent<GoalView>();
+                    SensorPlatformVisual.Apply(view, palette);
                     view.Initialize(position, goalActive, goalComplete);
                     goals.Add(view);
                 }
@@ -73,6 +79,7 @@ namespace FirstPersonSokoban.Core
             {
                 GameObject boxObject = Object.Instantiate(boxPrefab, grid.GridToWorld(boxPosition), Quaternion.identity, levelRoot.transform);
                 BoxView view = boxObject.GetComponent<BoxView>();
+                TrainingModuleVisual.Apply(view, boxes.Count, palette);
                 view.Initialize(boxPosition, boxNormal, boxGoal, boxDenied);
                 boxes.Add(view);
             }
@@ -84,9 +91,10 @@ namespace FirstPersonSokoban.Core
             Player = playerObject.GetComponent<FirstPersonController>();
             Interactor = playerObject.GetComponent<BoxInteractor>();
             if (Interactor != null) Interactor.SetBoxes(boxes);
+            LabEnvironment.Build(definition, grid, levelRoot.transform, palette);
         }
 
-        public void SyncViews(BoardState board)
+        public void SyncViews(BoardState board, bool playFeedback = false)
         {
             for (int i = 0; i < boxes.Count && i < board.Boxes.Count; i++)
             {
@@ -95,7 +103,7 @@ namespace FirstPersonSokoban.Core
                 boxes[i].SetOnGoal(board.IsGoal(board.Boxes[i]));
             }
 
-            foreach (GoalView goal in goals) goal.SetComplete(board.HasBoxAt(goal.GridPosition));
+            foreach (GoalView goal in goals) goal.SetComplete(board.HasBoxAt(goal.GridPosition), playFeedback);
         }
 
         public void ClearLevel()

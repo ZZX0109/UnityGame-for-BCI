@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using FirstPersonSokoban.Core;
 using FirstPersonSokoban.SaveSystem;
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 using static FirstPersonSokoban.UI.UIFactory;
@@ -114,72 +115,67 @@ namespace FirstPersonSokoban.UI
         {
             hud = Group(canvasRoot, "HUD");
             PanelImage(hud.transform, "Level Plate", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(320, 96), Panel);
+                new Vector2(32, -28), new Vector2(320, 94), Hex("10161D", 0.82f));
             LineImage(hud.transform, "Level Accent", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(4, 96), Accent);
-            levelNumber = Label(hud.transform, "Level Number", "LEVEL 01", 15, Accent,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -41), new Vector2(240, 22), style: FontStyle.Bold);
+                new Vector2(32, -28), new Vector2(3, 94), Accent);
+            levelNumber = Label(hud.transform, "Level Number", "LAB / 01", 14, Muted,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -40), new Vector2(260, 24));
             levelTitle = Label(hud.transform, "Level Title", "初次接触", 25, White,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -66), new Vector2(250, 42), style: FontStyle.Bold);
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -68), new Vector2(270, 42), style: FontStyle.Bold);
 
             PanelImage(hud.transform, "Stats Plate", new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-32, -28), new Vector2(310, 112), Panel);
-            goalCounter = Label(hud.transform, "Goals", "0 / 1", 28, Accent,
-                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-322, -38), new Vector2(120, 44), style: FontStyle.Bold);
-            Label(hud.transform, "Goals Caption", "目标归位", 16, Muted,
-                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-322, -88), new Vector2(120, 26));
-            pushCounter = Label(hud.transform, "Pushes", "00", 28, White,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-52, -38), new Vector2(100, 44), TextAnchor.MiddleRight, FontStyle.Bold);
-            Label(hud.transform, "Pushes Caption", "有效推动", 16, Muted,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-52, -88), new Vector2(100, 26), TextAnchor.MiddleRight);
-
+                new Vector2(-32, -28), new Vector2(500, 94), Hex("10161D", 0.82f));
+            sessionTime = Label(hud.transform, "Session Time", "00:00", 24, White,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-512, -38), new Vector2(140, 38), style: FontStyle.Bold);
+            Label(hud.transform, "Time Caption", "训练用时", 14, Muted,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-512, -82), new Vector2(140, 24));
+            pushCounter = Label(hud.transform, "Pushes", "00", 24, White,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-340, -38), new Vector2(110, 38), style: FontStyle.Bold);
+            Label(hud.transform, "Pushes Caption", "有效推动", 14, Muted,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-340, -82), new Vector2(110, 24));
+            goalCounter = Label(hud.transform, "Goals", "0 / 1", 24, Accent,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-180, -38), new Vector2(128, 38), style: FontStyle.Bold);
+            Label(hud.transform, "Goals Caption", "目标归位", 14, Muted,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-180, -82), new Vector2(128, 24));
             LineImage(hud.transform, "Goal Progress Track", new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-50, -126), new Vector2(274, 3), Line);
+                new Vector2(-52, -114), new Vector2(460, 2), Line);
             goalProgress = LineImage(hud.transform, "Goal Progress", new Vector2(1, 1), new Vector2(0, 1),
-                new Vector2(-324, -126), new Vector2(0, 3), Accent).rectTransform;
-            sessionTime = Label(hud.transform, "Session Time", "00:00", 18, Muted,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -142), new Vector2(130, 28));
+                new Vector2(-512, -114), new Vector2(0, 2), Accent).rectTransform;
 
-            Image outer = PanelImage(hud.transform, "Crosshair Ring", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(18, 18), Hex("58E0C2", 0.22f));
-            outer.raycastTarget = false;
-            Image dot = PanelImage(hud.transform, "Crosshair Dot", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+            Image dot = PanelImage(hud.transform, "Crosshair Dot", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 Vector2.zero, new Vector2(4, 4), White);
             dot.raycastTarget = false;
-
             interaction = Group(hud.transform, "Interaction");
-            PanelImage(interaction.transform, "Prompt Plate", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -92), new Vector2(400, 48), Panel);
-            interactionText = Label(interaction.transform, "Prompt", "E  推动箱子", 17, Accent,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -92), new Vector2(380, 44), TextAnchor.MiddleCenter, FontStyle.Bold);
-            interaction.alpha = 0f;
+            PanelImage(interaction.transform, "Prompt Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(0, 124), new Vector2(460, 52), Hex("10161D", 0.92f));
+            interactionText = Label(interaction.transform, "Prompt", "E  推动模块", 19, Accent,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 125), new Vector2(436, 48), TextAnchor.MiddleCenter, FontStyle.Bold);
+            interaction.alpha = 0;
             interaction.gameObject.SetActive(false);
 
             guidance = Group(hud.transform, "Guidance");
-            PanelImage(guidance.transform, "Guidance Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 86), new Vector2(840, 48), Hex("142B3B", 0.96f));
-            guidanceText = Label(guidance.transform, "Guidance Text", "", 18, Muted,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 87), new Vector2(810, 44), TextAnchor.MiddleCenter);
+            guidanceText = Label(guidance.transform, "Guidance Text", "", 17, White,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 192), new Vector2(900, 46), TextAnchor.MiddleCenter);
+            Shadow guidanceShadow = guidanceText.gameObject.AddComponent<Shadow>();
+            guidanceShadow.effectColor = Hex("000000", 0.80f);
+            guidanceShadow.effectDistance = new Vector2(0, -1);
             guidance.gameObject.SetActive(false);
 
             deadlock = Group(hud.transform, "Deadlock");
             PanelImage(deadlock.transform, "Deadlock Plate", new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -142), new Vector2(720, 50), Hex("3A2A1C", 0.94f));
-            deadlockText = Label(deadlock.transform, "Deadlock Text", "", 16, Amber,
-                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -143), new Vector2(690, 46), TextAnchor.MiddleCenter, FontStyle.Bold);
+                new Vector2(0, -150), new Vector2(760, 48), Hex("35291F", 0.95f));
+            deadlockText = Label(deadlock.transform, "Deadlock Text", "", 17, Amber,
+                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -151), new Vector2(730, 44), TextAnchor.MiddleCenter);
             deadlock.gameObject.SetActive(false);
-
-            PanelImage(hud.transform, "Controls", new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(32, 28), new Vector2(760, 48), Hex("0A1622", 0.90f));
-            Label(hud.transform, "Control Labels", "WASD  移动    E  推动    Z  撤销    R  重置    ESC  暂停", 18, Muted,
-                new Vector2(0, 0), new Vector2(0, 0), new Vector2(50, 30), new Vector2(720, 44));
+            Label(hud.transform, "Control Labels", "WASD  移动    E  推动    Z  撤销    R  重置    ESC  暂停", 16, Muted,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(980, 36), TextAnchor.MiddleCenter);
 
             toast = Group(hud.transform, "Toast");
             PanelImage(toast.transform, "Toast Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 148), new Vector2(780, 50), Hex("1C384A", 0.98f));
+                new Vector2(0, 250), new Vector2(780, 48), Panel);
             toastText = Label(toast.transform, "Toast Text", "", 18, White,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 149), new Vector2(748, 46), TextAnchor.MiddleCenter);
-            toast.alpha = 0f;
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 251), new Vector2(748, 44), TextAnchor.MiddleCenter);
+            toast.alpha = 0;
             toast.gameObject.SetActive(false);
         }
 
@@ -188,40 +184,39 @@ namespace FirstPersonSokoban.UI
             menu = Group(canvasRoot, "Main Menu");
             menu.gameObject.AddComponent<Image>().color = Ink;
             Background(menu.transform, "Atmosphere");
-            Label(menu.transform, "Brand", "S / 01     SPATIAL PUZZLES", 17, Accent,
+            Label(menu.transform, "Brand", "COGNITIVE LAB", 17, Accent,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -32), new Vector2(420, 32), style: FontStyle.Bold);
-            Label(menu.transform, "Edition", "01  /  空间解谜", 16, Muted,
+            Label(menu.transform, "Edition", "SPATIAL PROGRAM  /  01", 16, Muted,
                 new Vector2(1, 1), new Vector2(1, 1), new Vector2(-56, -32), new Vector2(300, 32), TextAnchor.MiddleRight);
-            Label(menu.transform, "Footer", "观察空间 · 规划路径 · 让思考发生", 16, Muted,
+            Label(menu.transform, "Footer", "自由观察，按自己的节奏完成训练。", 16, Muted,
                 new Vector2(0, 0), new Vector2(0, 0), new Vector2(56, 24), new Vector2(620, 30));
 
             identityGroup = RectStretch(menu.transform, "Menu Identity", Vector2.zero, Vector2.zero);
             RectTransform identityContent = Rect(identityGroup, "Identity Content", Vector2.one * 0.5f,
                 Vector2.one * 0.5f, Vector2.zero, new Vector2(1100, 560));
             Transform left = identityContent;
-            LineImage(left, "Title Accent", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                new Vector2(30, -2), new Vector2(4, 430), Accent);
-            Label(left, "Eyebrow", "EXPLORE. PLAN. PUSH.", 18, Accent,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, 236), new Vector2(850, 34), style: FontStyle.Bold);
-            Label(left, "Title Small", "FIRST PERSON", 54, White,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(60, 158), new Vector2(930, 84), style: FontStyle.Bold);
-            Label(left, "Title Large", "SOKOBAN", 112, White,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(52, 20), new Vector2(1000, 172), style: FontStyle.Bold);
-            Label(left, "Chinese Title", "第一人称 · 三维推箱子", 30, Amber,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, -108), new Vector2(880, 50), style: FontStyle.Bold);
-            Label(left, "Description", "走进空间，发现每一步的可能。\n绕行、观察、推动，让箱子与目标相遇。", 22, Muted,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, -180), new Vector2(900, 74));
-            FeatureChip(left, "自由探索", new Vector2(64, -252), 156);
-            FeatureChip(left, "空间规划", new Vector2(232, -252), 156);
-            FeatureChip(left, "八段挑战", new Vector2(400, -252), 156);
+            Label(left, "Eyebrow", "COGNITIVE TRAINING LAB / 01", 15, Accent,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, 264), new Vector2(950, 26));
+            Label(left, "Title Large", "Spatial Cognition\nTrainer", 46, White,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(60, 174), new Vector2(970, 138), style: FontStyle.Bold);
+            Label(left, "Chinese Title", "空间规划训练", 28, White,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, 70), new Vector2(900, 44));
+            Label(left, "Description", "观察空间 · 规划路径 · 让每个模块准确归位", 18, Muted,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, 23), new Vector2(960, 30));
+            RectTransform previewArea = Rect(identityContent, "Lab Equipment Preview", Vector2.one * 0.5f,
+                Vector2.one * 0.5f, new Vector2(0, -126), new Vector2(1000, 244));
+            LabPreviewView.Attach(previewArea);
+            Label(left, "Equipment Caption", "TRAINING MODULE  /  SPATIAL PLANNING", 13, Muted,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, -264), new Vector2(960, 24));
 
             levelPanel = PanelImage(menu.transform, "Level Select", new Vector2(1, 0.5f), new Vector2(1, 0.5f),
                 new Vector2(-64, 0), new Vector2(520, 670), Panel).rectTransform;
             Border(levelPanel.GetComponent<Image>(), Line);
-            Label(levelPanel, "Select Eyebrow", "YOUR NEXT MOVE", 15, Accent,
+            SoftShadow(levelPanel.GetComponent<Image>());
+            Label(levelPanel, "Select Eyebrow", "TRAINING PROGRAM", 15, Accent,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -22), new Vector2(280, 26), style: FontStyle.Bold);
-            Label(levelPanel, "Select Title", "选择关卡", 32, White,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -50), new Vector2(270, 52), style: FontStyle.Bold);
+            Label(levelPanel, "Select Title", "训练关卡", 32, White,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -50), new Vector2(230, 52), style: FontStyle.Bold);
             menuProgress = Label(levelPanel, "Chapter Progress Label", "0 / 8 已完成", 15, Muted,
                 new Vector2(1, 1), new Vector2(1, 1), new Vector2(-28, -68), new Vector2(180, 32), TextAnchor.MiddleRight);
             RectTransform chapterTrack = LineImage(levelPanel, "Select Divider", new Vector2(0, 1), new Vector2(0, 1),
@@ -284,7 +279,7 @@ namespace FirstPersonSokoban.UI
                 levelButtons[i] = card;
                 levelCardImages[i] = card.GetComponent<Image>();
                 PanelImage(card.transform, "Number Tile", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                    new Vector2(14, 0), new Vector2(56, 62), Hex("0C2331"));
+                    new Vector2(14, 0), new Vector2(56, 62), Hex("151E26"));
                 Label(card.transform, "Number", $"{i + 1:00}", 27, Accent,
                     new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(56, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
                 Text title = Label(card.transform, "Title", levels[i].Title, 23, White,
@@ -296,7 +291,7 @@ namespace FirstPersonSokoban.UI
                 levelNotes[i] = Label(card.transform, "Note", "可开始", 14, Accent,
                     new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-14, 0), new Vector2(88, 58), TextAnchor.MiddleRight);
             }
-            Button continueButton = Button(levelPanel, "Continue", "开始探索  →",
+            Button continueButton = Button(levelPanel, "Continue", "开始训练  →",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(424, 58),
                 () => game.StartLevel(SaveManager.UnlockedCount(PuzzleGameManager.LevelCount) - 1));
             continueButtonRect = continueButton.GetComponent<RectTransform>();
@@ -310,12 +305,13 @@ namespace FirstPersonSokoban.UI
             Label(levelPanel, "Scroll Hint", "滚动查看全部关卡", 14, Muted,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 88), new Vector2(330, 22), TextAnchor.MiddleCenter);
             Button(menu.transform, "Exit", "退出", new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(-56, 22), new Vector2(100, 38), ExitGame, false);
+                new Vector2(-56, 22), new Vector2(100, 38), ExitGame, false, true);
             menuLayout = menu.gameObject.AddComponent<MenuLayoutController>();
             menuLayout.identityGroup = identityGroup;
             menuLayout.identityContent = identityContent;
             menuLayout.levelPanel = levelPanel;
             menuLayout.Apply(Screen.width, Screen.height, true);
+            menu.gameObject.AddComponent<PanelMotion>();
         }
 
         private RectTransform Modal(CanvasGroup overlay, string name, Vector2 size)
@@ -324,6 +320,8 @@ namespace FirstPersonSokoban.UI
             Image panel = PanelImage(overlay.transform, name, Vector2.one * 0.5f,
                 Vector2.one * 0.5f, Vector2.zero, size, Panel);
             Border(panel, Line);
+            SoftShadow(panel);
+            overlay.gameObject.AddComponent<PanelMotion>();
             overlay.gameObject.AddComponent<OverlayLayoutController>().Configure(panel.rectTransform, size);
             LineImage(panel.transform, "Accent", new Vector2(0.5f, 1), new Vector2(0.5f, 1),
                 new Vector2(0, -1), new Vector2(112, 4), Accent);
@@ -343,13 +341,13 @@ namespace FirstPersonSokoban.UI
             Button(card, "Resume", "继续探索  →", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, 62), new Vector2(400, 58), () => game.Resume());
             Button(card, "Restart", "重新开始", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(0, -10), new Vector2(400, 54), () => game.RestartLevel(), false);
+                new Vector2(0, -10), new Vector2(400, 54), () => game.RestartLevel(), false, true);
             Button(card, "Settings", "设置与舒适度", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, -78), new Vector2(400, 54), ShowSettings, false);
             Button(card, "Menu", "返回主菜单", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, -146), new Vector2(400, 54), () => game.ShowMenu(), false);
             Button(card, "Exit", "退出游戏", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(0, -214), new Vector2(400, 50), ExitGame, false);
+                new Vector2(0, -214), new Vector2(400, 50), ExitGame, false, true);
             Label(card, "Pause Hint", "ESC 继续  ·  切出窗口后会自动暂停", 16, Muted,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -284), new Vector2(490, 30), TextAnchor.MiddleCenter);
         }
@@ -357,23 +355,25 @@ namespace FirstPersonSokoban.UI
         private void BuildSettings()
         {
             settings = Group(canvasRoot, "Settings");
-            settingsCard = Modal(settings, "Settings Card", new Vector2(660, 700));
+            settingsCard = Modal(settings, "Settings Card", new Vector2(660, 840));
             Label(settingsCard, "Settings Eyebrow", "MAKE IT COMFORTABLE", 15, Accent,
-                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 284), new Vector2(560, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 350), new Vector2(560, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
             Label(settingsCard, "Settings Title", "设置与舒适度", 38, White,
-                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 226), new Vector2(560, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 294), new Vector2(560, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
             Label(settingsCard, "Settings Note", "点击数值切换 · 自动保存", 17, Muted,
-                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 178), new Vector2(560, 30), TextAnchor.MiddleCenter);
-            settingButtons = new Button[5];
-            settingButtons[0] = CycleRow("鼠标灵敏度", 112, CycleSensitivity);
-            settingButtons[1] = CycleRow("视野 FOV", 48, CycleFov);
-            settingButtons[2] = CycleRow("反转 Y 视角", -16, () => GameSettings.InvertY = !GameSettings.InvertY);
-            settingButtons[3] = CycleRow("舒适模式 · 慢速推动", -80, () => GameSettings.ComfortMode = !GameSettings.ComfortMode);
-            settingButtons[4] = CycleRow("全屏显示", -144, () => GameSettings.FullScreen = !GameSettings.FullScreen);
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 244), new Vector2(560, 30), TextAnchor.MiddleCenter);
+            settingButtons = new Button[7];
+            settingButtons[0] = CycleRow("鼠标灵敏度", 180, CycleSensitivity);
+            settingButtons[1] = CycleRow("视野 FOV", 120, CycleFov);
+            settingButtons[2] = CycleRow("反转 Y 视角", 60, () => GameSettings.InvertY = !GameSettings.InvertY);
+            settingButtons[3] = CycleRow("舒适模式 · 慢速推动", 0, () => GameSettings.ComfortMode = !GameSettings.ComfortMode);
+            settingButtons[4] = CycleRow("全屏显示", -60, () => GameSettings.FullScreen = !GameSettings.FullScreen);
+            settingButtons[5] = CycleRow("声音音量", -120, CycleVolume);
+            settingButtons[6] = CycleRow("实验室环境音", -180, () => GameSettings.AmbientAudio = !GameSettings.AmbientAudio);
             Button(settingsCard, "Restore Defaults", "恢复默认", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(-140, -246), new Vector2(248, 56), () => { GameSettings.ResetToDefaults(); RefreshSettings(); }, false);
+                new Vector2(-140, -296), new Vector2(248, 56), () => { GameSettings.ResetToDefaults(); RefreshSettings(); }, false);
             Button(settingsCard, "Settings Back", "保存并返回", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(140, -246), new Vector2(248, 56), CloseSettings);
+                new Vector2(140, -296), new Vector2(248, 56), CloseSettings);
             RefreshSettings();
             settings.gameObject.SetActive(false);
         }
@@ -396,6 +396,12 @@ namespace FirstPersonSokoban.UI
             GameSettings.MouseSensitivity = next;
         }
 
+        private static void CycleVolume()
+        {
+            float current = GameSettings.MasterVolume;
+            GameSettings.MasterVolume = current >= 0.99f ? 0f : Mathf.Min(1f, (Mathf.Floor(current * 4f + 0.01f) + 1f) / 4f);
+        }
+
         private static void CycleFov()
         {
             float[] steps = { 60f, 70f, 75f, 85f, 95f };
@@ -414,6 +420,8 @@ namespace FirstPersonSokoban.UI
             SetButtonText(2, GameSettings.InvertY ? "开" : "关");
             SetButtonText(3, GameSettings.ComfortMode ? "开 · 0.55 秒" : "关 · 0.38 秒");
             SetButtonText(4, GameSettings.FullScreen ? "开" : "关");
+            SetButtonText(5, $"{Mathf.RoundToInt(GameSettings.MasterVolume * 100f)} %");
+            SetButtonText(6, GameSettings.AmbientAudio ? "开" : "关");
         }
 
         private void SetButtonText(int index, string value)
@@ -426,11 +434,11 @@ namespace FirstPersonSokoban.UI
         {
             victory = Group(canvasRoot, "Victory");
             RectTransform card = Modal(victory, "Victory Card", new Vector2(690, 650));
-            Label(card, "Victory Eyebrow", "A PLACE FOR EVERY BOX", 16, Accent,
+            Label(card, "Victory Eyebrow", "TRAINING COMPLETE", 16, Accent,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 250), new Vector2(570, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Label(card, "Victory Title", "恰到好处。", 50, White,
+            Label(card, "Victory Title", "本关训练完成", 50, White,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 174), new Vector2(570, 80), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Label(card, "Victory Description", "所有箱子都找到了自己的位置", 19, Muted,
+            Label(card, "Victory Description", "所有训练模块已准确归位", 19, Muted,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 116), new Vector2(570, 36), TextAnchor.MiddleCenter);
             PanelImage(card, "Stats Background", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, 32), new Vector2(588, 118), Hex("0B2130"));
@@ -441,7 +449,7 @@ namespace FirstPersonSokoban.UI
             nextButton = Button(card, "Next", "下一关  →", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, -124), new Vector2(510, 58), NextLevel);
             Button(card, "Replay", "再玩一次", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(-132, -200), new Vector2(246, 52), () => game.RestartLevel(), false);
+                new Vector2(-132, -200), new Vector2(246, 52), () => game.RestartLevel(), false, true);
             Button(card, "Menu", "返回主菜单", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(132, -200), new Vector2(246, 52), () => game.ShowMenu(), false);
             Label(card, "Victory Footer", "每一步，都是下一次探索的起点。", 16, Muted,
@@ -510,7 +518,7 @@ namespace FirstPersonSokoban.UI
 
         public void SetLevel(int number, string title)
         {
-            levelNumber.text = $"LEVEL {number:00}";
+            levelNumber.text = $"LAB / {number:00}";
             levelTitle.text = title;
         }
 
@@ -520,7 +528,7 @@ namespace FirstPersonSokoban.UI
             pushCounter.text = pushes.ToString("00");
             if (goalProgress != null)
                 goalProgress.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
-                    274f * (total > 0 ? Mathf.Clamp01((float)completed / total) : 0));
+                    460f * (total > 0 ? Mathf.Clamp01((float)completed / total) : 0));
         }
 
         public void SetInteractionPrompt(string content, bool visible, bool valid = true)
@@ -584,13 +592,13 @@ namespace FirstPersonSokoban.UI
                 if (best >= 0) completed++;
                 levelButtons[i].interactable = available;
                 levelNotes[i].text = best >= 0 ? $"已完成\n最佳 {best} 推" : available ? "可开始  →" : "待解锁";
-                levelNotes[i].color = !available ? Muted : best >= 0 ? Amber : Accent;
-                levelCardImages[i].color = available && i == unlocked - 1 ? Hex("254759") : PanelLight;
+                levelNotes[i].color = !available ? Muted : best >= 0 ? Success : Accent;
+                levelCardImages[i].color = available && i == unlocked - 1 ? Hex("24383B") : PanelLight;
             }
             menuProgress.text = $"{completed:00} / {levelButtons.Length:00} 已完成";
             chapterProgress.anchorMax = new Vector2((float)completed / Mathf.Max(1, levelButtons.Length), 1f);
             continueButtonRect.GetComponentInChildren<Text>().text = completed == levelButtons.Length
-                ? "再次探索  →" : unlocked == 1 ? "开始探索  →" : $"继续探索 · 第 {unlocked:00} 关  →";
+                ? "再次训练  →" : unlocked == 1 ? "开始训练  →" : $"继续训练 · 第 {unlocked:00} 关  →";
         }
 
         private CanvasGroup ActiveOverlay()
@@ -608,7 +616,13 @@ namespace FirstPersonSokoban.UI
                 group.gameObject.SetActive(active);
                 group.alpha = active ? 1f : 0f;
                 group.blocksRaycasts = active;
+                if (active)
+                {
+                    PanelMotion motion = group.GetComponent<PanelMotion>();
+                    if (motion != null) motion.Show();
+                }
             }
+            if (visible != null && visible != victory) LabAudio.Play(SoundCue.PanelOpen);
         }
 
         private static CanvasGroup Group(Transform parent, string name)
@@ -619,12 +633,5 @@ namespace FirstPersonSokoban.UI
             return group;
         }
 
-        private static void FeatureChip(Transform parent, string content, Vector2 position, float width)
-        {
-            PanelImage(parent, content + " Chip", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                position, new Vector2(width, 42), PanelLight);
-            Label(parent, content, content, 17, White, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                position, new Vector2(width, 40), TextAnchor.MiddleCenter);
-        }
     }
 }

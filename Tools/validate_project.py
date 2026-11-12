@@ -18,7 +18,8 @@ IMPORTERS = {
     ".cs": "MonoImporter", ".asmdef": "AssemblyDefinitionImporter",
     ".txt": "TextScriptImporter", ".json": "TextScriptImporter",
     ".prefab": "PrefabImporter", ".mat": "NativeFormatImporter",
-    ".unity": "DefaultImporter",
+    ".unity": "DefaultImporter", ".png": "TextureImporter",
+    ".otf": "TrueTypeFontImporter", ".ttf": "TrueTypeFontImporter",
 }
 SERIALIZED = {".unity", ".prefab", ".mat", ".asset", ".controller", ".anim"}
 

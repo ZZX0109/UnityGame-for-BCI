@@ -1,4 +1,5 @@
 using System.Collections;
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Interaction
@@ -13,6 +14,8 @@ namespace FirstPersonSokoban.Interaction
         private bool isOnGoal;
         private GameObject highlightCap;
         private Material highlightMaterial;
+        private Mesh highlightMesh;
+        private TrainingModuleVisual moduleVisual;
 
         public Vector2Int GridPosition { get; private set; }
         public bool IsHighlighted => highlightCap != null && highlightCap.activeSelf;
@@ -25,6 +28,7 @@ namespace FirstPersonSokoban.Interaction
 
         public void Initialize(Vector2Int gridPosition, Material normal, Material onGoal, Material denied)
         {
+            moduleVisual = GetComponent<TrainingModuleVisual>();
             GridPosition = gridPosition;
             normalMaterial = normal;
             goalMaterial = onGoal;
@@ -33,7 +37,7 @@ namespace FirstPersonSokoban.Interaction
             BuildHighlightCap();
         }
 
-        /// <summary>瞄准时的高亮顶盖，不改箱体本身材质，避免闪烁反馈与归位材质互相覆盖。</summary>
+        /// <summary>A thin selection rim keeps the target clear without a large luminous top plate.</summary>
         private void BuildHighlightCap()
         {
             if (highlightCap != null || normalMaterial == null) return;
@@ -42,14 +46,33 @@ namespace FirstPersonSokoban.Interaction
             Collider collider = cap.GetComponent<Collider>();
             if (collider != null) { collider.enabled = false; Destroy(collider); }
             cap.transform.SetParent(transform, false);
-            cap.transform.localPosition = new Vector3(0f, BoxDimensions.HighlightY, 0f);
-            cap.transform.localScale = new Vector3(BoxDimensions.HighlightWidth,
-                BoxDimensions.HighlightThickness, BoxDimensions.HighlightWidth);
+            cap.transform.localPosition = new Vector3(0f,
+                BoxDimensions.BodyCenterY + BoxDimensions.BodyHeight * 0.5f + 0.012f, 0f);
+            cap.transform.localScale = Vector3.one;
+            Mesh cube = cap.GetComponent<MeshFilter>().sharedMesh;
+            var parts = new CombineInstance[4];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                bool horizontal = i < 2;
+                float edge = i % 2 == 0 ? -0.93f : 0.93f;
+                parts[i] = new CombineInstance
+                {
+                    mesh = cube,
+                    transform = Matrix4x4.TRS(horizontal ? new Vector3(0, 0, edge) : new Vector3(edge, 0, 0),
+                        Quaternion.identity, horizontal ? new Vector3(1.90f, 0.012f, 0.018f) :
+                            new Vector3(0.018f, 0.012f, 1.90f))
+                };
+            }
+            highlightMesh = new Mesh { name = "Sokoban Selection Rim (Runtime)" };
+            highlightMesh.CombineMeshes(parts);
+            cap.GetComponent<MeshFilter>().sharedMesh = highlightMesh;
             highlightMaterial = new Material(normalMaterial)
             {
                 name = "Sokoban Aim Highlight (Runtime)",
                 color = new Color(0.35f, 0.88f, 0.76f, 1f)
             };
+            highlightMaterial.EnableKeyword("_EMISSION");
+            highlightMaterial.SetColor("_EmissionColor", new Color(0.12f, 0.35f, 0.30f));
             cap.GetComponent<Renderer>().sharedMaterial = highlightMaterial;
             cap.SetActive(false);
             highlightCap = cap;
@@ -58,6 +81,7 @@ namespace FirstPersonSokoban.Interaction
         public void SetHighlighted(bool highlighted)
         {
             if (highlightCap != null) highlightCap.SetActive(highlighted);
+            if (moduleVisual != null) moduleVisual.SetState(isOnGoal, highlighted);
         }
 
         public void SetGridPosition(Vector2Int position) => GridPosition = position;
@@ -66,6 +90,7 @@ namespace FirstPersonSokoban.Interaction
         {
             isOnGoal = complete;
             if (bodyRenderer != null) bodyRenderer.sharedMaterial = complete ? goalMaterial : normalMaterial;
+            if (moduleVisual != null) moduleVisual.SetState(complete, IsHighlighted);
         }
 
         public void SnapTo(Vector3 position) => transform.position = position;
@@ -74,6 +99,7 @@ namespace FirstPersonSokoban.Interaction
         {
             // Only this instance owns the generated highlight. Resource materials stay shared.
             if (highlightMaterial != null) Destroy(highlightMaterial);
+            if (highlightMesh != null) Destroy(highlightMesh);
         }
 
         public void FlashDenied()
@@ -85,7 +111,9 @@ namespace FirstPersonSokoban.Interaction
         private IEnumerator DeniedFeedback()
         {
             if (bodyRenderer != null && deniedMaterial != null) bodyRenderer.sharedMaterial = deniedMaterial;
+            if (moduleVisual != null) moduleVisual.SetDenied(true);
             yield return new WaitForSeconds(0.16f);
+            if (moduleVisual != null) moduleVisual.SetDenied(false);
             SetOnGoal(isOnGoal);
             feedbackRoutine = null;
         }

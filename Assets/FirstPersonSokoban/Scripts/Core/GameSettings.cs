@@ -55,6 +55,18 @@ namespace FirstPersonSokoban.Core
             }
         }
 
+        public static float MasterVolume
+        {
+            get => Mathf.Clamp01(store.GetFloat(Prefix + "volume", 0.5f));
+            set { store.SetFloat(Prefix + "volume", Mathf.Clamp01(value)); Save(); }
+        }
+
+        public static bool AmbientAudio
+        {
+            get => store.GetInt(Prefix + "ambient", 0) != 0;
+            set { store.SetInt(Prefix + "ambient", value ? 1 : 0); Save(); }
+        }
+
         /// <summary>推动动画时长。舒适模式更慢，降低第一人称镜头加速度。</summary>
         public static float PushAnimationDuration => ComfortMode ? 0.55f : 0.38f;
 
@@ -71,6 +83,8 @@ namespace FirstPersonSokoban.Core
             store.SetInt(Prefix + "invertY", 0);
             store.SetInt(Prefix + "comfort", 1);
             store.SetInt(Prefix + "fullscreen", 1);
+            store.SetFloat(Prefix + "volume", 0.5f);
+            store.SetInt(Prefix + "ambient", 0);
             if (Application.isPlaying) Screen.fullScreen = true;
             Save();
         }

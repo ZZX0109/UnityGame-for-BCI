@@ -1,4 +1,5 @@
 using FirstPersonSokoban.UI;
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -13,6 +14,7 @@ namespace FirstPersonSokoban.Core
             if (Application.isPlaying) Screen.fullScreen = GameSettings.FullScreen;
             ConfigureEnvironment();
             EnsureEventSystem();
+            gameObject.AddComponent<LabAudio>();
 
             GridManager grid = gameObject.AddComponent<GridManager>();
             LevelLoader loader = gameObject.AddComponent<LevelLoader>();
@@ -24,21 +26,10 @@ namespace FirstPersonSokoban.Core
         private static void ConfigureEnvironment()
         {
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.55f, 0.65f, 0.68f, 1f);
-            RenderSettings.ambientIntensity = 0.85f;
+            RenderSettings.ambientLight = new Color(0.31f, 0.36f, 0.40f, 1f);
+            RenderSettings.ambientIntensity = 0.65f;
             RenderSettings.fog = false;
-
-            if (Object.FindObjectOfType<Light>() == null)
-            {
-                GameObject lightObject = new GameObject("Key Light · Soft Daylight");
-                Light key = lightObject.AddComponent<Light>();
-                key.type = LightType.Directional;
-                key.color = new Color(0.88f, 0.95f, 1f);
-                key.intensity = 1.15f;
-                key.shadows = LightShadows.Soft;
-                key.shadowStrength = 0.72f;
-                lightObject.transform.rotation = Quaternion.Euler(48f, -32f, 0f);
-            }
+            // Room lighting is owned by the generated level and removed on reload.
         }
 
         private static void EnsureEventSystem()

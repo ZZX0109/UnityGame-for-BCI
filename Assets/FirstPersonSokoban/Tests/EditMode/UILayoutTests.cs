@@ -46,6 +46,7 @@ namespace FirstPersonSokoban.Tests.EditMode
 
         [TestCase(800f, 600f, 560f, 680f)]
         [TestCase(800f, 600f, 660f, 700f)]
+        [TestCase(800f, 600f, 660f, 840f)]
         [TestCase(1920f, 1080f, 690f, 650f)]
         [TestCase(420f, 800f, 660f, 700f)]
         public void Dialog_ScalesWholeCardWithoutChangingItsDesignSize(

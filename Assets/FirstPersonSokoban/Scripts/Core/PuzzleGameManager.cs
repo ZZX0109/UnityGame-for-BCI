@@ -4,6 +4,7 @@ using FirstPersonSokoban.Interaction;
 using FirstPersonSokoban.PlayerSystem;
 using FirstPersonSokoban.SaveSystem;
 using FirstPersonSokoban.UI;
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Core
@@ -208,6 +209,7 @@ namespace FirstPersonSokoban.Core
         {
             StartLevel(CurrentLevelIndex);
             ui.FlashMessage("关卡已重置");
+            LabAudio.Play(SoundCue.Reset);
         }
 
         /// <summary>键盘 R 走二次确认，避免误触丢失进度；菜单按钮仍可立即重置。</summary>
@@ -241,6 +243,7 @@ namespace FirstPersonSokoban.Core
             tutorialActive = CurrentLevelIndex == 0 && Board.PushCount == 0;
             ui.SetGuidance(tutorialActive ? FirstPushTutorial : string.Empty);
             ui.FlashMessage("已撤销上一次推动");
+            LabAudio.Play(SoundCue.Undo);
             preview.Hide();
             SetHighlight(null);
             UpdateStats();
@@ -266,6 +269,7 @@ namespace FirstPersonSokoban.Core
             if (!assessment.CanPush)
             {
                 aim.Box.FlashDenied();
+                LabAudio.Play(SoundCue.Denied);
                 ui.FlashMessage(assessment.Message);
                 UpdateInteractionPrompt();
                 return;
@@ -289,6 +293,7 @@ namespace FirstPersonSokoban.Core
             tutorialActive = false;
             ui.SetGuidance(string.Empty);
             ui.SetInteractionPrompt(string.Empty, false);
+            LabAudio.Play(SoundCue.Push);
             pushRoutine = StartCoroutine(AnimatePush(aim.Box, push));
         }
 
@@ -331,8 +336,10 @@ namespace FirstPersonSokoban.Core
             }
             pushRoutine = null;
 
-            loader.SyncViews(Board);
+            loader.SyncViews(Board, true);
             UpdateStats();
+            if (Board.IsComplete) LabAudio.Play(SoundCue.Victory);
+            else if (Board.IsGoal(push.BoxTo) && !Board.IsGoal(push.BoxFrom)) LabAudio.Play(SoundCue.Goal);
 
             if (Board.IsComplete)
             {
@@ -491,7 +498,9 @@ namespace FirstPersonSokoban.Core
 
         private void ApplyDeadlockReport(DeadlockReport report)
         {
+            bool wasDeadlocked = deadlockActive;
             deadlockActive = report.Status == DeadlockStatus.Deadlocked;
+            if (deadlockActive && !wasDeadlocked) LabAudio.Play(SoundCue.Warning);
             ui.SetDeadlock(deadlockActive,
                 deadlockActive ? report.Reason + "  ·  Z 撤销 / R 重置" : string.Empty);
         }

@@ -1,3 +1,4 @@
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Interaction
@@ -7,24 +8,32 @@ namespace FirstPersonSokoban.Interaction
         private Renderer[] glowRenderers;
         private Material activeMaterial;
         private Material completeMaterial;
+        private SensorPlatformVisual sensor;
+        private bool initialized;
         public Vector2Int GridPosition { get; private set; }
-
-        private void Awake() => glowRenderers = GetComponentsInChildren<Renderer>();
+        public bool IsComplete { get; private set; }
 
         public void Initialize(Vector2Int position, Material active, Material complete)
         {
             GridPosition = position;
             activeMaterial = active;
             completeMaterial = complete;
-            SetComplete(false);
+            glowRenderers = GetComponentsInChildren<Renderer>(true);
+            sensor = GetComponent<SensorPlatformVisual>();
+            initialized = false;
+            SetComplete(false, false);
         }
 
-        public void SetComplete(bool complete)
+        public void SetComplete(bool complete, bool animate = true)
         {
-            if (glowRenderers == null) return;
+            if (initialized && IsComplete == complete) return;
+            initialized = true;
+            IsComplete = complete;
             Material material = complete ? completeMaterial : activeMaterial;
-            foreach (Renderer glow in glowRenderers)
-                if (glow != null && glow.name.StartsWith("Glow")) glow.sharedMaterial = material;
+            if (glowRenderers != null)
+                foreach (Renderer glow in glowRenderers)
+                    if (glow != null && glow.name.StartsWith("Glow")) glow.sharedMaterial = material;
+            if (sensor != null) sensor.SetComplete(complete, animate);
         }
     }
 }

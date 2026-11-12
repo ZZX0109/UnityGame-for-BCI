@@ -6,14 +6,15 @@ namespace FirstPersonSokoban.UI
 {
     public static class UIFactory
     {
-        public static readonly Color Ink = Hex("0A1622");
-        public static readonly Color Panel = Hex("142B3B", 0.98f);
-        public static readonly Color PanelLight = Hex("1C384A", 0.98f);
-        public static readonly Color Accent = Hex("76E5CD");
-        public static readonly Color Amber = Hex("F0C58A");
-        public static readonly Color White = Hex("F3F7FA");
-        public static readonly Color Muted = Hex("B2C6D3");
-        public static readonly Color Line = Hex("7397AE", 0.30f);
+        public static readonly Color Ink = Hex("10161D");
+        public static readonly Color Panel = Hex("18222C", 0.98f);
+        public static readonly Color PanelLight = Hex("202D38", 0.98f);
+        public static readonly Color Accent = Hex("46D7C4");
+        public static readonly Color Amber = Hex("FFB357");
+        public static readonly Color White = Hex("F2F5F7");
+        public static readonly Color Muted = Hex("AEB9C3");
+        public static readonly Color Line = Hex("2C3C4A", 0.85f);
+        public static readonly Color Success = Hex("72E28A");
 
         private static Sprite roundedSprite;
         private static Font uiFont;
@@ -97,7 +98,7 @@ namespace FirstPersonSokoban.UI
                 {
                     float glow = Mathf.Clamp01(1f - Vector2.Distance(
                         new Vector2(x / 127f, y / 127f), new Vector2(0.25f, 0.65f)));
-                    pixels[y * size + x] = Color.Lerp(Hex("08131F"), Hex("1C394A"), glow * 0.88f);
+                    pixels[y * size + x] = Color.Lerp(Hex("10161D"), Hex("24343D"), glow * 0.66f);
                 }
                 gradientTexture.SetPixels(pixels);
                 gradientTexture.Apply(false, true);
@@ -115,6 +116,14 @@ namespace FirstPersonSokoban.UI
             outline.effectColor = color;
             outline.effectDistance = new Vector2(1f, -1f);
             outline.useGraphicAlpha = false;
+        }
+
+        public static void SoftShadow(Image image)
+        {
+            Shadow shadow = image.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = Hex("000000", 0.18f);
+            shadow.effectDistance = new Vector2(0, -5);
+            shadow.useGraphicAlpha = true;
         }
 
         public static RectTransform Rect(Transform parent, string name, Vector2 anchor, Vector2 pivot,
@@ -186,24 +195,27 @@ namespace FirstPersonSokoban.UI
         }
 
         public static Button Button(Transform parent, string name, string content, Vector2 anchor, Vector2 pivot,
-            Vector2 position, Vector2 size, UnityAction action, bool primary = true)
+            Vector2 position, Vector2 size, UnityAction action, bool primary = true, bool danger = false)
         {
             Image image = PanelImage(parent, name, anchor, pivot, position, size,
-                primary ? Accent : PanelLight);
+                danger ? Hex("382A23", 0.96f) : primary ? Accent : PanelLight);
             Button button = image.gameObject.AddComponent<Button>();
             image.raycastTarget = true;
-            Border(image, primary ? new Color(0.75f, 1f, 0.93f, 0.45f) : Line);
+            Color idleBorder = danger ? Hex("9B6F3D", 0.55f) : primary ? Hex("46D7C4", 0.45f) : Line;
+            Border(image, idleBorder);
+            image.gameObject.AddComponent<ButtonFeedback>().Configure(image.GetComponent<Outline>(),
+                idleBorder, danger ? Amber : Accent);
             button.targetGraphic = image;
             button.onClick.AddListener(action);
             ColorBlock colors = button.colors;
             colors.normalColor = Color.white;
-            colors.highlightedColor = primary ? Hex("D8FFF4") : Hex("D6E8EC");
-            colors.pressedColor = Hex("A4BBB9");
+            colors.highlightedColor = danger ? Hex("FFDCB2") : primary ? Hex("E0FFF7") : Hex("DEE9EF");
+            colors.pressedColor = danger ? Hex("D7A76E") : Hex("99B7B8");
             colors.selectedColor = colors.highlightedColor;
             colors.disabledColor = Hex("75818E", 0.72f);
             colors.fadeDuration = 0.12f;
             button.colors = colors;
-            Label(image.transform, "Label", content, 20, primary ? Ink : White,
+            Label(image.transform, "Label", content, 20, danger ? Amber : primary ? Ink : White,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size - new Vector2(24, 8),
                 TextAnchor.MiddleCenter, FontStyle.Bold);
             RectTransform label = image.transform.Find("Label") as RectTransform;
