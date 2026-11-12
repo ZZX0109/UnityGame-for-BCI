@@ -113,7 +113,7 @@ namespace FirstPersonSokoban.Presentation
             previewCamera.enabled = false;
             previewCamera.cullingMask = PreviewMask;
             previewCamera.clearFlags = CameraClearFlags.SolidColor;
-            previewCamera.backgroundColor = new Color(0.063f, 0.086f, 0.114f, 0f);
+            previewCamera.backgroundColor = new Color(0.965f, 0.937f, 0.890f, 0f);
             previewCamera.orthographic = true;
             previewCamera.orthographicSize = 1.9f;
             previewCamera.aspect = (float)target.width / target.height;
@@ -161,7 +161,7 @@ namespace FirstPersonSokoban.Presentation
             Light key = keyObject.AddComponent<Light>();
             key.type = LightType.Directional;
             key.cullingMask = PreviewMask;
-            key.color = new Color(0.88f, 0.94f, 1f);
+            key.color = LabMaterials.Hex("FFF1DB");
             key.intensity = 1.15f;
             key.shadows = LightShadows.None;
             keyObject.transform.localRotation = Quaternion.Euler(48f, -30f, 0f);
@@ -169,7 +169,7 @@ namespace FirstPersonSokoban.Presentation
             Light fill = fillObject.AddComponent<Light>();
             fill.type = LightType.Point;
             fill.cullingMask = PreviewMask;
-            fill.color = new Color(1f, 0.89f, 0.76f);
+            fill.color = LabMaterials.Hex("FFE8CC");
             fill.intensity = 1.5f;
             fill.range = 11f;
             fill.shadows = LightShadows.None;

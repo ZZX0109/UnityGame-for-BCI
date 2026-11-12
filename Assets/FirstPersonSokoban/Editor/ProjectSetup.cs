@@ -39,16 +39,16 @@ namespace FirstPersonSokoban.Editor
 
         private static void CreateMaterials()
         {
-            Material("Floor", "AAB9BA", 0.08f, 0.5f);
-            Material("Wall", "C5CFCE", 0.05f, 0.42f);
-            Material("WallTrim", "526B70", 0.5f, 0.5f);
-            Material("Box", "BD7545", 0.25f, 0.38f);
-            Material("BoxFrame", "3A4547", 0.72f, 0.48f);
-            Material("BoxComplete", "48B89F", 0.35f, 0.42f, "1D7566");
-            Material("BoxDenied", "C75E50", 0.2f, 0.35f, "7A211C");
-            Material("GoalBase", "24494B", 0.4f, 0.52f);
-            Material("Goal", "3CAF9E", 0.3f, 0.48f, "176B5E");
-            Material("GoalComplete", "8CF7CE", 0.25f, 0.42f, "49D9A6");
+            Material("Floor", "E2D4BF", 0.00f, 0.24f);
+            Material("Wall", "F1E7D8", 0.00f, 0.12f);
+            Material("WallTrim", "C2AB91", 0.00f, 0.20f);
+            Material("Box", "C66D45", 0.00f, 0.20f);
+            Material("BoxFrame", "695344", 0.00f, 0.18f);
+            Material("BoxComplete", "C9CFAC", 0.00f, 0.20f);
+            Material("BoxDenied", "D99A66", 0.00f, 0.20f);
+            Material("GoalBase", "F1E7D8", 0.00f, 0.12f);
+            Material("Goal", "BB6039", 0.00f, 0.24f);
+            Material("GoalComplete", "75834F", 0.00f, 0.24f);
         }
 
         private static Material Material(string name, string color, float metallic, float smoothness, string emission = null)
@@ -171,7 +171,7 @@ namespace FirstPersonSokoban.Editor
             camera.nearClipPlane = 0.05f;
             camera.farClipPlane = 100f;
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Hex("789097");
+            camera.backgroundColor = Hex("EADBC6");
             cameraObject.AddComponent<AudioListener>();
             SavePrefab(root, "Player");
         }

@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 0
-  m_AmbientSkyColor: {r: 0.549020, g: 0.650980, b: 0.678431, a: 1.000000}
-  m_AmbientEquatorColor: {r: 0.443137, g: 0.541176, b: 0.568627, a: 1.000000}
-  m_AmbientGroundColor: {r: 0.270588, g: 0.341176, b: 0.360784, a: 1.000000}
+  m_AmbientSkyColor: {r: 0.933333, g: 0.878431, b: 0.792157, a: 1}
+  m_AmbientEquatorColor: {r: 0.796078, g: 0.721569, b: 0.607843, a: 1}
+  m_AmbientGroundColor: {r: 0.556863, g: 0.474510, b: 0.396078, a: 1}
   m_AmbientIntensity: 0.85
   m_AmbientMode: 3
   m_SkyboxMaterial: {fileID: 0}

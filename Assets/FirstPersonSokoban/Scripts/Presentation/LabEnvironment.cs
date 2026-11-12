@@ -92,16 +92,12 @@ namespace FirstPersonSokoban.Presentation
 
         private static void WallPanel(Transform surface, float cell, LabMaterials palette)
         {
-            // Every face stays at/barely in front of the original wall plane. In
-            // particular, no proud shelving intrudes into the narrow box corridors.
-            LocalPart(surface, "Lower Service Panel", new Vector3(0, 0.58f, -0.010f),
-                new Vector3(cell - 0.06f, 0.88f, 0.028f), palette.Trim);
-            LocalPart(surface, "Skirting", new Vector3(0, 0.075f, -0.018f),
-                new Vector3(cell - 0.02f, 0.15f, 0.04f), palette.Dark);
-            LocalPart(surface, "Panel Joint", new Vector3(-cell * 0.5f + 0.025f, 1.80f, -0.009f),
-                new Vector3(0.022f, 1.44f, 0.02f), palette.Dark);
-            LocalPart(surface, "Upper Service Rail", new Vector3(0, 2.69f, -0.012f),
-                new Vector3(cell - 0.02f, 0.045f, 0.028f), palette.Trim);
+            // A quiet plaster wall and thin warm skirting replace the equipment panels.
+            // All detail stays against the original wall; corridors retain their width.
+            LocalPart(surface, "Gallery Skirting", new Vector3(0, 0.065f, 0.006f),
+                new Vector3(cell - 0.02f, 0.13f, 0.018f), palette.Trim);
+            LocalPart(surface, "Plaster Reveal", new Vector3(-cell * 0.5f + 0.018f, 1.42f, -0.003f),
+                new Vector3(0.012f, 2.68f, 0.012f), palette.Trim);
         }
 
         private static void AddFeatureWalls(List<WallFace> faces, LevelDefinition definition,
@@ -110,7 +106,7 @@ namespace FirstPersonSokoban.Presentation
             if (faces.Count == 0) return;
             Vector3 start = grid.GridToWorld(definition.PlayerStart);
             Vector3 forward = Quaternion.Euler(0, definition.InitialYaw, 0) * Vector3.forward;
-            int windowIndex = 0;
+            int artworkIndex = 0;
             float best = float.NegativeInfinity;
             for (int i = 0; i < faces.Count; i++)
             {
@@ -118,81 +114,83 @@ namespace FirstPersonSokoban.Presentation
                 float score = Vector3.Dot(to.normalized, forward) * 4f - to.magnitude * 0.08f;
                 if (score <= best) continue;
                 best = score;
-                windowIndex = i;
+                artworkIndex = i;
             }
-            ObservationWindow(faces[windowIndex].Frame, palette);
-            if (faces.Count > 4)
-            {
-                int doorIndex = (windowIndex + faces.Count / 2) % faces.Count;
-                DoorFrame(faces[doorIndex].Frame, palette);
-            }
+            Artwork(faces[artworkIndex].Frame, 0, palette);
+            int doorIndex = faces.Count > 4 ? (artworkIndex + faces.Count / 2) % faces.Count : -1;
+            if (doorIndex >= 0) DoorFrame(faces[doorIndex].Frame, palette);
             for (int i = 0; i < faces.Count; i++)
             {
-                if (i == windowIndex || i == (windowIndex + faces.Count / 2) % faces.Count) continue;
-                if (i % 9 == 4) Vent(faces[i].Frame, palette);
-                if (i % 13 == 2) Display(faces[i].Frame, palette);
+                if (i == artworkIndex || i == doorIndex) continue;
+                if (i % 7 == 3) Artwork(faces[i].Frame, 1 + i % 2, palette);
             }
         }
 
-        private static void ObservationWindow(Transform wall, LabMaterials palette)
+        private static void Artwork(Transform wall, int variant, LabMaterials palette)
         {
-            LocalPart(wall, "Observation Window Frame", new Vector3(0, 1.87f, -0.012f),
-                new Vector3(1.74f, 1.08f, 0.028f), palette.Dark);
-            LocalPart(wall, "Observation Window Glass", new Vector3(0, 1.87f, 0.004f),
-                new Vector3(1.58f, 0.93f, 0.008f), palette.Glass);
-            LocalPart(wall, "Window Mullion", new Vector3(0.26f, 1.87f, 0.012f),
-                new Vector3(0.025f, 0.93f, 0.012f), palette.Metal);
-            LocalPart(wall, "Window Status", new Vector3(-0.72f, 2.36f, 0.012f),
-                new Vector3(0.13f, 0.018f, 0.012f), palette.GoalActive);
-            Label(wall, "Observation Label", "OBSERVATION / 01", new Vector3(0, 1.25f, 0.014f),
-                0.030f, LabMaterials.Hex("31444C"));
+            // Shallow abstract prints provide the gallery identity without adding
+            // props to walkable cells or obscuring the box/target silhouettes.
+            LocalPart(wall, "Gallery Picture Frame", new Vector3(0, 1.92f, 0.003f),
+                new Vector3(1.70f, 1.12f, 0.004f), palette.Trim);
+            LocalPart(wall, "Gallery Picture Mount", new Vector3(0, 1.92f, 0.006f),
+                new Vector3(1.62f, 1.04f, 0.002f), palette.Wall);
+            if (variant == 0)
+            {
+                LocalPart(wall, "Terracotta Composition", new Vector3(-0.36f, 2.04f, 0.009f),
+                    new Vector3(0.68f, 0.64f, 0.004f), palette.Module);
+                Disc(wall, "Ochre Composition", new Vector3(0.30f, 1.92f, 0.012f), 0.36f, palette.Glass);
+                LocalPart(wall, "Ivory Composition", new Vector3(-0.36f, 1.72f, 0.016f),
+                    new Vector3(0.68f, 0.24f, 0.004f), palette.Wall);
+            }
+            else
+            {
+                Disc(wall, "Terracotta Circle", new Vector3(-0.22f, 1.96f, 0.009f), 0.34f, palette.Module);
+                LocalPart(wall, "Ochre Composition", new Vector3(0.36f, 1.84f, 0.013f),
+                    new Vector3(0.48f, 0.65f, 0.004f), variant == 1 ? palette.Glass : palette.Trim);
+                LocalPart(wall, "Ivory Horizon", new Vector3(-0.22f, 1.69f, 0.017f),
+                    new Vector3(0.82f, 0.14f, 0.004f), palette.Wall);
+            }
+            Label(wall, "Gallery Artwork Caption", "FORM / SPACE", new Vector3(0, 1.27f, 0.014f),
+                0.018f, LabMaterials.Hex("695344"));
+        }
+
+        private static void Disc(Transform parent, string name, Vector3 position, float radius, Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            part.name = name;
+            Collider collider = part.GetComponent<Collider>();
+            collider.enabled = false;
+            if (Application.isPlaying) Object.Destroy(collider);
+            else Object.DestroyImmediate(collider);
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = position;
+            part.transform.localRotation = Quaternion.Euler(90, 0, 0);
+            part.transform.localScale = new Vector3(radius * 2f, 0.002f, radius * 2f);
+            Renderer renderer = part.GetComponent<Renderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
         private static void DoorFrame(Transform wall, LabMaterials palette)
         {
-            LocalPart(wall, "Service Door Frame", new Vector3(0, 1.19f, -0.011f),
-                new Vector3(1.44f, 2.38f, 0.026f), palette.Dark);
-            LocalPart(wall, "Closed Service Door", new Vector3(0, 1.16f, 0.005f),
-                new Vector3(1.25f, 2.27f, 0.008f), palette.Wall);
-            LocalPart(wall, "Door Center Joint", new Vector3(0, 1.15f, 0.012f),
-                new Vector3(0.018f, 2.23f, 0.008f), palette.Trim);
-            LocalPart(wall, "Door Access Panel", new Vector3(0.83f, 1.34f, 0.005f),
-                new Vector3(0.15f, 0.27f, 0.012f), palette.Dark);
-            LocalPart(wall, "Door Access Indicator", new Vector3(0.83f, 1.42f, 0.015f),
-                new Vector3(0.075f, 0.022f, 0.006f), palette.Warning);
-            Label(wall, "Room Number", "TRAINING BAY 01", new Vector3(0, 2.52f, 0.014f),
-                0.028f, LabMaterials.Hex("31444C"));
-        }
-
-        private static void Vent(Transform wall, LabMaterials palette)
-        {
-            LocalPart(wall, "Vent Housing", new Vector3(0.2f, 2.33f, 0.003f),
-                new Vector3(0.68f, 0.28f, 0.012f), palette.Dark);
-            for (int row = 0; row < 4; row++)
-                LocalPart(wall, "Vent Louver", new Vector3(0.2f, 2.24f + row * 0.055f, 0.012f),
-                    new Vector3(0.60f, 0.024f, 0.012f), palette.Metal);
-        }
-
-        private static void Display(Transform wall, LabMaterials palette)
-        {
-            LocalPart(wall, "Wall Display Frame", new Vector3(0.16f, 1.87f, -0.003f),
-                new Vector3(0.87f, 0.61f, 0.02f), palette.Dark);
-            LocalPart(wall, "Wall Display Screen", new Vector3(0.16f, 1.87f, 0.012f),
-                new Vector3(0.77f, 0.51f, 0.01f), palette.Glass);
-            LocalPart(wall, "Display Status Line", new Vector3(0.14f, 1.74f, 0.020f),
-                new Vector3(0.60f, 0.014f, 0.008f), palette.GoalActive);
-            Label(wall, "Display Caption", "SPATIAL\nREADY", new Vector3(0.16f, 1.94f, 0.026f),
-                0.023f, LabMaterials.AccentColor);
+            LocalPart(wall, "Gallery Door Frame", new Vector3(0, 1.16f, 0.003f),
+                new Vector3(1.36f, 2.32f, 0.004f), palette.Trim);
+            LocalPart(wall, "Closed Gallery Door", new Vector3(0, 1.14f, 0.007f),
+                new Vector3(1.23f, 2.22f, 0.004f), palette.Wall);
+            LocalPart(wall, "Champagne Door Handle", new Vector3(0.43f, 1.06f, 0.014f),
+                new Vector3(0.045f, 0.28f, 0.006f), palette.Dark);
+            Label(wall, "Room Number", "SPATIAL / 01", new Vector3(0, 2.47f, 0.014f),
+                0.025f, LabMaterials.Hex("695344"));
         }
 
         private static void ConfigureLighting(Transform parent, Vector3 center, Vector3 span,
             LevelDefinition definition, GridManager grid, HashSet<Vector2Int> reachable)
         {
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = LabMaterials.Hex("71818A");
-            RenderSettings.ambientEquatorColor = LabMaterials.Hex("4E5B5E");
-            RenderSettings.ambientGroundColor = LabMaterials.Hex("293A3D");
-            RenderSettings.ambientIntensity = 0.65f;
+            RenderSettings.ambientSkyColor = LabMaterials.Hex("EEE0CA");
+            RenderSettings.ambientEquatorColor = LabMaterials.Hex("CBB89B");
+            RenderSettings.ambientGroundColor = LabMaterials.Hex("8E7965");
+            RenderSettings.ambientIntensity = 0.80f;
             RenderSettings.fog = false;
 
             var cells = new List<Vector2Int>(reachable);
@@ -207,15 +205,14 @@ namespace FirstPersonSokoban.Presentation
                 best = distance;
                 keyPosition = candidate;
             }
-            Light key = MakeLight(parent, "Lab Main Softbox", keyPosition + Vector3.up * 3.02f,
-                Color.white, 1.1f, Mathf.Max(span.x, span.z) * 1.5f);
-            key.type = LightType.Spot;
-            key.spotAngle = 145f;
-            key.transform.rotation = Quaternion.Euler(90, 0, 0);
+            Light key = MakeLight(parent, "Gallery Daylight", keyPosition + Vector3.up * 3.02f,
+                LabMaterials.Hex("FFF1DB"), 0.95f, Mathf.Max(span.x, span.z) * 1.5f);
+            key.type = LightType.Directional;
+            key.transform.rotation = Quaternion.Euler(52, -32, 0);
             key.useColorTemperature = true;
-            key.colorTemperature = 6100;
+            key.colorTemperature = 5100;
             key.shadows = LightShadows.Soft;
-            key.shadowStrength = 0.65f;
+            key.shadowStrength = 0.48f;
             key.shadowBias = 0.035f;
             key.shadowNormalBias = 0.22f;
             key.shadowNearPlane = 0.15f;
@@ -224,9 +221,9 @@ namespace FirstPersonSokoban.Presentation
             {
                 int index = i * (cells.Count - 1) / Mathf.Max(1, MaxFillLights - 1);
                 Vector3 location = grid.GridToWorld(cells[index], 2.52f);
-                MakeLight(parent, i == 0 ? "Warm Observation Fill" : "Lab Soft Fill",
-                    location, LabMaterials.Hex(i == 0 ? "FFE8CC" : "DDEEEB"),
-                    i == 0 ? 0.28f : 0.34f, Mathf.Max(span.x, span.z) * 0.85f);
+                MakeLight(parent, i == 0 ? "Gallery Warm Fill" : "Gallery Soft Fill",
+                    location, LabMaterials.Hex(i == 0 ? "FFE8CC" : "FFF3E0"),
+                    i == 0 ? 0.18f : 0.20f, Mathf.Max(span.x, span.z) * 0.85f);
             }
         }
 
@@ -238,6 +235,8 @@ namespace FirstPersonSokoban.Presentation
             lamp.position = position;
             Light light = lamp.gameObject.AddComponent<Light>();
             light.type = LightType.Point;
+            // The menu still uses reserved layer 31 and its own lighting.
+            light.cullingMask = ~(1 << 31);
             light.color = color;
             light.intensity = intensity;
             light.range = range;
@@ -270,9 +269,10 @@ namespace FirstPersonSokoban.Presentation
             probe.center = center - probePosition;
             probe.size = span;
             probe.resolution = 128;
-            probe.intensity = 0.5f;
+            probe.cullingMask = ~(1 << 31);
+            probe.intensity = 0.30f;
             probe.clearFlags = ReflectionProbeClearFlags.SolidColor;
-            probe.backgroundColor = LabMaterials.Hex("68797C");
+            probe.backgroundColor = LabMaterials.Hex("DDCBB2");
             probe.nearClipPlane = 0.08f;
             probe.farClipPlane = Mathf.Max(span.x, span.z) * 1.8f;
             if (Application.isPlaying && !Application.isBatchMode && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
@@ -295,14 +295,6 @@ namespace FirstPersonSokoban.Presentation
                 }
             }
             return reached;
-        }
-
-        private static GameObject WorldPart(Transform parent, string name, Vector3 position,
-            Vector3 scale, Material material)
-        {
-            GameObject result = LocalPart(parent, name, Vector3.zero, scale, material);
-            result.transform.position = position;
-            return result;
         }
 
         private static GameObject LocalPart(Transform parent, string name, Vector3 position,
