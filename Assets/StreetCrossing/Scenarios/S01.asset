@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1815aace345f587b9cdf49c760151da9, type: 3}
+  m_Name: S01
+  m_EditorClassIdentifier:
+  scenarioId: S01
+  destinationName: 街角便利店
+  seed: 3101
+  phaseTable: {fileID: 11400000, guid: 5f79caf3d88a5c0b9c7dedeea5e9c6f1, type: 2}
+  surfaceMaterial: {fileID: 2100000, guid: 2fd759a48d965539b0da9d9894b14fd9, type: 2}
+  vehiclePrefab: {fileID: 100010, guid: 307a6895cccc5e3ab1c7caf4c61e5368, type: 3}
+  rightHandTraffic: 1
+  roadHalfWidth: 3.3
+  laneOffset: 1.65
+  roadHalfLength: 42
+  crosswalkHalfWidth: 1.8
+  conflictHalfWidth: 2.3
+  stopLineOffset: 4.6
+  maximumVehicles: 2
+  minimumSpeed: 6
+  maximumSpeed: 7
+  minimumSpawnInterval: 7
+  maximumSpawnInterval: 9
+  acceleration: 1.7
+  comfortableBraking: 3
+  reactionTime: 0.6
+  queueGap: 2.5
+  walkingSpeed: 1.35
+  comfortableSpeed: 1.05
+  fastWalkingSpeed: 1.85
+  nearMissDistance: 1.8
+  timeoutSeconds: 240
+  playerSpawn: {x: 0, y: 0.02, z: -8}
+  destination: {x: 0, y: 0, z: 7.5}

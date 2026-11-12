@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f29d538d33bc5591bc87a08c16c2ffed, type: 3}
+  m_Name: S01PhaseTable
+  m_EditorClassIdentifier:
+  phases:
+  - phase: 0
+    duration: 15
+    vehicleEntry: 1
+    pedestrianEntry: 0
+  - phase: 1
+    duration: 3
+    vehicleEntry: 0
+    pedestrianEntry: 0
+  - phase: 2
+    duration: 2
+    vehicleEntry: 0
+    pedestrianEntry: 0
+  - phase: 3
+    duration: 12
+    vehicleEntry: 0
+    pedestrianEntry: 1
+  - phase: 4
+    duration: 5
+    vehicleEntry: 0
+    pedestrianEntry: 0
+  - phase: 5
+    duration: 2
+    vehicleEntry: 0
+    pedestrianEntry: 0
+  clearanceWatchdogSeconds: 30
