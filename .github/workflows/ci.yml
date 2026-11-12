@@ -6,22 +6,21 @@
 #   3. windows-build    —— Windows x64 构建，产物上传为 artifact，需要许可证 Secret。
 #
 # 首次使用前的配置（仓库 Settings → Secrets and variables → Actions）：
-#   UNITY_LICENSE        Personal 许可证的 .ulf 文件内容（见下方获取方法）
-#   UNITY_EMAIL          Unity 账号邮箱
-#   UNITY_PASSWORD       Unity 账号密码
-#   UNITY_AUTHENTICATOR_KEY  Unity 许可证服务器密钥（可选，与上面二选一）
+#   1. Secrets:
+#      UNITY_LICENSE        Personal 许可证的 .ulf 文件内容
+#      UNITY_EMAIL          Unity 账号邮箱
+#      UNITY_PASSWORD       Unity 账号密码
+#      （或 UNITY_AUTHENTICATOR_KEY 许可证服务器密钥，与上面二选一）
+#   2. Variables（选项卡 Variables → New repository variable）:
+#      UNITY_CI_ENABLED = true    ← 设为 true 后 Unity 测试/构建才会运行
 #
 # Personal 许可证 .ulf 获取方法（本机一次性操作）：
-#   1. 用 Unity Hub 打开一次本工程并登录，让本机激活 Personal 许可证；
-#   2. 复制 %LOCALAPPDATA%\Unity\Unity_lic.ulf 的全部内容
-#      （或用 docker 运行 gameci/unity license activation 流程，见
-#       https://docs.unity3d.com/Manual/Licenses.html 与 GameCI 文档）；
-#   3. 粘贴到 UNITY_LICENSE Secret。
+#   用 Unity Hub 打开一次本工程并登录，然后复制
+#   %LOCALAPPDATA%\Unity\Unity_lic.ulf 的全部内容粘贴到 UNITY_LICENSE。
 #
-# 注意：本工程使用中国版编辑器 2022.3.62f3c1（revision 1623fc0bbb97）。
-# GameCI 镜像基于国际版构建，若该精确版本拉取失败，把下方 UNITY_VERSION
-# 改为最接近的国际版（如 2022.3.62f1）重新激活许可证即可；
-# 测试与构建结果不受小版本号差异影响，但建议尽快对齐。
+# 注意：工程使用中国版编辑器 2022.3.62f3c1（revision 1623fc0bbb97）。
+# GameCI 镜像基于国际版构建，若该精确版本拉取失败，把下面三处
+# 2022.3.62f3c1 改为最接近的国际版（如 2022.3.62f1）并重新激活许可证。
 
 name: ci
 
@@ -30,10 +29,6 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-
-env:
-  UNITY_VERSION: 2022.3.62f3c1
-  UNITY_IMAGE: unityci/editor:ubuntu-2223-base-3.1.1
 
 jobs:
   validate-levels:
@@ -50,9 +45,9 @@ jobs:
   unity-tests:
     name: Unity 测试（EditMode + PlayMode）
     runs-on: ubuntu-latest
-    # 未配置许可证 Secret 时自动跳过，关卡验证仍会运行
+    # 未配置 UNITY_CI_ENABLED 变量时自动跳过，关卡验证仍会运行
     if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
-    container: ${{ env.UNITY_IMAGE }}
+    container: unityci/editor:ubuntu-2223-base-3.1.1
     steps:
       - uses: actions/checkout@v4
 
@@ -60,32 +55,33 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Library
-          key: Library-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Library-2022.3.62f3c1-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ env.UNITY_VERSION }}-
+            Library-2022.3.62f3c1-
             Library-
 
       - uses: game-ci/unity-test-runner@v4
-        id: tests
+        id: editmode
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
         with:
-          unityVersion: ${{ env.UNITY_VERSION }}
+          unityVersion: 2022.3.62f3c1
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           testMode: EditMode
           artifactsPath: artifacts/editmode
 
       - uses: game-ci/unity-test-runner@v4
+        id: playmode
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
         with:
-          unityVersion: ${{ env.UNITY_VERSION }}
+          unityVersion: 2022.3.62f3c1
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           testMode: PlayMode
           artifactsPath: artifacts/playmode
@@ -103,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
     needs: [validate-levels]
-    container: ${{ env.UNITY_IMAGE }}
+    container: unityci/editor:ubuntu-2223-base-3.1.1
     steps:
       - uses: actions/checkout@v4
 
@@ -111,9 +107,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Library
-          key: Library-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Library-2022.3.62f3c1-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ env.UNITY_VERSION }}-
+            Library-2022.3.62f3c1-
             Library-
 
       - uses: game-ci/unity-builder@v4
@@ -123,7 +119,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
         with:
-          unityVersion: ${{ env.UNITY_VERSION }}
+          unityVersion: 2022.3.62f3c1
           targetPlatform: StandaloneWindows64
           buildsPath: build
 
