@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity
     guid: 100828ea82092a86821b5ca7948def1a
+  - enabled: 1
+    path: Assets/ClawMachine/Scenes/ClawMachineScene.unity
+    guid: d3db46f473921794946fb0027b1844d2
   m_configObjects: {}

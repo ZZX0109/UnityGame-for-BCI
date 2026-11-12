@@ -1,0 +1,10 @@
+{
+  "name": "ClawMachine.Editor",
+  "rootNamespace": "ClawMachine.Editor",
+  "references": [
+    "ClawMachine.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 5c536996da7dc1326ec181a640897c5e
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 24
+  forceTextureCase: -2
+  includeFontData: 1
+  fontName: Claw UI Sans
+  fontNames:
+  - Claw UI Sans
+  fallbackFontReferences: []
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData:
+  assetBundleName:
+  assetBundleVariant:

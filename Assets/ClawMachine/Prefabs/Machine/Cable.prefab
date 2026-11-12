@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1184
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1185}
+  - component: {fileID: 1186}
+  - component: {fileID: 1187}
+  m_Layer: 0
+  m_Name: "Y cable"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1185
+Transform:
+  m_GameObject: {fileID: 1184}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.86, z: 0}
+  m_LocalScale: {x: 0.012, y: 0.06, z: 0.012}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!33 &1186
+MeshFilter:
+  m_GameObject: {fileID: 1184}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1187
+MeshRenderer:
+  m_GameObject: {fileID: 1184}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1

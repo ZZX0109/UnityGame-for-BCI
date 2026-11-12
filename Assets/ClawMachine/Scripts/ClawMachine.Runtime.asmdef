@@ -1,0 +1,6 @@
+{
+  "name": "ClawMachine.Runtime",
+  "rootNamespace": "ClawMachine",
+  "references": [],
+  "autoReferenced": true
+}

@@ -1,0 +1,585 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1174
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1175}
+  m_Layer: 0
+  m_Name: "GantryRoot"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1175
+Transform:
+  m_GameObject: {fileID: 1174}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1177}
+  - {fileID: 1181}
+  - {fileID: 1185}
+  - {fileID: 1189}
+  m_Father: {fileID: 0}
+--- !u!1 &1176
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1177}
+  - component: {fileID: 1178}
+  - component: {fileID: 1179}
+  m_Layer: 0
+  m_Name: "X bridge"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1177
+Transform:
+  m_GameObject: {fileID: 1176}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.92, z: 0}
+  m_LocalScale: {x: 1.08, y: 0.055, z: 0.06}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1175}
+--- !u!1 &1180
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1181}
+  - component: {fileID: 1182}
+  - component: {fileID: 1183}
+  m_Layer: 0
+  m_Name: "XZ trolley"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1181
+Transform:
+  m_GameObject: {fileID: 1180}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.92, z: 0}
+  m_LocalScale: {x: 0.2, y: 0.1, z: 0.16}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1175}
+--- !u!1 &1184
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1185}
+  - component: {fileID: 1186}
+  - component: {fileID: 1187}
+  m_Layer: 0
+  m_Name: "Y cable"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1185
+Transform:
+  m_GameObject: {fileID: 1184}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.86, z: 0}
+  m_LocalScale: {x: 0.012, y: 0.06, z: 0.012}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1175}
+--- !u!1 &1188
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1189}
+  - component: {fileID: 1190}
+  - component: {fileID: 1231}
+  m_Layer: 0
+  m_Name: "Tool - grip origin"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1189
+Transform:
+  m_GameObject: {fileID: 1188}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1192}
+  - {fileID: 1196}
+  - {fileID: 1208}
+  - {fileID: 1220}
+  m_Father: {fileID: 1175}
+--- !u!1 &1191
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1192}
+  - component: {fileID: 1193}
+  - component: {fileID: 1194}
+  m_Layer: 0
+  m_Name: "Gripper hub"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1192
+Transform:
+  m_GameObject: {fileID: 1191}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.17, z: 0}
+  m_LocalScale: {x: 0.13, y: 0.065, z: 0.13}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1189}
+--- !u!1 &1195
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1196}
+  m_Layer: 0
+  m_Name: "Finger 0"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1196
+Transform:
+  m_GameObject: {fileID: 1195}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.102182e-17, y: 0.07, z: 0.18}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1198}
+  - {fileID: 1202}
+  - {fileID: 1206}
+  m_Father: {fileID: 1189}
+--- !u!1 &1197
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1198}
+  - component: {fileID: 1199}
+  - component: {fileID: 1200}
+  m_Layer: 0
+  m_Name: "Silver finger"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1198
+Transform:
+  m_GameObject: {fileID: 1197}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.022, y: 0.18, z: 0.022}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1196}
+--- !u!1 &1201
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1202}
+  - component: {fileID: 1203}
+  - component: {fileID: 1204}
+  m_Layer: 0
+  m_Name: "Contact pad"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1202
+Transform:
+  m_GameObject: {fileID: 1201}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 0.033, y: 0.045, z: 0.033}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1196}
+--- !u!1 &1205
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1206}
+  m_Layer: 0
+  m_Name: "Contact probe"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1206
+Transform:
+  m_GameObject: {fileID: 1205}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1196}
+--- !u!1 &1207
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1208}
+  m_Layer: 0
+  m_Name: "Finger 1"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1208
+Transform:
+  m_GameObject: {fileID: 1207}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.1558846, y: 0.07, z: -0.09}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1210}
+  - {fileID: 1214}
+  - {fileID: 1218}
+  m_Father: {fileID: 1189}
+--- !u!1 &1209
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1210}
+  - component: {fileID: 1211}
+  - component: {fileID: 1212}
+  m_Layer: 0
+  m_Name: "Silver finger"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1210
+Transform:
+  m_GameObject: {fileID: 1209}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.022, y: 0.18, z: 0.022}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1208}
+--- !u!1 &1213
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1214}
+  - component: {fileID: 1215}
+  - component: {fileID: 1216}
+  m_Layer: 0
+  m_Name: "Contact pad"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1214
+Transform:
+  m_GameObject: {fileID: 1213}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 0.033, y: 0.045, z: 0.033}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1208}
+--- !u!1 &1217
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1218}
+  m_Layer: 0
+  m_Name: "Contact probe"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1218
+Transform:
+  m_GameObject: {fileID: 1217}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1208}
+--- !u!1 &1219
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1220}
+  m_Layer: 0
+  m_Name: "Finger 2"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1220
+Transform:
+  m_GameObject: {fileID: 1219}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.1558846, y: 0.07, z: -0.09}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1222}
+  - {fileID: 1226}
+  - {fileID: 1230}
+  m_Father: {fileID: 1189}
+--- !u!1 &1221
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1222}
+  - component: {fileID: 1223}
+  - component: {fileID: 1224}
+  m_Layer: 0
+  m_Name: "Silver finger"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1222
+Transform:
+  m_GameObject: {fileID: 1221}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.022, y: 0.18, z: 0.022}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1220}
+--- !u!1 &1225
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1226}
+  - component: {fileID: 1227}
+  - component: {fileID: 1228}
+  m_Layer: 0
+  m_Name: "Contact pad"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1226
+Transform:
+  m_GameObject: {fileID: 1225}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 0.033, y: 0.045, z: 0.033}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1220}
+--- !u!1 &1229
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1230}
+  m_Layer: 0
+  m_Name: "Contact probe"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1230
+Transform:
+  m_GameObject: {fileID: 1229}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.07, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1220}
+--- !u!33 &1178
+MeshFilter:
+  m_GameObject: {fileID: 1176}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1179
+MeshRenderer:
+  m_GameObject: {fileID: 1176}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1182
+MeshFilter:
+  m_GameObject: {fileID: 1180}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1183
+MeshRenderer:
+  m_GameObject: {fileID: 1180}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1186
+MeshFilter:
+  m_GameObject: {fileID: 1184}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1187
+MeshRenderer:
+  m_GameObject: {fileID: 1184}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!54 &1190
+Rigidbody:
+  m_GameObject: {fileID: 1188}
+  serializedVersion: 4
+  m_Mass: 0.3
+  m_Drag: 0.05
+  m_AngularDrag: 0.2
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!33 &1193
+MeshFilter:
+  m_GameObject: {fileID: 1191}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1194
+MeshRenderer:
+  m_GameObject: {fileID: 1191}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1199
+MeshFilter:
+  m_GameObject: {fileID: 1197}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1200
+MeshRenderer:
+  m_GameObject: {fileID: 1197}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1203
+MeshFilter:
+  m_GameObject: {fileID: 1201}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1204
+MeshRenderer:
+  m_GameObject: {fileID: 1201}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1211
+MeshFilter:
+  m_GameObject: {fileID: 1209}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1212
+MeshRenderer:
+  m_GameObject: {fileID: 1209}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1215
+MeshFilter:
+  m_GameObject: {fileID: 1213}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1216
+MeshRenderer:
+  m_GameObject: {fileID: 1213}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1223
+MeshFilter:
+  m_GameObject: {fileID: 1221}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1224
+MeshRenderer:
+  m_GameObject: {fileID: 1221}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1227
+MeshFilter:
+  m_GameObject: {fileID: 1225}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1228
+MeshRenderer:
+  m_GameObject: {fileID: 1225}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!114 &1231
+MonoBehaviour:
+  m_GameObject: {fileID: 1188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd0792adc11b4d0590533129a8f5cbc9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  toolBody: {fileID: 1190}
+  fingers:
+  - {fileID: 1196}
+  - {fileID: 1208}
+  - {fileID: 1220}
+  contactPads:
+  - {fileID: 1206}
+  - {fileID: 1218}
+  - {fileID: 1230}

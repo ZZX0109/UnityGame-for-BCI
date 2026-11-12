@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 83f4b735fa01960a2b5284a2e8fc07de, type: 3}
+  m_Name: C01
+  m_EditorClassIdentifier:
+  challengeId: C01
+  title: "C01 · 三轴定位教学"
+  prizeId: mint-parcel
+  targetId: mint-parcel
+  seed: 20261112
+  attemptLimit: 5
+  spawnPosition: {x: 0.08, y: 0.92, z: 0.08}
+  spawnEuler: {x: 0, y: 0, z: 0}
+  cameraPolicy: FrontLeftRight
+  successRule: ReleasedTargetFullyInsideChuteAndStable
+  graspProfile: {fileID: 11400000, guid: dae489ae8ee4405788fd5ecc70c92ef7, type: 2}

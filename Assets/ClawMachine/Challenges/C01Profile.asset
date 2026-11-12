@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: c12cb84cd88ad3d4e3456695d5866d5f, type: 3}
+  m_Name: C01Profile
+  m_EditorClassIdentifier:
+  mass: 0.3
+  centerOfMass: {x: 0, y: 0, z: 0}
+  maxCenterOffset: 0.05
+  contactTolerance: 0.035
+  verticalTolerance: 0.045
+  breakForce: 24
+  stableSpeed: 0.08
+  stableDwell: 0.3
+  settleTimeout: 2.5
