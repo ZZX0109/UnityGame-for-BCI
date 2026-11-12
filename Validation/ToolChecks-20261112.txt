@@ -1,0 +1,52 @@
+$ python Tools/validate_project.py
+[OK] Static file, GUID, importer, JSON, catalog and build-scene checks passed.
+Unity compilation, tests, player build and GUI acceptance remain separate checks.
+Exit code: 0
+
+$ python Tools/validate_levels.py
+[OK]   Level01.txt: 最少 1 推，探索 13 状态
+[OK]   Level02.txt: 最少 1 推，探索 17 状态
+[OK]   Level03.txt: 最少 3 推，探索 521 状态
+[OK]   Level04.txt: 最少 3 推，探索 30 状态
+[OK]   Level05.txt: 最少 4 推，探索 1405 状态
+[OK]   Level06.txt: 最少 6 推，探索 2708 状态
+[OK]   Level07.txt: 最少 3 推，探索 29 状态
+[OK]   Level08.txt: 最少 9 推，探索 5281 状态
+Exit code: 0
+
+$ python Tools/build_ui_font.py --check
+[OK] Bundled UI font: 274,528 bytes; 885 covered codepoints; current UI text covered.
+Exit code: 0
+
+$ python -m unittest discover -s Tools/tests -v
+test_box_on_goal_and_player_on_goal_are_supported (test_delivery_tools.LevelParserChecks.test_box_on_goal_and_player_on_goal_are_supported) ... ok
+test_invalid_symbol_rejected (test_delivery_tools.LevelParserChecks.test_invalid_symbol_rejected) ... ok
+test_open_boundary_rejected (test_delivery_tools.LevelParserChecks.test_open_boundary_rejected) ... ok
+test_real_one_push_solution (test_delivery_tools.LevelParserChecks.test_real_one_push_solution) ... ok
+test_build_scene_path_guid_mismatch_fails (test_delivery_tools.ProjectChecks.test_build_scene_path_guid_mismatch_fails) ... ok
+test_catalog_missing_map_fails (test_delivery_tools.ProjectChecks.test_catalog_missing_map_fails) ... ok
+test_complete_fixture_passes_without_writing_files (test_delivery_tools.ProjectChecks.test_complete_fixture_passes_without_writing_files) ... ok
+test_duplicate_guid_fails (test_delivery_tools.ProjectChecks.test_duplicate_guid_fails) ... ok
+test_fingerprint_changes_with_source (test_delivery_tools.ProjectChecks.test_fingerprint_changes_with_source) ... ok
+test_missing_meta_fails (test_delivery_tools.ProjectChecks.test_missing_meta_fails) ... ok
+test_missing_prefab_fails (test_delivery_tools.ProjectChecks.test_missing_prefab_fails) ... ok
+test_unresolved_reference_fails (test_delivery_tools.ProjectChecks.test_unresolved_reference_fails) ... ok
+test_wrong_asmdef_importer_fails (test_delivery_tools.ProjectChecks.test_wrong_asmdef_importer_fails) ... ok
+test_failed_xml_rejected_even_when_process_was_successful (test_delivery_tools.TestEvidenceChecks.test_failed_xml_rejected_even_when_process_was_successful) ... ok
+test_inconclusive_tests_rejected_even_when_run_says_passed (test_delivery_tools.TestEvidenceChecks.test_inconclusive_tests_rejected_even_when_run_says_passed) ... ok
+test_inconsistent_inconclusive_counter_rejected (test_delivery_tools.TestEvidenceChecks.test_inconsistent_inconclusive_counter_rejected) ... ok
+test_inconsistent_skip_counter_rejected (test_delivery_tools.TestEvidenceChecks.test_inconsistent_skip_counter_rejected) ... ok
+test_non_test_xml_rejected (test_delivery_tools.TestEvidenceChecks.test_non_test_xml_rejected) ... ok
+test_pass_count_must_equal_total_even_without_skip_attribute (test_delivery_tools.TestEvidenceChecks.test_pass_count_must_equal_total_even_without_skip_attribute) ... ok
+test_passed_xml_reports_actual_count (test_delivery_tools.TestEvidenceChecks.test_passed_xml_reports_actual_count) ... ok
+test_skipped_tests_rejected_even_when_run_says_passed (test_delivery_tools.TestEvidenceChecks.test_skipped_tests_rejected_even_when_run_says_passed) ... ok
+test_zero_tests_does_not_count_as_passed (test_delivery_tools.TestEvidenceChecks.test_zero_tests_does_not_count_as_passed) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.040s
+
+OK
+Exit code: 0
+
+$ git diff HEAD --check
+Exit code: 0

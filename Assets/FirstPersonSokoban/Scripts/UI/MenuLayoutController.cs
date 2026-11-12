@@ -32,6 +32,9 @@ namespace FirstPersonSokoban.UI
 
         public RectTransform identityGroup;
         public RectTransform levelPanel;
+        public RectTransform identityContent;
+
+        public static readonly Vector2 IdentityDesignSize = new Vector2(1100f, 560f);
 
         private int lastWidth = -1;
         private int lastHeight = -1;
@@ -52,6 +55,8 @@ namespace FirstPersonSokoban.UI
 
         public static MenuLayoutSpec ComputeSpec(float screenWidth, float screenHeight)
         {
+            screenWidth = Mathf.Max(1f, screenWidth);
+            screenHeight = Mathf.Max(1f, screenHeight);
             float scale = Mathf.Pow(screenWidth / ReferenceWidth, 1f - ScaleMatch) *
                           Mathf.Pow(screenHeight / ReferenceHeight, ScaleMatch);
             if (scale <= 0.0001f) scale = 1f;
@@ -70,30 +75,45 @@ namespace FirstPersonSokoban.UI
                 PanelPivot = wide ? new Vector2(1f, 0.5f) : new Vector2(0.5f, 0f)
             };
 
-            float maxHeight = Mathf.Min(560f, refH - 48f);
-            float identityWidth = Mathf.Min(1100f, refW - 32f);
-            float panelWidth = wide ? 480f : Mathf.Min(720f, refW - 32f);
+            const float margin = 24f;
+            const float gap = 36f;
+            float usableWidth = Mathf.Max(1f, refW - margin * 2f);
+            // Reserve space for the global header and footer in every aspect ratio.
+            float usableHeight = Mathf.Max(1f, refH - 160f);
 
             if (wide)
             {
-                float panelHeight = Mathf.Min(670f, refH - 48f);
-                spec.Identity = new Rect(-refW * 0.5f, -maxHeight * 0.5f, identityWidth, maxHeight);
-                spec.Panel = new Rect(refW * 0.5f - 544f, -panelHeight * 0.5f + 18f,
-                    panelWidth, panelHeight);
+                // Keep the two columns together on ultrawide displays. Branding scales
+                // inside its measured area instead of spilling into the chapter list.
+                float contentWidth = Mathf.Min(1840f, usableWidth);
+                float panelWidth = contentWidth < 1780f ? 480f : 520f;
+                panelWidth = Mathf.Min(panelWidth, contentWidth * 0.4f);
+                float columnGap = Mathf.Min(72f, contentWidth * 0.045f);
+                float identityWidth = Mathf.Min(IdentityDesignSize.x,
+                    Mathf.Max(1f, contentWidth - panelWidth - columnGap));
+                float identityHeight = Mathf.Min(IdentityDesignSize.y, usableHeight);
+                float panelHeight = Mathf.Min(750f, usableHeight);
+                float left = -contentWidth * 0.5f;
+
+                spec.Identity = new Rect(left, -identityHeight * 0.5f,
+                    identityWidth, identityHeight);
+                spec.Panel = new Rect(contentWidth * 0.5f - panelWidth,
+                    -panelHeight * 0.5f, panelWidth, panelHeight);
             }
             else
             {
-                const float margin = 24f;
-                const float gap = 36f;
-                float usable = refH - margin * 2f - gap;
-                float identityHeight = Mathf.Clamp(usable * 0.5f, 420f, maxHeight);
-                float panelHeight = Mathf.Min(Mathf.Min(670f, refH - 48f), usable - identityHeight);
-                panelHeight = Mathf.Max(240f, panelHeight);
+                float usable = Mathf.Max(1f, usableHeight - gap);
+                float identityHeight = Mathf.Min(480f, usable * 0.42f);
+                float panelHeight = Mathf.Min(670f, usable - identityHeight);
+                float totalHeight = identityHeight + gap + panelHeight;
+                float top = totalHeight * 0.5f;
+                float identityWidth = Mathf.Min(IdentityDesignSize.x, usableWidth);
+                float panelWidth = Mathf.Min(720f, usableWidth);
 
                 spec.Identity = new Rect(-identityWidth * 0.5f,
-                    refH * 0.5f - margin - identityHeight, identityWidth, identityHeight);
+                    top - identityHeight, identityWidth, identityHeight);
                 spec.Panel = new Rect(-panelWidth * 0.5f,
-                    -refH * 0.5f + margin, panelWidth, panelHeight);
+                    -totalHeight * 0.5f, panelWidth, panelHeight);
             }
 
             spec.IdentitySize = new Vector2(spec.Identity.width, spec.Identity.height);
@@ -138,6 +158,18 @@ namespace FirstPersonSokoban.UI
                 spec.IdentityPosition, spec.IdentitySize);
             Set(levelPanel, spec.PanelAnchor, spec.PanelPivot,
                 spec.PanelPosition, spec.PanelSize);
+            FitIdentityContent(spec.IdentitySize);
+        }
+
+        private void FitIdentityContent(Vector2 available)
+        {
+            if (identityContent == null) return;
+            identityContent.anchorMin = identityContent.anchorMax = new Vector2(0.5f, 0.5f);
+            identityContent.pivot = new Vector2(0.5f, 0.5f);
+            identityContent.anchoredPosition = Vector2.zero;
+            identityContent.sizeDelta = IdentityDesignSize;
+            float scale = OverlayLayoutController.ComputeScale(available, IdentityDesignSize, 0f);
+            identityContent.localScale = Vector3.one * scale;
         }
 
         private static void Set(RectTransform rect, Vector2 anchor, Vector2 pivot,

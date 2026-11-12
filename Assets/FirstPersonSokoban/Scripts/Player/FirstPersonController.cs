@@ -8,7 +8,7 @@ namespace FirstPersonSokoban.PlayerSystem
     {
         [SerializeField] private float moveSpeed = 3.5f;
         [SerializeField] private float gravity = -22f;
-        [SerializeField] private float cameraHeight = 1.65f;
+        [SerializeField, Min(0.1f)] private float cameraHeight = 1.65f;
 
         private CharacterController characterController;
         private Camera playerCamera;
@@ -16,10 +16,10 @@ namespace FirstPersonSokoban.PlayerSystem
         private float pitch;
         private float sensitivity = 2.2f;
         private bool invertY;
-        private Vector3 lastPosition;
 
         public Camera PlayerCamera => playerCamera;
         public bool InputLocked { get; private set; }
+        /// <summary>Total horizontal movement, including push follow-through; teleports/undo are excluded.</summary>
         public float DistanceTravelled { get; private set; }
         public float CameraHeight => cameraHeight;
         public float LookYaw => transform.eulerAngles.y;
@@ -28,8 +28,23 @@ namespace FirstPersonSokoban.PlayerSystem
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
-            playerCamera = GetComponentInChildren<Camera>();
-            lastPosition = transform.position;
+            playerCamera = GetComponentInChildren<Camera>(true);
+            ApplyCameraHeight();
+        }
+
+        private void OnValidate()
+        {
+            cameraHeight = Mathf.Max(0.1f, cameraHeight);
+            ApplyCameraHeight();
+        }
+
+        private void ApplyCameraHeight()
+        {
+            if (playerCamera == null) playerCamera = GetComponentInChildren<Camera>(true);
+            if (playerCamera == null) return;
+            Vector3 position = playerCamera.transform.localPosition;
+            position.y = cameraHeight;
+            playerCamera.transform.localPosition = position;
         }
 
         private void OnEnable()
@@ -62,12 +77,7 @@ namespace FirstPersonSokoban.PlayerSystem
 
             if (characterController.isGrounded && verticalVelocity < 0f) verticalVelocity = -2f;
             verticalVelocity += gravity * Time.deltaTime;
-            characterController.Move((planar * moveSpeed + Vector3.up * verticalVelocity) * Time.deltaTime);
-
-            Vector3 delta = transform.position - lastPosition;
-            delta.y = 0f;
-            DistanceTravelled += delta.magnitude;
-            lastPosition = transform.position;
+            MoveAndMeasure((planar * moveSpeed + Vector3.up * verticalVelocity) * Time.deltaTime);
         }
 
         // 由外部（过场、撤销恢复或自动化测试）设置俯仰角。
@@ -89,7 +99,6 @@ namespace FirstPersonSokoban.PlayerSystem
         public void SetInputLocked(bool locked)
         {
             InputLocked = locked;
-            lastPosition = transform.position;
         }
 
         public void Teleport(Vector3 position)
@@ -99,12 +108,20 @@ namespace FirstPersonSokoban.PlayerSystem
             transform.position = position;
             characterController.enabled = wasEnabled;
             verticalVelocity = 0f;
-            lastPosition = position;
         }
 
         public void MoveControlled(Vector3 delta)
         {
+            MoveAndMeasure(delta);
+        }
+
+        private void MoveAndMeasure(Vector3 delta)
+        {
+            Vector3 before = transform.position;
             characterController.Move(delta);
+            Vector3 travelled = transform.position - before;
+            travelled.y = 0f;
+            DistanceTravelled += travelled.magnitude;
         }
     }
 }

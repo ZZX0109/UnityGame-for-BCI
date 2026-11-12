@@ -79,8 +79,7 @@ namespace FirstPersonSokoban.Core
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (Phase == GamePhase.Paused) Resume();
-                else if (Phase == GamePhase.Playing || Phase == GamePhase.Animating) Pause();
+                HandleEscape();
                 return;
             }
 
@@ -89,6 +88,14 @@ namespace FirstPersonSokoban.Core
             if (Input.GetKeyDown(KeyCode.Z)) { Undo(); return; }
             if (Input.GetKeyDown(KeyCode.E)) { TryPush(); return; }
             UpdateInteractionPrompt();
+        }
+
+        /// <summary>Escape closes settings before changing the underlying game phase.</summary>
+        public void HandleEscape()
+        {
+            if (ui != null && ui.SettingsOpen) { ui.CloseSettings(); return; }
+            if (Phase == GamePhase.Paused) Resume();
+            else if (Phase == GamePhase.Playing || Phase == GamePhase.Animating) Pause();
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -433,7 +440,7 @@ namespace FirstPersonSokoban.Core
         }
 
         /// <summary>
-        /// 静态死锁立即判定；需要完整搜索时改为分帧协程，每帧最多展开 400 个状态。
+        /// 静态死锁立即判定；需要完整搜索时改为分帧协程，每帧最多展开 200 个状态。
         /// generation 让撤销 / 再推动 / 切关卡自动作废旧搜索，结果不会过期写回。
         /// </summary>
         private void RefreshDeadlock()

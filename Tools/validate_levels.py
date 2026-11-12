@@ -14,23 +14,32 @@ MAX_STATES = 200000
 
 
 def parse(path):
-    rows = [line.rstrip("\r\n") for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = path.read_text(encoding="utf-8-sig").replace("\r", "").strip("\n").split("\n")
+    if len(rows) < 3 or len(rows[0]) < 3:
+        raise ValueError(f"{path.name}: 地图至少需要 3 行 3 列")
     width = len(rows[0])
-    assert all(len(r) == width for r in rows), f"{path.name}: 行宽不一致"
+    if not all(len(r) == width for r in rows):
+        raise ValueError(f"{path.name}: 行宽不一致")
     walls, boxes, goals, players = set(), [], set(), []
     for y, row in enumerate(rows):
         for x, ch in enumerate(row):
             p = (x, y)
+            if ch not in "#.PBG*+":
+                raise ValueError(f"{path.name}: 非法符号 {ch!r} at {p}")
+            if (x in (0, width - 1) or y in (0, len(rows) - 1)) and ch != "#":
+                raise ValueError(f"{path.name}: 地图边界必须是墙壁 at {p}")
             if ch == "#":
                 walls.add(p)
-            elif ch == "G":
+            if ch in "G*+":
                 goals.add(p)
-            elif ch == "B":
+            if ch in "B*":
                 boxes.append(p)
-            elif ch == "P":
+            if ch in "P+":
                 players.append(p)
-    assert len(players) == 1, f"{path.name}: 玩家起点必须唯一"
-    assert len(boxes) == len(goals) and boxes, f"{path.name}: 箱子/目标数量不匹配"
+    if len(players) != 1:
+        raise ValueError(f"{path.name}: 玩家起点必须唯一")
+    if len(boxes) != len(goals) or not boxes:
+        raise ValueError(f"{path.name}: 箱子/目标数量不匹配")
     return walls, width, len(rows), tuple(sorted(boxes)), frozenset(goals), players[0]
 
 
@@ -82,8 +91,17 @@ def solve(path):
 
 def main():
     ok = True
-    for path in sorted(LEVELS.glob("Level*.txt")):
-        pushes, states = solve(path)
+    paths = sorted(LEVELS.glob("Level*.txt"))
+    if not paths:
+        print("[FAIL] No level maps found")
+        return 1
+    for path in paths:
+        try:
+            pushes, states = solve(path)
+        except ValueError as exc:
+            print(f"[FAIL] {exc}")
+            ok = False
+            continue
         if pushes is None:
             print(f"[FAIL] {path.name}: 无解或超出 {MAX_STATES} 状态 (探索 {states})")
             ok = False

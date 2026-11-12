@@ -12,6 +12,7 @@ namespace FirstPersonSokoban.Interaction
         private Coroutine feedbackRoutine;
         private bool isOnGoal;
         private GameObject highlightCap;
+        private Material highlightMaterial;
 
         public Vector2Int GridPosition { get; private set; }
         public bool IsHighlighted => highlightCap != null && highlightCap.activeSelf;
@@ -44,9 +45,12 @@ namespace FirstPersonSokoban.Interaction
             cap.transform.localPosition = new Vector3(0f, BoxDimensions.HighlightY, 0f);
             cap.transform.localScale = new Vector3(BoxDimensions.HighlightWidth,
                 BoxDimensions.HighlightThickness, BoxDimensions.HighlightWidth);
-            Material material = new Material(normalMaterial);
-            material.color = new Color(0.35f, 0.88f, 0.76f, 1f);
-            cap.GetComponent<Renderer>().sharedMaterial = material;
+            highlightMaterial = new Material(normalMaterial)
+            {
+                name = "Sokoban Aim Highlight (Runtime)",
+                color = new Color(0.35f, 0.88f, 0.76f, 1f)
+            };
+            cap.GetComponent<Renderer>().sharedMaterial = highlightMaterial;
             cap.SetActive(false);
             highlightCap = cap;
         }
@@ -66,18 +70,10 @@ namespace FirstPersonSokoban.Interaction
 
         public void SnapTo(Vector3 position) => transform.position = position;
 
-        public IEnumerator AnimateTo(Vector3 target, float duration)
+        private void OnDestroy()
         {
-            Vector3 start = transform.position;
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
-                transform.position = Vector3.LerpUnclamped(start, target, t);
-                yield return null;
-            }
-            transform.position = target;
+            // Only this instance owns the generated highlight. Resource materials stay shared.
+            if (highlightMaterial != null) Destroy(highlightMaterial);
         }
 
         public void FlashDenied()

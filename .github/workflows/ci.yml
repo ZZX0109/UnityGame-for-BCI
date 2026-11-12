@@ -1,28 +1,4 @@
-# FirstPersonSokoban 云端 CI
-#
-# 三个任务：
-#   1. validate-levels  —— 纯 Python BFS 校验 8 个关卡可解，无任何依赖，永远运行。
-#   2. unity-tests      —— Unity EditMode + PlayMode 测试（GameCI），需要许可证 Secret。
-#   3. windows-build    —— Windows x64 构建，产物上传为 artifact，需要许可证 Secret。
-#
-# 首次使用前的配置（仓库 Settings → Secrets and variables → Actions）：
-#   1. Secrets:
-#      UNITY_LICENSE        Personal 许可证的 .ulf 文件内容
-#      UNITY_EMAIL          Unity 账号邮箱
-#      UNITY_PASSWORD       Unity 账号密码
-#      （或 UNITY_AUTHENTICATOR_KEY 许可证服务器密钥，与上面二选一）
-#   2. Variables（选项卡 Variables → New repository variable）:
-#      UNITY_CI_ENABLED = true    ← 设为 true 后 Unity 测试/构建才会运行
-#
-# Personal 许可证 .ulf 获取方法（本机一次性操作）：
-#   用 Unity Hub 打开一次本工程并登录，然后复制
-#   %LOCALAPPDATA%\Unity\Unity_lic.ulf 的全部内容粘贴到 UNITY_LICENSE。
-#
-# 注意：工程使用中国版编辑器 2022.3.62f3c1（revision 1623fc0bbb97）。
-# GameCI 镜像基于国际版构建，若该精确版本拉取失败，把下面三处
-# 2022.3.62f3c1 改为最接近的国际版（如 2022.3.62f1）并重新激活许可证。
-
-name: ci
+name: Source checks and optional Windows delivery
 
 on:
   push:
@@ -30,102 +6,82 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  validate-levels:
-    name: 关卡可解性（Python BFS）
+  source-checks:
+    name: Static integrity and eight-level solvability
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: 校验 8 个关卡均可解
-        run: python Tools/validate_levels.py
+      - run: python Tools/validate_project.py
+      - run: python Tools/validate_levels.py
+      - run: python Tools/build_ui_font.py --check
+      - run: python -m unittest discover -s Tools/tests -v
+      - name: State the verification boundary
+        shell: bash
+        run: |
+          echo '### Source checks passed' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Static/GUID checks and Python BFS do not prove Unity compilation, player tests, Windows build or GUI acceptance.' >> "$GITHUB_STEP_SUMMARY"
 
-  unity-tests:
-    name: Unity 测试（EditMode + PlayMode）
-    runs-on: ubuntu-latest
-    # 未配置 UNITY_CI_ENABLED 变量时自动跳过，关卡验证仍会运行
-    if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
-    container: unityci/editor:ubuntu-2223-base-3.1.1
+  unity-delivery:
+    name: Unity tests then Windows build (exact local Editor)
+    needs: source-checks
+    # China Editor 2022.3.62f3c1 has not been verified in GameCI Docker images.
+    # Use a dedicated Windows runner with this exact licensed Editor plus Windows
+    # Build Support. Set UNITY_EDITOR_PATH on that runner, then explicitly enable
+    # repository variable UNITY_CI_ENABLED=true. No guessed international version.
+    # PR code never executes on a persistent self-hosted machine.
+    if: ${{ vars.UNITY_CI_ENABLED == 'true' && github.event_name != 'pull_request' }}
+    runs-on: [self-hosted, Windows, X64, unity-2022.3.62f3c1]
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-
-      - name: 恢复 Library 缓存
-        uses: actions/cache@v4
+      - uses: actions/setup-python@v5
         with:
-          path: Library
-          key: Library-2022.3.62f3c1-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
-          restore-keys: |
-            Library-2022.3.62f3c1-
-            Library-
-
-      - uses: game-ci/unity-test-runner@v4
-        id: editmode
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
-        with:
-          unityVersion: 2022.3.62f3c1
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          testMode: EditMode
-          artifactsPath: artifacts/editmode
-
-      - uses: game-ci/unity-test-runner@v4
-        id: playmode
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
-        with:
-          unityVersion: 2022.3.62f3c1
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          testMode: PlayMode
-          artifactsPath: artifacts/playmode
-
-      - name: 上传测试结果
+          python-version: "3.12"
+      - name: Require the configured installed Editor
+        shell: pwsh
+        run: |
+          if (-not $env:UNITY_EDITOR_PATH -or -not (Test-Path $env:UNITY_EDITOR_PATH)) {
+            throw 'UNITY_EDITOR_PATH must point to the exact installed and licensed Editor on this runner.'
+          }
+      - name: EditMode, PlayMode, level validation, Windows build and ZIP
+        shell: pwsh
+        # The script stops before building when either XML reports failure or
+        # zero tests, and binds the manifest to the tested source fingerprint.
+        run: python Tools/run_delivery.py --output BuildOutput/CI --timeout 1800
+      - name: Keep real logs even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: artifacts
-          retention-days: 14
-
-  windows-build:
-    name: Windows x64 构建
-    runs-on: ubuntu-latest
-    if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
-    needs: [validate-levels]
-    container: unityci/editor:ubuntu-2223-base-3.1.1
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 恢复 Library 缓存
-        uses: actions/cache@v4
-        with:
-          path: Library
-          key: Library-2022.3.62f3c1-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
-          restore-keys: |
-            Library-2022.3.62f3c1-
-            Library-
-
-      - uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
-        with:
-          unityVersion: 2022.3.62f3c1
-          targetPlatform: StandaloneWindows64
-          buildsPath: build
-
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
-        with:
-          name: FirstPersonSokoban-Windows64
-          path: build
+          name: Unity-evidence-and-Windows-delivery
+          path: BuildOutput/CI
+          if-no-files-found: warn
           retention-days: 30
+
+  verification-summary:
+    name: Verification status
+    if: always()
+    needs: [source-checks, unity-delivery]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report passed, failed and unverified separately
+        shell: bash
+        env:
+          SOURCE_RESULT: ${{ needs.source-checks.result }}
+          UNITY_RESULT: ${{ needs.unity-delivery.result }}
+        run: |
+          echo '### Verification status' >> "$GITHUB_STEP_SUMMARY"
+          echo "Source integrity / Python levels: $SOURCE_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$UNITY_RESULT" = 'success' ]; then
+            echo 'Unity EditMode + PlayMode and Windows ZIP: passed; real XML/logs are in artifacts.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Unity tests and Windows delivery: NOT VERIFIED (job: $UNITY_RESULT)." >> "$GITHUB_STEP_SUMMARY"
+            echo 'To run them, configure a dedicated exact-version Windows runner and UNITY_EDITOR_PATH, enable UNITY_CI_ENABLED, then push main or dispatch this workflow.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo 'GUI playthrough, comfort, visual quality and measured performance: NOT VERIFIED by CI.' >> "$GITHUB_STEP_SUMMARY"

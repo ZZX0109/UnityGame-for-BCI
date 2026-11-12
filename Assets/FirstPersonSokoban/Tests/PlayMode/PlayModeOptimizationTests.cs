@@ -1,6 +1,7 @@
 using System.Collections;
 using FirstPersonSokoban.Core;
 using FirstPersonSokoban.Interaction;
+using FirstPersonSokoban.PlayerSystem;
 using FirstPersonSokoban.SaveSystem;
 using FirstPersonSokoban.UI;
 using NUnit.Framework;
@@ -56,6 +57,8 @@ namespace FirstPersonSokoban.Tests.PlayMode
             yield return WaitForAnimation(game);
             Assert.AreEqual(GamePhase.Victory, game.Phase);
             Assert.AreEqual(1, game.Board.PushCount);
+            Assert.Greater(game.Loader.Player.DistanceTravelled, 1.5f,
+                "首关推动会带动玩家前进一格，通关路程必须计入这段移动");
         }
 
         [UnityTest]
@@ -167,11 +170,14 @@ namespace FirstPersonSokoban.Tests.PlayMode
             game.Loader.Player.SetLookRotation(75f, -22f);
             Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(game.Loader.Player.LookYaw, yaw)), 60f,
                 "撤销前先转身，才能验证视角确实被恢复");
+            float distanceBeforeUndo = game.Loader.Player.DistanceTravelled;
             game.Undo();
 
             Assert.Less(Mathf.Abs(Mathf.DeltaAngle(game.Loader.Player.LookYaw, yaw)), 0.5f,
                 "撤销必须恢复推动前的观察方向");
             Assert.Less(Mathf.Abs(game.Loader.Player.LookPitch - pitch), 0.5f);
+            Assert.AreEqual(distanceBeforeUndo, game.Loader.Player.DistanceTravelled, 0.0001f,
+                "撤销的瞬间位移不能被当作新的行走路程");
         }
 
         [UnityTest]
@@ -255,6 +261,93 @@ namespace FirstPersonSokoban.Tests.PlayMode
 
         // ---- 本轮 P0 / P1 回归：暂停恢复、动画事务、真实布局、多箱瞄准 ----
 
+        [UnityTest]
+        public IEnumerator ControlledMovement_CountsHorizontalDistanceButNotTeleportOrVerticalMotion()
+        {
+            GameObject root = new GameObject("Movement Metric Test");
+            root.transform.position = new Vector3(1000f, 1000f, 1000f);
+            FirstPersonController player = root.AddComponent<FirstPersonController>();
+            player.SetInputLocked(true);
+            try
+            {
+                player.MoveControlled(Vector3.right * 2f);
+                Assert.AreEqual(2f, player.DistanceTravelled, 0.01f,
+                    "锁定键盘期间的推箱跟随仍须记录实际水平路程");
+
+                player.Teleport(root.transform.position + Vector3.forward * 20f);
+                Assert.AreEqual(2f, player.DistanceTravelled, 0.01f,
+                    "重置站位/撤销所用的 Teleport 不应累计路程");
+
+                player.MoveControlled(Vector3.up * 2f);
+                Assert.AreEqual(2f, player.DistanceTravelled, 0.01f,
+                    "垂直位移不应计入平面路程");
+                yield return null;
+                Assert.AreEqual(2f, player.DistanceTravelled, 0.01f,
+                    "下一帧不能重复累计上一段受控移动");
+            }
+            finally
+            {
+                Object.Destroy(root);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator CameraHeight_AppliesOnAwakeAndInspectorValidation()
+        {
+            GameObject root = new GameObject("Camera Height Test");
+            root.SetActive(false);
+            GameObject eye = new GameObject("Camera", typeof(Camera));
+            eye.transform.SetParent(root.transform, false);
+            eye.transform.localPosition = new Vector3(0.1f, 0f, 0.2f);
+            FirstPersonController player = root.AddComponent<FirstPersonController>();
+            JsonUtility.FromJsonOverwrite("{\"cameraHeight\":1.42}", player);
+            root.SetActive(true);
+            player.SetInputLocked(true);
+            try
+            {
+                Assert.AreEqual(1.42f, eye.transform.localPosition.y, 0.001f,
+                    "序列化视点高度必须在 Awake 生效");
+                Assert.AreEqual(0.1f, eye.transform.localPosition.x, 0.001f);
+                Assert.AreEqual(0.2f, eye.transform.localPosition.z, 0.001f);
+
+                JsonUtility.FromJsonOverwrite("{\"cameraHeight\":1.73}", player);
+                player.SendMessage("OnValidate");
+                Assert.AreEqual(1.73f, eye.transform.localPosition.y, 0.001f,
+                    "Inspector 修改高度也应立即更新相机");
+                yield return null;
+            }
+            finally
+            {
+                Object.Destroy(root);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator GeneratedFeedbackMaterials_AreReleasedWithTheirOwners()
+        {
+            Material source = Resources.Load<Material>("Materials/Box");
+            Assert.NotNull(source);
+            GameObject root = new GameObject("Material Ownership Test");
+            GameObject boxObject = Object.Instantiate(Resources.Load<GameObject>("Prefabs/Box"), root.transform);
+            BoxView box = boxObject.GetComponent<BoxView>();
+            box.Initialize(Vector2Int.zero, source, source, source);
+            Material highlight = boxObject.transform.Find("Aim Highlight Cap").GetComponent<Renderer>().sharedMaterial;
+            PushPreviewView preview = PushPreviewView.Create(root.transform);
+            // Activate once so Unity invokes this component's destruction lifecycle as in normal use.
+            preview.Show(Vector3.zero);
+            Material target = preview.GetComponentInChildren<Renderer>(true).sharedMaterial;
+            Assert.NotNull(highlight);
+            Assert.NotNull(target);
+            Assert.AreNotSame(source, highlight);
+
+            Object.Destroy(root);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(highlight == null, "箱子销毁后应释放它生成的高亮材质");
+            Assert.IsTrue(target == null, "预览销毁后应释放它生成的标记材质");
+            Assert.IsTrue(source != null, "共享 Resources 材质不能由实例销毁");
+        }
+
         /// <summary>旧 Resume 把 SetInputLocked(Phase == Playing) 写反，恢复后玩家反而动不了。</summary>
         [UnityTest]
         public IEnumerator ResumeFromPlaying_UnlocksPlayer()
@@ -336,9 +429,11 @@ namespace FirstPersonSokoban.Tests.PlayMode
             yield return null;
             Vector2Int initialBox = game.Board.Boxes[0];
             Vector3 initialPlayer = game.Loader.Player.transform.position;
+            Vector3 initialBoxWorld = game.Loader.Boxes[0].transform.position;
 
             game.TryPush();
             Assert.IsTrue(game.HasActivePush, "推动事务进行中");
+            yield return WaitForPushMidpoint(game, initialBoxWorld);
             game.Pause();
             Assert.AreEqual(GamePhase.Paused, game.Phase);
             game.ShowMenu();
@@ -355,7 +450,7 @@ namespace FirstPersonSokoban.Tests.PlayMode
             Assert.Less(Vector3.Distance(game.Loader.Boxes[0].transform.position,
                 new Vector3(initialBox.x * 2f, 0f, initialBox.y * 2f)), 0.001f);
 
-            for (int i = 0; i < 6; i++) yield return null;
+            yield return new WaitForSecondsRealtime(GameSettings.PushAnimationDuration + 0.1f);
             Assert.AreEqual(GamePhase.Menu, game.Phase, "旧协程不能在菜单里把阶段改回 Playing / Victory");
 
             game.StartLevel(0);
@@ -389,8 +484,10 @@ namespace FirstPersonSokoban.Tests.PlayMode
             game.Loader.Player.SetLookRotation(180f, 0f);
             yield return null;
 
+            Vector3 initialBoxWorld = game.Loader.Boxes[0].transform.position;
             game.TryPush();
             Assert.IsTrue(game.HasActivePush);
+            yield return WaitForPushMidpoint(game, initialBoxWorld);
             game.Pause();
             game.RestartLevel();
 
@@ -398,7 +495,7 @@ namespace FirstPersonSokoban.Tests.PlayMode
             Assert.IsFalse(game.HasActivePush, "重建关卡前必须停掉旧动画协程");
             Assert.AreEqual(0, game.Board.PushCount);
             Assert.AreEqual(game.Board.Definition.Boxes[0], game.Loader.Boxes[0].GridPosition);
-            for (int i = 0; i < 6; i++) yield return null;
+            yield return new WaitForSecondsRealtime(GameSettings.PushAnimationDuration + 0.1f);
             Assert.AreEqual(GamePhase.Playing, game.Phase, "旧协程不能改写新关卡的阶段");
         }
 
@@ -521,6 +618,21 @@ namespace FirstPersonSokoban.Tests.PlayMode
                 timeout -= Time.unscaledDeltaTime;
                 yield return null;
             }
+        }
+
+        private static IEnumerator WaitForPushMidpoint(PuzzleGameManager game, Vector3 initialBoxWorld)
+        {
+            float timeout = 2f;
+            while (game.Phase == GamePhase.Animating &&
+                   Vector3.Distance(initialBoxWorld, game.Loader.Boxes[0].transform.position) < 0.2f &&
+                   timeout > 0f)
+            {
+                timeout -= Time.unscaledDeltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(GamePhase.Animating, game.Phase, "应在动画完成之前暂停");
+            Assert.Greater(Vector3.Distance(initialBoxWorld, game.Loader.Boxes[0].transform.position), 0.1f,
+                "必须先让箱子实际移动，才能验证退出后的视觉回滚");
         }
     }
 }

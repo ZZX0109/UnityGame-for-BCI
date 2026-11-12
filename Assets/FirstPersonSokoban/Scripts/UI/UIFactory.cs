@@ -6,17 +6,40 @@ namespace FirstPersonSokoban.UI
 {
     public static class UIFactory
     {
-        public static readonly Color Ink = Hex("0D1921");
-        public static readonly Color Panel = Hex("142731", 0.96f);
-        public static readonly Color PanelLight = Hex("1C333D", 0.96f);
-        public static readonly Color Accent = Hex("58E0C2");
-        public static readonly Color Amber = Hex("E7AD70");
-        public static readonly Color White = Hex("F2F6F4");
-        public static readonly Color Muted = Hex("9BB0B6");
-        public static readonly Color Line = Hex("45616A", 0.65f);
+        public static readonly Color Ink = Hex("0A1622");
+        public static readonly Color Panel = Hex("142B3B", 0.98f);
+        public static readonly Color PanelLight = Hex("1C384A", 0.98f);
+        public static readonly Color Accent = Hex("76E5CD");
+        public static readonly Color Amber = Hex("F0C58A");
+        public static readonly Color White = Hex("F3F7FA");
+        public static readonly Color Muted = Hex("B2C6D3");
+        public static readonly Color Line = Hex("7397AE", 0.30f);
 
         private static Sprite roundedSprite;
         private static Font uiFont;
+        private static Texture2D roundedTexture;
+        private static Sprite gradientSprite;
+        private static Texture2D gradientTexture;
+        private static bool ownsFont;
+        private static int resourceUsers;
+
+        public static void AcquireResources() => resourceUsers++;
+
+        // Imported fonts belong to Resources; only objects created here are destroyed here.
+        public static void ReleaseResources()
+        {
+            resourceUsers = Mathf.Max(0, resourceUsers - 1);
+            if (resourceUsers != 0) return;
+            if (roundedSprite != null) Object.Destroy(roundedSprite);
+            if (roundedTexture != null) Object.Destroy(roundedTexture);
+            if (gradientSprite != null) Object.Destroy(gradientSprite);
+            if (gradientTexture != null) Object.Destroy(gradientTexture);
+            if (ownsFont && uiFont != null) Object.Destroy(uiFont);
+            roundedSprite = gradientSprite = null;
+            roundedTexture = gradientTexture = null;
+            uiFont = null;
+            ownsFont = false;
+        }
 
         public static Color Hex(string hex, float alpha = 1f)
         {
@@ -32,19 +55,20 @@ namespace FirstPersonSokoban.UI
             "Microsoft JhengHei", "Arial Unicode MS", "Segoe UI", "Arial"
         };
 
-        /// <summary>
-        /// 中文字体回退链：优先系统里常见的中日韩字体，都不存在时再退到 Unity 内置字体，
-        /// 保证 Text 组件永远拿得到非 null 字体（无字体时中文会整片不渲染）。
-        /// 本工程不打包第三方字体文件，交付时不存在授权不明资源。
-        /// </summary>
+        /// <summary>Bundled OFL Chinese font first; OS fallback for developer-only installs.</summary>
         public static Font Font
         {
             get
             {
                 if (uiFont != null) return uiFont;
-                try { uiFont = UnityEngine.Font.CreateDynamicFontFromOSFont(FontCandidates, 24); }
+                uiFont = Resources.Load<Font>("Fonts/SokobanUISans");
+                if (uiFont != null) return uiFont;
+                try
+                {
+                    uiFont = UnityEngine.Font.CreateDynamicFontFromOSFont(FontCandidates, 24);
+                    ownsFont = uiFont != null;
+                }
                 catch (System.Exception) { uiFont = null; }
-
                 if (uiFont == null)
                 {
                     foreach (string builtin in new[] { "LegacyRuntime.ttf", "Arial.ttf" })
@@ -56,6 +80,41 @@ namespace FirstPersonSokoban.UI
                 }
                 return uiFont;
             }
+        }
+
+        public static Image Background(Transform parent, string name)
+        {
+            Image image = Stretch(parent, name).gameObject.AddComponent<Image>();
+            if (gradientSprite == null)
+            {
+                const int size = 128;
+                gradientTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                gradientTexture.name = "Sokoban UI Gradient";
+                gradientTexture.wrapMode = TextureWrapMode.Clamp;
+                var pixels = new Color[size * size];
+                for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float glow = Mathf.Clamp01(1f - Vector2.Distance(
+                        new Vector2(x / 127f, y / 127f), new Vector2(0.25f, 0.65f)));
+                    pixels[y * size + x] = Color.Lerp(Hex("08131F"), Hex("1C394A"), glow * 0.88f);
+                }
+                gradientTexture.SetPixels(pixels);
+                gradientTexture.Apply(false, true);
+                gradientSprite = Sprite.Create(gradientTexture, new UnityEngine.Rect(0, 0, size, size),
+                    Vector2.one * 0.5f);
+            }
+            image.sprite = gradientSprite;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        public static void Border(Image image, Color color)
+        {
+            Outline outline = image.gameObject.AddComponent<Outline>();
+            outline.effectColor = color;
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.useGraphicAlpha = false;
         }
 
         public static RectTransform Rect(Transform parent, string name, Vector2 anchor, Vector2 pivot,
@@ -104,6 +163,7 @@ namespace FirstPersonSokoban.UI
             image.sprite = RoundedSprite;
             image.type = Image.Type.Sliced;
             image.color = color;
+            image.raycastTarget = false;
             return image;
         }
 
@@ -131,6 +191,8 @@ namespace FirstPersonSokoban.UI
             Image image = PanelImage(parent, name, anchor, pivot, position, size,
                 primary ? Accent : PanelLight);
             Button button = image.gameObject.AddComponent<Button>();
+            image.raycastTarget = true;
+            Border(image, primary ? new Color(0.75f, 1f, 0.93f, 0.45f) : Line);
             button.targetGraphic = image;
             button.onClick.AddListener(action);
             ColorBlock colors = button.colors;
@@ -138,12 +200,17 @@ namespace FirstPersonSokoban.UI
             colors.highlightedColor = primary ? Hex("D8FFF4") : Hex("D6E8EC");
             colors.pressedColor = Hex("A4BBB9");
             colors.selectedColor = colors.highlightedColor;
-            colors.disabledColor = Hex("5B6B70", 0.55f);
+            colors.disabledColor = Hex("75818E", 0.72f);
             colors.fadeDuration = 0.12f;
             button.colors = colors;
-            Label(image.transform, "Label", content, 18, primary ? Ink : White,
+            Label(image.transform, "Label", content, 20, primary ? Ink : White,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size - new Vector2(24, 8),
                 TextAnchor.MiddleCenter, FontStyle.Bold);
+            RectTransform label = image.transform.Find("Label") as RectTransform;
+            label.anchorMin = Vector2.zero;
+            label.anchorMax = Vector2.one;
+            label.offsetMin = new Vector2(12f, 4f);
+            label.offsetMax = new Vector2(-12f, -4f);
             return button;
         }
 
@@ -165,6 +232,8 @@ namespace FirstPersonSokoban.UI
                 const int size = 64;
                 const int radius = 14;
                 var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                roundedTexture = texture;
+                texture.name = "Sokoban UI Rounded Panel";
                 var pixels = new Color[size * size];
                 for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
@@ -175,7 +244,7 @@ namespace FirstPersonSokoban.UI
                     pixels[y * size + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(radius + 0.5f - distance));
                 }
                 texture.SetPixels(pixels);
-                texture.Apply();
+                texture.Apply(false, true);
                 texture.wrapMode = TextureWrapMode.Clamp;
                 roundedSprite = Sprite.Create(texture, new UnityEngine.Rect(0, 0, size, size),
                     new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));

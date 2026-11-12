@@ -5,6 +5,8 @@ namespace FirstPersonSokoban.Interaction
     /// <summary>瞄准箱子时，在「箱子将被推入的格子」显示一块地面标记。</summary>
     public sealed class PushPreviewView : MonoBehaviour
     {
+        private Material previewMaterial;
+
         public static PushPreviewView Create(Transform parent)
         {
             var root = new GameObject("Push Target Preview");
@@ -25,12 +27,18 @@ namespace FirstPersonSokoban.Interaction
             plate.transform.localScale = new Vector3(1.72f, 0.03f, 1.72f);
 
             Shader shader = Shader.Find("Standard");
-            Material material = shader != null ? new Material(shader) : null;
-            if (material != null)
+            previewMaterial = shader != null ? new Material(shader) : null;
+            if (previewMaterial != null)
             {
-                material.color = new Color(0.35f, 0.88f, 0.76f, 1f);
-                plate.GetComponent<Renderer>().sharedMaterial = material;
+                previewMaterial.name = "Sokoban Push Preview (Runtime)";
+                previewMaterial.color = new Color(0.35f, 0.88f, 0.76f, 1f);
+                plate.GetComponent<Renderer>().sharedMaterial = previewMaterial;
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (previewMaterial != null) Destroy(previewMaterial);
         }
 
         public void Show(Vector3 cellWorld)

@@ -21,3 +21,7 @@ BuildOutput/
 
 # Unity 生成的解决方案目录
 obj/
+
+# Python tooling caches
+__pycache__/
+*.py[cod]

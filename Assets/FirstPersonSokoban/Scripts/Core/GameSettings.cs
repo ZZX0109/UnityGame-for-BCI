@@ -71,6 +71,7 @@ namespace FirstPersonSokoban.Core
             store.SetInt(Prefix + "invertY", 0);
             store.SetInt(Prefix + "comfort", 1);
             store.SetInt(Prefix + "fullscreen", 1);
+            if (Application.isPlaying) Screen.fullScreen = true;
             Save();
         }
     }

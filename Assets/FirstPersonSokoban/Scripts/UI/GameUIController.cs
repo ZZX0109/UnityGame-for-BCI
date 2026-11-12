@@ -36,8 +36,16 @@ namespace FirstPersonSokoban.UI
         private Button nextButton;
         private Button[] levelButtons;
         private Text[] levelNotes;
+        private Image[] levelCardImages;
+        private Text menuProgress;
+        private Text sessionTime;
+        private RectTransform goalProgress;
+        private RectTransform chapterProgress;
+        private float nextClockRefresh;
+        private bool acquiredResources;
         private Button[] settingButtons;
 
+        private RectTransform settingsCard;
         private RectTransform identityGroup;
         private RectTransform levelPanel;
         private RectTransform levelContent;
@@ -53,6 +61,7 @@ namespace FirstPersonSokoban.UI
         public RectTransform LevelContentRect => levelContent;
         public RectTransform ContinueButtonRect => continueButtonRect;
         public MenuLayoutController MenuLayout => menuLayout;
+        public bool SettingsOpen => settings != null && settings.gameObject.activeSelf;
         public int LevelCardCount => levelButtons == null ? 0 : levelButtons.Length;
         public RectTransform LevelCardRect(int index) => levelButtons[index].GetComponent<RectTransform>();
 
@@ -61,12 +70,28 @@ namespace FirstPersonSokoban.UI
             game = manager;
             levelButtons = new Button[PuzzleGameManager.LevelCount];
             levelNotes = new Text[PuzzleGameManager.LevelCount];
+            levelCardImages = new Image[PuzzleGameManager.LevelCount];
+            AcquireResources();
+            acquiredResources = true;
             BuildCanvas();
             BuildHUD();
             BuildMenu();
             BuildPause();
             BuildSettings();
             BuildVictory();
+        }
+
+        private void OnDestroy()
+        {
+            if (acquiredResources) ReleaseResources();
+        }
+
+        private void Update()
+        {
+            if (sessionTime == null || game == null || Time.unscaledTime < nextClockRefresh) return;
+            nextClockRefresh = Time.unscaledTime + 0.25f;
+            int seconds = Mathf.FloorToInt(game.ElapsedSeconds);
+            sessionTime.text = $"{seconds / 60:00}:{seconds % 60:00}";
         }
 
         private void BuildCanvas()
@@ -89,24 +114,31 @@ namespace FirstPersonSokoban.UI
         {
             hud = Group(canvasRoot, "HUD");
             PanelImage(hud.transform, "Level Plate", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(300, 88), Panel);
+                new Vector2(32, -28), new Vector2(320, 96), Panel);
             LineImage(hud.transform, "Level Accent", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(5, 88), Accent);
-            levelNumber = Label(hud.transform, "Level Number", "LEVEL 01", 13, Accent,
+                new Vector2(32, -28), new Vector2(4, 96), Accent);
+            levelNumber = Label(hud.transform, "Level Number", "LEVEL 01", 15, Accent,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -41), new Vector2(240, 22), style: FontStyle.Bold);
             levelTitle = Label(hud.transform, "Level Title", "初次接触", 25, White,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -66), new Vector2(250, 42), style: FontStyle.Bold);
 
             PanelImage(hud.transform, "Stats Plate", new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-32, -28), new Vector2(290, 88), Panel);
-            goalCounter = Label(hud.transform, "Goals", "0 / 1", 29, Accent,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-270, -40), new Vector2(120, 40), style: FontStyle.Bold);
-            Label(hud.transform, "Goals Caption", "目标归位", 13, Muted,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-267, -83), new Vector2(115, 25));
-            pushCounter = Label(hud.transform, "Pushes", "00", 29, White,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-128, -40), new Vector2(80, 40), TextAnchor.MiddleRight, FontStyle.Bold);
-            Label(hud.transform, "Pushes Caption", "有效推动", 13, Muted,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-127, -83), new Vector2(78, 25), TextAnchor.MiddleRight);
+                new Vector2(-32, -28), new Vector2(310, 112), Panel);
+            goalCounter = Label(hud.transform, "Goals", "0 / 1", 28, Accent,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-322, -38), new Vector2(120, 44), style: FontStyle.Bold);
+            Label(hud.transform, "Goals Caption", "目标归位", 16, Muted,
+                new Vector2(1, 1), new Vector2(0, 1), new Vector2(-322, -88), new Vector2(120, 26));
+            pushCounter = Label(hud.transform, "Pushes", "00", 28, White,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-52, -38), new Vector2(100, 44), TextAnchor.MiddleRight, FontStyle.Bold);
+            Label(hud.transform, "Pushes Caption", "有效推动", 16, Muted,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-52, -88), new Vector2(100, 26), TextAnchor.MiddleRight);
+
+            LineImage(hud.transform, "Goal Progress Track", new Vector2(1, 1), new Vector2(1, 1),
+                new Vector2(-50, -126), new Vector2(274, 3), Line);
+            goalProgress = LineImage(hud.transform, "Goal Progress", new Vector2(1, 1), new Vector2(0, 1),
+                new Vector2(-324, -126), new Vector2(0, 3), Accent).rectTransform;
+            sessionTime = Label(hud.transform, "Session Time", "00:00", 18, Muted,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -142), new Vector2(130, 28));
 
             Image outer = PanelImage(hud.transform, "Crosshair Ring", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 Vector2.zero, new Vector2(18, 18), Hex("58E0C2", 0.22f));
@@ -125,9 +157,9 @@ namespace FirstPersonSokoban.UI
 
             guidance = Group(hud.transform, "Guidance");
             PanelImage(guidance.transform, "Guidance Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 86), new Vector2(760, 42), Hex("142731", 0.9f));
-            guidanceText = Label(guidance.transform, "Guidance Text", "", 15, Muted,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 87), new Vector2(730, 38), TextAnchor.MiddleCenter);
+                new Vector2(0, 86), new Vector2(840, 48), Hex("142B3B", 0.96f));
+            guidanceText = Label(guidance.transform, "Guidance Text", "", 18, Muted,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 87), new Vector2(810, 44), TextAnchor.MiddleCenter);
             guidance.gameObject.SetActive(false);
 
             deadlock = Group(hud.transform, "Deadlock");
@@ -138,15 +170,15 @@ namespace FirstPersonSokoban.UI
             deadlock.gameObject.SetActive(false);
 
             PanelImage(hud.transform, "Controls", new Vector2(0, 0), new Vector2(0, 0),
-                new Vector2(32, 28), new Vector2(690, 44), Hex("0D1921", 0.82f));
-            Label(hud.transform, "Control Labels", "WASD  移动     E  推动     Z  撤销     R  重置     ESC  暂停", 15, Muted,
-                new Vector2(0, 0), new Vector2(0, 0), new Vector2(50, 30), new Vector2(650, 40));
+                new Vector2(32, 28), new Vector2(760, 48), Hex("0A1622", 0.90f));
+            Label(hud.transform, "Control Labels", "WASD  移动    E  推动    Z  撤销    R  重置    ESC  暂停", 18, Muted,
+                new Vector2(0, 0), new Vector2(0, 0), new Vector2(50, 30), new Vector2(720, 44));
 
             toast = Group(hud.transform, "Toast");
             PanelImage(toast.transform, "Toast Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 148), new Vector2(560, 46), Hex("1C333D", 0.98f));
-            toastText = Label(toast.transform, "Toast Text", "", 15, White,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 149), new Vector2(530, 42), TextAnchor.MiddleCenter);
+                new Vector2(0, 148), new Vector2(780, 50), Hex("1C384A", 0.98f));
+            toastText = Label(toast.transform, "Toast Text", "", 18, White,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 149), new Vector2(748, 46), TextAnchor.MiddleCenter);
             toast.alpha = 0f;
             toast.gameObject.SetActive(false);
         }
@@ -154,162 +186,204 @@ namespace FirstPersonSokoban.UI
         private void BuildMenu()
         {
             menu = Group(canvasRoot, "Main Menu");
-            menu.gameObject.AddComponent<Image>().color = Hex("09141C", 0.965f);
+            menu.gameObject.AddComponent<Image>().color = Ink;
+            Background(menu.transform, "Atmosphere");
+            Label(menu.transform, "Brand", "S / 01     SPATIAL PUZZLES", 17, Accent,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -32), new Vector2(420, 32), style: FontStyle.Bold);
+            Label(menu.transform, "Edition", "01  /  空间解谜", 16, Muted,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-56, -32), new Vector2(300, 32), TextAnchor.MiddleRight);
+            Label(menu.transform, "Footer", "观察空间 · 规划路径 · 让思考发生", 16, Muted,
+                new Vector2(0, 0), new Vector2(0, 0), new Vector2(56, 24), new Vector2(620, 30));
 
-            // 左侧品牌区作为一个整体，窄屏时由 MenuLayoutController 挪到上方。
             identityGroup = RectStretch(menu.transform, "Menu Identity", Vector2.zero, Vector2.zero);
-            Transform left = identityGroup;
+            RectTransform identityContent = Rect(identityGroup, "Identity Content", Vector2.one * 0.5f,
+                Vector2.one * 0.5f, Vector2.zero, new Vector2(1100, 560));
+            Transform left = identityContent;
             LineImage(left, "Title Accent", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                new Vector2(82, 84), new Vector2(5, 350), Accent);
-            Label(left, "Eyebrow", "SPATIAL LOGIC  /  VOL. 01", 15, Accent,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(116, 244), new Vector2(650, 28), style: FontStyle.Bold);
-            Label(left, "Title Small", "FIRST PERSON", 52, White,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(110, 176), new Vector2(850, 80), style: FontStyle.Bold);
-            Label(left, "Title Large", "SOKOBAN", 92, White,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(104, 86), new Vector2(880, 128), style: FontStyle.Bold);
-            Label(left, "Chinese Title", "第一人称 · 三维推箱子", 27, Amber,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(114, 5), new Vector2(700, 48), style: FontStyle.Bold);
-            Label(left, "Description", "走进空间，而不只是俯视地图。\n观察、绕行、推动，让每一个箱子准确归位。", 18, Muted,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(114, -82), new Vector2(700, 78));
-            FeatureChip(left, "自由探索", new Vector2(114, -190), 132);
-            FeatureChip(left, "网格逻辑", new Vector2(258, -190), 132);
-            FeatureChip(left, "空间解谜", new Vector2(402, -190), 132);
+                new Vector2(30, -2), new Vector2(4, 430), Accent);
+            Label(left, "Eyebrow", "EXPLORE. PLAN. PUSH.", 18, Accent,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, 236), new Vector2(850, 34), style: FontStyle.Bold);
+            Label(left, "Title Small", "FIRST PERSON", 54, White,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(60, 158), new Vector2(930, 84), style: FontStyle.Bold);
+            Label(left, "Title Large", "SOKOBAN", 112, White,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(52, 20), new Vector2(1000, 172), style: FontStyle.Bold);
+            Label(left, "Chinese Title", "第一人称 · 三维推箱子", 30, Amber,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, -108), new Vector2(880, 50), style: FontStyle.Bold);
+            Label(left, "Description", "走进空间，发现每一步的可能。\n绕行、观察、推动，让箱子与目标相遇。", 22, Muted,
+                new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(64, -180), new Vector2(900, 74));
+            FeatureChip(left, "自由探索", new Vector2(64, -252), 156);
+            FeatureChip(left, "空间规划", new Vector2(232, -252), 156);
+            FeatureChip(left, "八段挑战", new Vector2(400, -252), 156);
 
-            // 右侧关卡面板：标题改为面板局部左上锚点，卡片进 ScrollRect，底部按钮独立固定。
             levelPanel = PanelImage(menu.transform, "Level Select", new Vector2(1, 0.5f), new Vector2(1, 0.5f),
-                new Vector2(-64, 18), new Vector2(480, 670), Panel).rectTransform;
-            Label(levelPanel, "Select Eyebrow", "CHAPTER SELECT", 13, Accent,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -26), new Vector2(424, 22), style: FontStyle.Bold);
+                new Vector2(-64, 0), new Vector2(520, 670), Panel).rectTransform;
+            Border(levelPanel.GetComponent<Image>(), Line);
+            Label(levelPanel, "Select Eyebrow", "YOUR NEXT MOVE", 15, Accent,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -22), new Vector2(280, 26), style: FontStyle.Bold);
             Label(levelPanel, "Select Title", "选择关卡", 32, White,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -54), new Vector2(424, 54), style: FontStyle.Bold);
-            LineImage(levelPanel, "Select Divider", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(28, -108), new Vector2(424, 2), Line);
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(28, -50), new Vector2(270, 52), style: FontStyle.Bold);
+            menuProgress = Label(levelPanel, "Chapter Progress Label", "0 / 8 已完成", 15, Muted,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-28, -68), new Vector2(180, 32), TextAnchor.MiddleRight);
+            RectTransform chapterTrack = LineImage(levelPanel, "Select Divider", new Vector2(0, 1), new Vector2(0, 1),
+                new Vector2(28, -112), new Vector2(-56, 3), Line).rectTransform;
+            chapterTrack.anchorMax = new Vector2(1, 1);
+            chapterProgress = RectStretch(chapterTrack, "Chapter Progress", Vector2.zero, Vector2.zero);
+            chapterProgress.gameObject.AddComponent<Image>().color = Accent;
+            chapterProgress.GetComponent<Image>().raycastTarget = false;
 
             RectTransform viewport = RectStretch(levelPanel, "Level Viewport",
-                new Vector2(24, 92), new Vector2(-24, -120));
+                new Vector2(24, 116), new Vector2(-24, -130));
             Image viewportImage = viewport.gameObject.AddComponent<Image>();
-            viewportImage.color = new Color(0f, 0f, 0f, 0.01f);
+            viewportImage.color = new Color(0, 0, 0, 0.01f);
             viewport.gameObject.AddComponent<RectMask2D>();
-
-            var contentObject = new GameObject("Level Cards", typeof(RectTransform));
-            levelContent = (RectTransform)contentObject.transform;
-            levelContent.SetParent(viewport, false);
-            levelContent.anchorMin = new Vector2(0f, 1f);
-            levelContent.anchorMax = new Vector2(1f, 1f);
-            levelContent.pivot = new Vector2(0.5f, 1f);
-            levelContent.anchoredPosition = Vector2.zero;
-            levelContent.sizeDelta = Vector2.zero;
-            VerticalLayoutGroup list = contentObject.AddComponent<VerticalLayoutGroup>();
-            list.padding = new RectOffset(0, 0, 4, 4);
-            list.spacing = 12f;
+            levelContent = Rect(viewport, "Level Cards", new Vector2(0.5f, 1), new Vector2(0.5f, 1), Vector2.zero, Vector2.zero);
+            levelContent.anchorMin = new Vector2(0, 1);
+            levelContent.anchorMax = new Vector2(1, 1);
+            VerticalLayoutGroup list = levelContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            list.padding = new RectOffset(2, 2, 4, 4);
+            list.spacing = 10;
             list.childAlignment = TextAnchor.UpperCenter;
             list.childControlWidth = true;
             list.childControlHeight = false;
             list.childForceExpandWidth = true;
             list.childForceExpandHeight = false;
-            ContentSizeFitter fitter = contentObject.AddComponent<ContentSizeFitter>();
+            ContentSizeFitter fitter = levelContent.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
             ScrollRect scroll = levelPanel.gameObject.AddComponent<ScrollRect>();
             scroll.viewport = viewport;
             scroll.content = levelContent;
             scroll.horizontal = false;
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 36f;
+            scroll.scrollSensitivity = 36;
+            RectTransform scrollTrack = RectStretch(levelPanel, "Scroll Track",
+                new Vector2(-12, 116), new Vector2(-8, -130));
+            scrollTrack.anchorMin = new Vector2(1, 0);
+            Image trackImage = scrollTrack.gameObject.AddComponent<Image>();
+            trackImage.color = Line;
+            RectTransform scrollHandle = RectStretch(scrollTrack, "Handle", Vector2.zero, Vector2.zero);
+            Image handleImage = scrollHandle.gameObject.AddComponent<Image>();
+            handleImage.color = Accent * new Color(1, 1, 1, 0.55f);
+            Scrollbar scrollbar = scrollTrack.gameObject.AddComponent<Scrollbar>();
+            scrollbar.handleRect = scrollHandle;
+            scrollbar.targetGraphic = handleImage;
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            scroll.verticalScrollbar = scrollbar;
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 
             var levels = LevelCatalog.Entries;
             for (int i = 0; i < levels.Count; i++)
             {
                 int index = i;
                 Button card = Button(levelContent, $"Level {i + 1}", "",
-                    new Vector2(0f, 1f), new Vector2(0.5f, 1f), Vector2.zero,
+                    new Vector2(0, 1), new Vector2(0.5f, 1), Vector2.zero,
                     new Vector2(424, 104), () => game.StartLevel(index), false);
                 LayoutElement element = card.gameObject.AddComponent<LayoutElement>();
-                element.minHeight = 104f;
-                element.preferredHeight = 104f;
+                element.minHeight = element.preferredHeight = 104;
                 levelButtons[i] = card;
-                Label(card.transform, "Number", $"{i + 1:00}", 32, Accent,
-                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(62, 58), style: FontStyle.Bold);
-                Label(card.transform, "Title", levels[i].Title, 21, White,
-                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(94, 16), new Vector2(240, 36), style: FontStyle.Bold);
-                Label(card.transform, "Subtitle", levels[i].Subtitle, 13, Muted,
-                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(94, -19), new Vector2(280, 30));
-                levelNotes[i] = Label(card.transform, "Note", "可开始", 12, Accent,
-                    new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-14, 0), new Vector2(92, 58), TextAnchor.MiddleRight);
+                levelCardImages[i] = card.GetComponent<Image>();
+                PanelImage(card.transform, "Number Tile", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+                    new Vector2(14, 0), new Vector2(56, 62), Hex("0C2331"));
+                Label(card.transform, "Number", $"{i + 1:00}", 27, Accent,
+                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(56, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
+                Text title = Label(card.transform, "Title", levels[i].Title, 23, White,
+                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(86, 18), new Vector2(230, 36), style: FontStyle.Bold);
+                title.horizontalOverflow = HorizontalWrapMode.Overflow;
+                Text subtitle = Label(card.transform, "Subtitle", levels[i].Subtitle, 15, Muted,
+                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(86, -20), new Vector2(230, 28));
+                subtitle.horizontalOverflow = HorizontalWrapMode.Overflow;
+                levelNotes[i] = Label(card.transform, "Note", "可开始", 14, Accent,
+                    new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-14, 0), new Vector2(88, 58), TextAnchor.MiddleRight);
             }
-
-            Button continueButton = Button(levelPanel, "Continue", "进入最新关卡",
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(424, 58),
+            Button continueButton = Button(levelPanel, "Continue", "开始探索  →",
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(424, 58),
                 () => game.StartLevel(SaveManager.UnlockedCount(PuzzleGameManager.LevelCount) - 1));
             continueButtonRect = continueButton.GetComponent<RectTransform>();
+            continueButtonRect.anchorMin = new Vector2(0, 0);
+            continueButtonRect.anchorMax = new Vector2(1, 0);
+            continueButtonRect.offsetMin = new Vector2(28, 24);
+            continueButtonRect.offsetMax = new Vector2(-28, 82);
             Button(levelPanel, "Settings", "设置", new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-28, -24), new Vector2(96, 34), ShowSettings, false)
-                .GetComponentInChildren<Text>().fontSize = 14;
-
+                new Vector2(-24, -16), new Vector2(90, 34), ShowSettings, false)
+                .GetComponentInChildren<Text>().fontSize = 16;
+            Label(levelPanel, "Scroll Hint", "滚动查看全部关卡", 14, Muted,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 88), new Vector2(330, 22), TextAnchor.MiddleCenter);
+            Button(menu.transform, "Exit", "退出", new Vector2(1, 0), new Vector2(1, 0),
+                new Vector2(-56, 22), new Vector2(100, 38), ExitGame, false);
             menuLayout = menu.gameObject.AddComponent<MenuLayoutController>();
             menuLayout.identityGroup = identityGroup;
+            menuLayout.identityContent = identityContent;
             menuLayout.levelPanel = levelPanel;
             menuLayout.Apply(Screen.width, Screen.height, true);
+        }
+
+        private RectTransform Modal(CanvasGroup overlay, string name, Vector2 size)
+        {
+            overlay.gameObject.AddComponent<Image>().color = Hex("030B13", 0.86f);
+            Image panel = PanelImage(overlay.transform, name, Vector2.one * 0.5f,
+                Vector2.one * 0.5f, Vector2.zero, size, Panel);
+            Border(panel, Line);
+            overlay.gameObject.AddComponent<OverlayLayoutController>().Configure(panel.rectTransform, size);
+            LineImage(panel.transform, "Accent", new Vector2(0.5f, 1), new Vector2(0.5f, 1),
+                new Vector2(0, -1), new Vector2(112, 4), Accent);
+            return panel.rectTransform;
         }
 
         private void BuildPause()
         {
             pause = Group(canvasRoot, "Pause");
-            pause.gameObject.AddComponent<Image>().color = Hex("071118", 0.82f);
-            PanelImage(pause.transform, "Pause Card", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(560, 680), Panel);
-            Label(pause.transform, "Pause Eyebrow", "GAME PAUSED", 14, Accent,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 240), new Vector2(440, 28), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Label(pause.transform, "Pause Title", "暂停探索", 38, White,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 180), new Vector2(440, 64), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Button(pause.transform, "Resume", "继续游戏", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 84), new Vector2(360, 58), () => game.Resume());
-            Button(pause.transform, "Restart", "重新开始", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 12), new Vector2(360, 54), () => game.RestartLevel(), false);
-            Button(pause.transform, "Settings", "设置与舒适度", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -60), new Vector2(360, 54), ShowSettings, false);
-            Button(pause.transform, "Menu", "返回主菜单", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -132), new Vector2(360, 54), () => game.ShowMenu(), false);
-            Button(pause.transform, "Exit", "退出游戏", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -204), new Vector2(360, 54), ExitGame, false);
-            Label(pause.transform, "Pause Hint", "ESC 继续  ·  失焦会自动暂停", 13, Muted,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -280), new Vector2(460, 26), TextAnchor.MiddleCenter);
+            RectTransform card = Modal(pause, "Pause Card", new Vector2(560, 680));
+            Label(card, "Pause Eyebrow", "TAKE A BREATH", 16, Accent,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 252), new Vector2(440, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(card, "Pause Title", "暂停一下", 42, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 184), new Vector2(440, 70), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(card, "Pause Description", "进度仍在这里，准备好再继续。", 18, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 130), new Vector2(460, 34), TextAnchor.MiddleCenter);
+            Button(card, "Resume", "继续探索  →", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, 62), new Vector2(400, 58), () => game.Resume());
+            Button(card, "Restart", "重新开始", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -10), new Vector2(400, 54), () => game.RestartLevel(), false);
+            Button(card, "Settings", "设置与舒适度", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -78), new Vector2(400, 54), ShowSettings, false);
+            Button(card, "Menu", "返回主菜单", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -146), new Vector2(400, 54), () => game.ShowMenu(), false);
+            Button(card, "Exit", "退出游戏", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -214), new Vector2(400, 50), ExitGame, false);
+            Label(card, "Pause Hint", "ESC 继续  ·  切出窗口后会自动暂停", 16, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -284), new Vector2(490, 30), TextAnchor.MiddleCenter);
         }
 
         private void BuildSettings()
         {
             settings = Group(canvasRoot, "Settings");
-            settings.gameObject.AddComponent<Image>().color = Hex("071118", 0.88f);
-            PanelImage(settings.transform, "Settings Card", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(660, 700), Panel);
-            Label(settings.transform, "Settings Title", "设置与舒适度", 36, White,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 272), new Vector2(560, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Label(settings.transform, "Settings Note", "点击右侧数值循环切换；改动即时生效并保存", 14, Muted,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 222), new Vector2(560, 30), TextAnchor.MiddleCenter);
-
+            settingsCard = Modal(settings, "Settings Card", new Vector2(660, 700));
+            Label(settingsCard, "Settings Eyebrow", "MAKE IT COMFORTABLE", 15, Accent,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 284), new Vector2(560, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(settingsCard, "Settings Title", "设置与舒适度", 38, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 226), new Vector2(560, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(settingsCard, "Settings Note", "点击数值切换 · 自动保存", 17, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 178), new Vector2(560, 30), TextAnchor.MiddleCenter);
             settingButtons = new Button[5];
-            settingButtons[0] = CycleRow("鼠标灵敏度", 150f, CycleSensitivity);
-            settingButtons[1] = CycleRow("视野 FOV", 82f, CycleFov);
-            settingButtons[2] = CycleRow("反转 Y 视角", 14f, () => GameSettings.InvertY = !GameSettings.InvertY);
-            settingButtons[3] = CycleRow("舒适模式 · 慢速推动", -54f, () => GameSettings.ComfortMode = !GameSettings.ComfortMode);
-            settingButtons[4] = CycleRow("全屏显示", -122f, () => GameSettings.FullScreen = !GameSettings.FullScreen);
-
-            Button(settings.transform, "Restore Defaults", "恢复默认", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(-110, -216), new Vector2(260, 56), () => { GameSettings.ResetToDefaults(); RefreshSettings(); }, false);
-            Button(settings.transform, "Settings Back", "返回", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(160, -216), new Vector2(260, 56), CloseSettings);
+            settingButtons[0] = CycleRow("鼠标灵敏度", 112, CycleSensitivity);
+            settingButtons[1] = CycleRow("视野 FOV", 48, CycleFov);
+            settingButtons[2] = CycleRow("反转 Y 视角", -16, () => GameSettings.InvertY = !GameSettings.InvertY);
+            settingButtons[3] = CycleRow("舒适模式 · 慢速推动", -80, () => GameSettings.ComfortMode = !GameSettings.ComfortMode);
+            settingButtons[4] = CycleRow("全屏显示", -144, () => GameSettings.FullScreen = !GameSettings.FullScreen);
+            Button(settingsCard, "Restore Defaults", "恢复默认", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(-140, -246), new Vector2(248, 56), () => { GameSettings.ResetToDefaults(); RefreshSettings(); }, false);
+            Button(settingsCard, "Settings Back", "保存并返回", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(140, -246), new Vector2(248, 56), CloseSettings);
             RefreshSettings();
             settings.gameObject.SetActive(false);
         }
 
         private Button CycleRow(string caption, float y, Action cycle)
         {
-            Label(settings.transform, caption + " Label", caption, 19, White,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-160, y), new Vector2(300, 44));
-            return Button(settings.transform, caption, "", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(170, y), new Vector2(220, 48), () => { cycle(); RefreshSettings(); }, false);
+            Label(settingsCard, caption + " Label", caption, 20, White,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-146, y), new Vector2(300, 44));
+            return Button(settingsCard, caption, "", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(186, y), new Vector2(212, 48), () => { cycle(); RefreshSettings(); }, false);
         }
 
         private static void CycleSensitivity()
@@ -338,7 +412,7 @@ namespace FirstPersonSokoban.UI
             SetButtonText(0, GameSettings.MouseSensitivity.ToString("0.0"));
             SetButtonText(1, GameSettings.FieldOfView.ToString("0"));
             SetButtonText(2, GameSettings.InvertY ? "开" : "关");
-            SetButtonText(3, GameSettings.ComfortMode ? "开（0.55 秒推动）" : "关（0.38 秒推动）");
+            SetButtonText(3, GameSettings.ComfortMode ? "开 · 0.55 秒" : "关 · 0.38 秒");
             SetButtonText(4, GameSettings.FullScreen ? "开" : "关");
         }
 
@@ -351,25 +425,27 @@ namespace FirstPersonSokoban.UI
         private void BuildVictory()
         {
             victory = Group(canvasRoot, "Victory");
-            victory.gameObject.AddComponent<Image>().color = Hex("071118", 0.84f);
-            PanelImage(victory.transform, "Victory Card", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(690, 650), Panel);
-            LineImage(victory.transform, "Victory Line", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, 279), new Vector2(110, 5), Accent);
-            Label(victory.transform, "Victory Eyebrow", "ALL BOXES IN PLACE", 14, Accent,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 230), new Vector2(570, 28), TextAnchor.MiddleCenter, FontStyle.Bold);
-            Label(victory.transform, "Victory Title", "关卡完成", 46, White,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 166), new Vector2(570, 76), TextAnchor.MiddleCenter, FontStyle.Bold);
-            victoryStats = Label(victory.transform, "Stats", "", 19, White,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 56), new Vector2(570, 100), TextAnchor.MiddleCenter);
-            victoryBest = Label(victory.transform, "Best", "", 14, Muted,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -24), new Vector2(570, 48), TextAnchor.MiddleCenter);
-            nextButton = Button(victory.transform, "Next", "下一关", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -92), new Vector2(440, 60), NextLevel);
-            Button(victory.transform, "Replay", "再玩一次", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -172), new Vector2(440, 54), () => game.RestartLevel(), false);
-            Button(victory.transform, "Menu", "返回主菜单", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0, -246), new Vector2(440, 54), () => game.ShowMenu(), false);
+            RectTransform card = Modal(victory, "Victory Card", new Vector2(690, 650));
+            Label(card, "Victory Eyebrow", "A PLACE FOR EVERY BOX", 16, Accent,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 250), new Vector2(570, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(card, "Victory Title", "恰到好处。", 50, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 174), new Vector2(570, 80), TextAnchor.MiddleCenter, FontStyle.Bold);
+            Label(card, "Victory Description", "所有箱子都找到了自己的位置", 19, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 116), new Vector2(570, 36), TextAnchor.MiddleCenter);
+            PanelImage(card, "Stats Background", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, 32), new Vector2(588, 118), Hex("0B2130"));
+            victoryStats = Label(card, "Stats", "", 20, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 32), new Vector2(560, 108), TextAnchor.MiddleCenter);
+            victoryBest = Label(card, "Best", "", 17, Accent,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -54), new Vector2(588, 48), TextAnchor.MiddleCenter);
+            nextButton = Button(card, "Next", "下一关  →", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -124), new Vector2(510, 58), NextLevel);
+            Button(card, "Replay", "再玩一次", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(-132, -200), new Vector2(246, 52), () => game.RestartLevel(), false);
+            Button(card, "Menu", "返回主菜单", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(132, -200), new Vector2(246, 52), () => game.ShowMenu(), false);
+            Label(card, "Victory Footer", "每一步，都是下一次探索的起点。", 16, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -270), new Vector2(570, 32), TextAnchor.MiddleCenter);
         }
 
         public void ShowMenu()
@@ -434,6 +510,9 @@ namespace FirstPersonSokoban.UI
         {
             goalCounter.text = $"{completed} / {total}";
             pushCounter.text = pushes.ToString("00");
+            if (goalProgress != null)
+                goalProgress.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
+                    274f * (total > 0 ? Mathf.Clamp01((float)completed / total) : 0));
         }
 
         public void SetInteractionPrompt(string content, bool visible, bool valid = true)
@@ -469,8 +548,8 @@ namespace FirstPersonSokoban.UI
             toastText.text = message;
             toast.gameObject.SetActive(true);
             toast.alpha = 1f;
-            yield return new WaitForSeconds(1.4f);
-            for (float t = 0f; t < 0.25f; t += Time.deltaTime)
+            yield return new WaitForSecondsRealtime(1.8f);
+            for (float t = 0f; t < 0.25f; t += Time.unscaledDeltaTime)
             {
                 toast.alpha = 1f - t / 0.25f;
                 yield return null;
@@ -489,12 +568,21 @@ namespace FirstPersonSokoban.UI
         private void RefreshLevelCards()
         {
             int unlocked = SaveManager.UnlockedCount(PuzzleGameManager.LevelCount);
+            int completed = 0;
             for (int i = 0; i < levelButtons.Length; i++)
             {
-                levelButtons[i].interactable = i < unlocked;
+                bool available = i < unlocked;
                 int best = SaveManager.GetBestPushes(i);
-                levelNotes[i].text = best >= 0 ? $"最佳 {best} 推" : i < unlocked ? "可开始" : "未解锁";
+                if (best >= 0) completed++;
+                levelButtons[i].interactable = available;
+                levelNotes[i].text = best >= 0 ? $"已完成\n最佳 {best} 推" : available ? "可开始  →" : "待解锁";
+                levelNotes[i].color = !available ? Muted : best >= 0 ? Amber : Accent;
+                levelCardImages[i].color = available && i == unlocked - 1 ? Hex("254759") : PanelLight;
             }
+            menuProgress.text = $"{completed:00} / {levelButtons.Length:00} 已完成";
+            chapterProgress.anchorMax = new Vector2((float)completed / Mathf.Max(1, levelButtons.Length), 1f);
+            continueButtonRect.GetComponentInChildren<Text>().text = completed == levelButtons.Length
+                ? "再次探索  →" : unlocked == 1 ? "开始探索  →" : $"继续探索 · 第 {unlocked:00} 关  →";
         }
 
         private CanvasGroup ActiveOverlay()
@@ -527,7 +615,7 @@ namespace FirstPersonSokoban.UI
         {
             PanelImage(parent, content + " Chip", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                 position, new Vector2(width, 42), PanelLight);
-            Label(parent, content, content, 14, White, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
+            Label(parent, content, content, 17, White, new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                 position, new Vector2(width, 40), TextAnchor.MiddleCenter);
         }
     }

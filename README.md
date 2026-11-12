@@ -1,95 +1,85 @@
 # FirstPersonSokoban · 第一人称三维推箱子
 
-版本：**P0/P1 修复版 2026-11-11（v2 存档 / 8 关）**
-引擎：Unity **2022.3.62f3c1**（2022.3 LTS），目标平台 Windows x64，旧 Input Manager。
-源码标识：`FirstPersonSokoban.Runtime` + `FirstPersonSokoban.Editor` 两个程序集。
+**2026-11-12 · 界面与稳定性修复候选版 · 8 关 · v2 存档兼容**
 
----
+Unity **2022.3.62f3c1**（中国版 2022.3 LTS），目标 Windows x64，使用旧 Input Manager。
+本轮已更新源码；尚未在当前环境运行 Unity 编译、Test Runner、Windows 构建或 GUI 游玩。
+实际验证边界见 [当前状态](Validation/CurrentStatus.md)。
 
-## 1. 快速开始
+## 开始测试
 
-- **直接玩**：解压 `FirstPersonSokoban-WindowsBuild-P0P1Fixed-20261111.zip`，双击 `FirstPersonSokoban.exe`。
-  不要单独移动 exe，需与 `FirstPersonSokoban_Data/`、`UnityPlayer.dll` 保持同目录。
-- **打开工程**：用 Unity 2022.3 LTS 打开本目录，加载
-  `Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity` 后按 Play。
-- **校验关卡**：菜单 `First Person Sokoban → Validate All Levels`。
-- **补齐资源**（仅在资源缺失时）：`First Person Sokoban → Setup Missing Game Assets`。
+1. 更新本仓库，在 Unity Hub 使用 **2022.3.62f3c1** 打开工程根目录。
+2. 等待资源导入，打开 `Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity`，按 Play。
+3. 本轮资源已提交，正常更新无需重新生成 Prefab。仅在资源确实缺失时使用菜单
+   `First Person Sokoban → Setup Missing Game Assets`。
+4. 按 [本轮测试清单](Validation/ManualTest-20261112.md) 检查。请先记录 Console 的编译错误，再进行游玩。
 
-## 2. 操作说明
+仓库不包含已验证的新 Windows exe。旧压缩包不会自动获得本轮修改；请用本轮源码运行或重新构建。
+
+## 操作
 
 | 按键 | 作用 |
 | --- | --- |
-| WASD | 自由行走 |
-| 鼠标 | 转动视角（可在设置里调灵敏度、FOV、反转 Y） |
-| E | 对准箱子并推动一格 |
-| Z | 撤销上一次推动（同时恢复位置与视角） |
-| R | 重置当前关（键盘需连按两次确认，避免误触） |
-| ESC | 暂停 / 继续（失焦自动暂停，返回后需手动继续） |
+| WASD / 鼠标 | 自由行走 / 转动视角 |
+| E | 对准相邻箱子正面，推动一格 |
+| Z | 撤销上次推动，恢复玩家位置与视角 |
+| R | 连按两次确认重置，避免误触 |
+| ESC | 暂停 / 继续；设置页中先返回上一层 |
 
-推动规则：**网格状态为准**，玩家必须站在箱子相邻的格子且横向站正，箱子前方一格不能是墙或另一个箱子。
-瞄准时箱体顶部会高亮、地面显示目标格预览；推不动时 HUD 会说明具体原因（未对准 / 太远 / 站位偏 / 前方是墙 / 前方有箱）。
-局面被判定为死锁时会常驻提示，可用 Z 撤销或 R 重置。
+失焦自动暂停，返回后手动继续。设置支持灵敏度、FOV、反转 Y、舒适模式和全屏。
+行走距离统计实际水平位移，包含推箱跟随，不包含撤销/Teleport 的瞬移。
+菜单显示关卡完成状态与最佳推动数；底部按钮进入最新已解锁关卡。
 
-设置入口：主菜单「设置」或暂停菜单「设置与舒适度」。含鼠标灵敏度、视野 FOV、反转 Y、
-舒适模式（推动动画 0.55s 而非 0.38s）、全屏，以及「退出游戏」。
+## 本轮修改
 
-## 3. 关卡
+- 主菜单采用统一深蓝灰与青绿色视觉，调整标题层级、关卡状态、进度条和滚动条。
+- HUD 增加计时、目标进度；暂停、设置、结算卡片与内部控件整体自适应。
+- 中文优先使用随包字体 Sokoban UI Sans（Noto Sans CJK SC 的 OFL 子集），保留系统字体回退。
+- 释放箱体高亮与预览的运行时材质；删除闲置动画实现；相机高度参数实际生效。
+- 统一路程统计，强化动画中途退出/重置测试，设置页 ESC 返回层级修正。
+- 停用旧 Python 资产生成器，Unity Editor 成为唯一资产生成入口。
+- 新增只读资源完整性检查、真实 Unity 测试和 Windows 打包入口；历史验证记录归档。
 
-8 关，最少推动数依次为 **1 / 1 / 3 / 3 / 4 / 6 / 3 / 9**。
-前 3 关为教学，后续加入内墙转角、双箱顺序、相邻箱腾挪、狭口对齐与长线绕行。
-关卡定义：`Assets/FirstPersonSokoban/Resources/Levels/Level01..08.txt`；
-标题、副标题、初始朝向与稳定 ID：`Resources/LevelCatalog.json`。
-新增关卡后请运行 `python Tools/validate_levels.py` 与 Editor 的 `Validate All Levels` 双重校验。
+八关与推箱规则保留。最少推动数为 **1 / 1 / 3 / 3 / 4 / 6 / 3 / 9**。
+当前范围是键鼠推箱子；EEG、UDP 和康复实验数据模块未包含在本轮中。
 
-## 4. 最低运行环境
+## 验证与打包
 
-- Windows 10/11 x64；支持 DirectX 11 的显卡；键鼠。
-- 建议 1920×1080 及以上；窄窗口会自动切换为上下排列的菜单布局。
-- 无需联网、无需脑机接口 / EEG / UDP / 康复实验数据模块（项目范围不含这些）。
-- 中文字体使用系统字体回退链（11 个中日韩候选，含 Microsoft YaHei / SimHei /
-  PingFang SC / Noto Sans CJK SC 等），全部失败时退 Unity 内置字体；
-  未随包附带第三方字体文件，无授权不明资源。
+Python 工具要求 Python 3.10+，常规验证只使用标准库：
 
-## 5. 验证状态（详见 `Validation/StaticValidation-2026-11-11.txt` 首页现状表与第十节）
-
-| 项 | 结果 |
-| --- | --- |
-| 编译 | ✅ Unity 批处理退出码 0，无 `error CS`（`Validation/Logs/fix-import.log`） |
-| EditMode | ✅ 33/33（`EditMode-fix-results.xml`） |
-| PlayMode | ✅ 17/17（`PlayMode-fix-results.xml`） |
-| 关卡可解性 | ✅ 8/8（`fix-validate-levels.log` + 独立 Python BFS 交叉验证） |
-| Windows x64 构建 | ✅ `Build Finished, Result: Success`（`fix-build.log`） |
-
-本轮（代码审查 P0/P1）修复：暂停恢复输入锁反转、贴墙死锁误判、推动动画协程与
-状态事务、箱体视觉/碰撞边界统一、菜单布局两套参数、死锁搜索改分帧可取消、
-辅助瞄准由 32° 收到 14°。逐文件修改清单与测试证据见验证文档第十节。
-
-**未验证**：实机 GUI 人工通关、画面观感与鼠标手感、连续快速 E、动画中 Z/R/ESC 组合、
-长时间运行稳定性、实机截图/录屏、不同分辨率下真实文字边界、Profiler 实测帧时间。
-**未做**：音效、材质光照重做、授权字体包、macOS 构建、画质/帧率选项、8→12 关扩充。
-构建成功不等于手感通过。
-
-## 6. 关键文件哈希（SHA-256）
-
-```
-8be58f41da2f1bc5be476d8d66621c76b2d581a4af853186901890ccb63d7883  Assets/FirstPersonSokoban/Scripts/Core/PuzzleGameManager.cs
-577ba3639e7aaa972289a44a6120f0982d2e73b011dddc1d62d92815d687946e  Assets/FirstPersonSokoban/Scripts/Core/DeadlockDetector.cs
-79b9a89213e9284d7b0942e3dcee926d3d32269fe5bf3e6b6705d1be85c5feeb  Assets/FirstPersonSokoban/Scripts/Core/LevelSolver.cs
-2241255ab69d94129a0f27e4af8162334ca56bf69fa9f5325a8ab06b9833dd2f  Assets/FirstPersonSokoban/Scripts/Interaction/BoxDimensions.cs
-a767e91be8424f9dd2cad541c019e5ba7c5fa4522b8450964381716af44014fb  Assets/FirstPersonSokoban/Resources/LevelCatalog.json
-957ceb6de3229d341fc57fce6463fb1c40699650435f5f1657e178e8ae240831  Validation/StaticValidation-2026-11-11.txt
-059c313352892718258a120b87bdc6fc7c23ce67181084abe14f86f204f5dddb  BuildOutput/FirstPersonSokoban.exe
+```bash
+python Tools/validate_project.py
+python Tools/validate_levels.py
+python Tools/build_ui_font.py --check
+python -m unittest discover -s Tools/tests -v
 ```
 
-`BuildOutput/FirstPersonSokoban.exe` 是 Unity 的启动器模板，本轮内容变化集中在
-`FirstPersonSokoban_Data/Managed/FirstPersonSokoban.Runtime.dll`（已核对新符号）。
+实际 Unity 测试可在 Editor 的 Test Runner 中运行。安装 Windows Build Support 后，
+在关闭该工程的 Editor 实例后执行以下命令（将路径替换为你的实际安装位置）：
 
-## 7. 目录说明
+```powershell
+python Tools/run_delivery.py --unity "D:/SoftwareManagement/Unity/2022.3.62f3c1/Editor/Unity.exe"
+```
 
-```
-Assets/FirstPersonSokoban/    运行时脚本、Editor 工具、场景/Prefab/材质/关卡、测试
-ProjectSettings/              Unity 生成的完整项目配置（含 InputManager.asset）
-Packages/manifest.json        包依赖
-Validation/                   验证记录、Unity 日志、Test Runner 结果 XML
-Tools/                        validate_levels.py（独立 BFS）、ensure_meta.py（GUID 补齐）、generate_serialized_assets.py
-```
+该命令串行执行 EditMode、PlayMode、C# 关卡验证和 Windows 构建，测试失败或没有有效 XML 时停止。
+结果位于新建的 `BuildOutput/Delivery-*`：完整 ZIP、SHA-256、XML/日志和源文件指纹。
+`--tests-only` 只运行测试。Editor 菜单 `First Person Sokoban → Delivery → Validate Levels and Build Windows`
+可直接构建，但没有运行 Test Runner，因此清单明确记录 `unityTests=not_run`。
+
+解压 Windows ZIP 后，exe、`FirstPersonSokoban_Data/`、`UnityPlayer.dll` 必须保持同目录。
+字体授权随包放在 `ThirdPartyNotices/`。构建成功之后仍需 Windows 实机验收。
+
+CI 默认运行静态检查、工具测试、字体覆盖和八关求解。完整 Unity CI 需要配置专用 Windows
+self-hosted runner（标签 `unity-2022.3.62f3c1`）、精确版本 Editor 及许可、Windows Build Support、
+环境变量 `UNITY_EDITOR_PATH`，然后设置仓库变量 `UNITY_CI_ENABLED=true`。
+未配置时状态摘要明确为 Unity 测试/构建 **NOT VERIFIED**；当前未替用户启用或配置这些条件。
+
+## 文件说明
+
+- `Assets/FirstPersonSokoban/`：脚本、资源、场景与 Unity 测试。
+- `Tools/`：关卡/资源检查、字体重建、测试与打包入口。
+- `Validation/CurrentStatus.md`：当前验证边界。
+- `Validation/History/`：历史陈述，缺少原始附件时不作为本轮通过证据。
+- `Resources/Fonts/LICENSE.txt`：完整字体许可；重建方式见字体目录说明。
+
+不要删除 `.meta`、程序集定义、`packages-lock.json` 或常规 ProjectSettings。
