@@ -482,7 +482,15 @@ namespace FirstPersonSokoban.UI
             else SetOnly(settingsOrigin);
         }
 
-        public void ExitGame() => Application.Quit();
+        public void ExitGame()
+        {
+#if UNITY_EDITOR
+            // Editor Play 模式下 Application.Quit() 是空操作；退出 Play 才能让实机测试继续。
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
 
         public void ShowVictory(int levelIndex, int levelCount, float seconds, int totalPushes,
             int effectivePushes, int undos, float distance, int goalsCompleted, int goalsTotal)
