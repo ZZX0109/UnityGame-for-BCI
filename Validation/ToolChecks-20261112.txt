@@ -43,7 +43,7 @@ test_skipped_tests_rejected_even_when_run_says_passed (test_delivery_tools.TestE
 test_zero_tests_does_not_count_as_passed (test_delivery_tools.TestEvidenceChecks.test_zero_tests_does_not_count_as_passed) ... ok
 
 ----------------------------------------------------------------------
-Ran 22 tests in 0.046s
+Ran 22 tests in 0.050s
 
 OK
 Exit code: 0
@@ -51,4 +51,4 @@ Exit code: 0
 $ git diff HEAD --check
 Exit code: 0
 
-C# lexical delimiter check: passed. This is not compilation.
+Ceiling removal: static checks passed; new eight-room geometry regression defined but Unity compilation/tests not run.

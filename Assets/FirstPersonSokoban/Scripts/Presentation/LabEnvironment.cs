@@ -13,7 +13,8 @@ namespace FirstPersonSokoban.Presentation
     /// </summary>
     public static class LabEnvironment
     {
-        public const float CeilingHeight = 3.2f;
+        // Lighting/probe volume only; the room deliberately has no overhead mesh.
+        public const float LightingHeight = 3.2f;
         public const int MaxShadowLights = 1;
         public const int MaxFillLights = 3;
         private static readonly Vector2Int[] Directions =
@@ -64,9 +65,6 @@ namespace FirstPersonSokoban.Presentation
                 var tile = new Vector2Int(x, y);
                 if (definition.TileAt(tile) != TileType.Wall) continue;
                 Vector3 world = grid.GridToWorld(tile);
-                // Close the gap above the existing 2.8 m wall without changing its collider.
-                WorldPart(architecture, "Wall Upper Panel", world + Vector3.up * 3.0f,
-                    new Vector3(cell, 0.4f, cell), palette.Wall);
                 foreach (Vector2Int direction in Directions)
                 {
                     if (!reachable.Contains(tile + direction)) continue;
@@ -83,24 +81,9 @@ namespace FirstPersonSokoban.Presentation
             Vector3 first = grid.GridToWorld(Vector2Int.zero);
             Vector3 last = grid.GridToWorld(new Vector2Int(definition.Width - 1, definition.Height - 1));
             Vector3 center = (first + last) * 0.5f;
-            Vector3 span = new Vector3(definition.Width * cell, CeilingHeight,
+            Vector3 span = new Vector3(definition.Width * cell, LightingHeight,
                 definition.Height * cell);
-            Renderer ceiling = WorldPart(architecture, "Continuous Acoustic Ceiling",
-                center + Vector3.up * (CeilingHeight + 0.04f),
-                new Vector3(span.x, 0.08f, span.z), palette.Wall).GetComponent<Renderer>();
-            ceiling.shadowCastingMode = ShadowCastingMode.Off;
-
-            // Structural lines provide human-scale cues without crowding the walking plane.
-            for (int row = 1; row < definition.Height; row += 3)
-            {
-                Vector3 beam = grid.GridToWorld(new Vector2Int(0, row));
-                beam.x = center.x;
-                WorldPart(architecture, "Ceiling Rail", beam + Vector3.up * 3.12f,
-                    new Vector3(span.x - 0.16f, 0.08f, 0.07f), palette.Trim);
-            }
-
             AddFeatureWalls(faces, definition, grid, palette);
-            AddFixtures(architecture, definition, grid, reachable, palette);
             ConfigureLighting(architecture, center, span, definition, grid, reachable);
             var probeCells = new HashSet<Vector2Int>(reachable);
             probeCells.ExceptWith(definition.Boxes);
@@ -200,23 +183,6 @@ namespace FirstPersonSokoban.Presentation
                 new Vector3(0.60f, 0.014f, 0.008f), palette.GoalActive);
             Label(wall, "Display Caption", "SPATIAL\nREADY", new Vector3(0.16f, 1.94f, 0.026f),
                 0.023f, LabMaterials.AccentColor);
-        }
-
-        private static void AddFixtures(Transform parent, LevelDefinition definition, GridManager grid,
-            HashSet<Vector2Int> reachable, LabMaterials palette)
-        {
-            // Evenly spaced ceiling strips, limited to open tiles. No flicker,
-            // scan animation or particles in the training field of view.
-            foreach (Vector2Int tile in reachable)
-            {
-                if ((tile.x + tile.y) % 4 != 0) continue;
-                Vector3 position = grid.GridToWorld(tile, 3.08f);
-                WorldPart(parent, "Recessed Light Housing", position,
-                    new Vector3(1.28f, 0.07f, 0.42f), palette.Dark);
-                Renderer diffuser = WorldPart(parent, "Frosted Light Diffuser", position - Vector3.up * 0.041f,
-                    new Vector3(1.15f, 0.012f, 0.29f), palette.Light).GetComponent<Renderer>();
-                diffuser.shadowCastingMode = ShadowCastingMode.Off;
-            }
         }
 
         private static void ConfigureLighting(Transform parent, Vector3 center, Vector3 span,

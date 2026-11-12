@@ -89,6 +89,27 @@ namespace FirstPersonSokoban.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator AllRoomsRemainOpenAboveTheOriginalWallHeight()
+        {
+            for (int index = 0; index < LevelCatalog.Count; index++)
+            {
+                loader.Build(loader.ReadDefinition(index));
+                yield return null;
+                int visibleMeshes = 0;
+                foreach (MeshRenderer renderer in loader.LevelRoot.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                    visibleMeshes++;
+                    // The original 2.8 m wall has a thin cap reaching 2.86 m.
+                    // Geometry above it would reintroduce a roof, rail or hanging fixture.
+                    Assert.LessOrEqual(renderer.bounds.max.y, 2.90f,
+                        $"Level {index + 1}: {renderer.name} covers or extends above the open room.");
+                }
+                Assert.Greater(visibleMeshes, 0, "The test must inspect an actual generated room.");
+            }
+        }
+
+        [UnityTest]
         public IEnumerator RebuildingRoom_ReleasesOwnedPaletteTexturesAndModuleMesh()
         {
             LevelDefinition definition = loader.ReadDefinition(0);
