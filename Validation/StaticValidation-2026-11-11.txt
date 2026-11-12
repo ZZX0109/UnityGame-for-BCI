@@ -1,0 +1,360 @@
+================================================================================
+现状一览（2026-11-11 第三轮：P0 状态修复 + P1 工程一致性；以下为最新结论）
+================================================================================
+依据《FirstPersonSokoban 优化版代码审查》，优先修复 P0 全项与 P1 全项。
+真实验证环境：Unity 2022.3.62f3c1，-batchmode -nographics，Windows x64。
+第二至第九节为历史过程记录；结论以本表与第十节为准。
+
+| 项目 | 状态 | 证据 |
+| --- | --- | --- |
+| 源码编译 | ✅ 通过 | fix-import.log，退出码 0，无 error CS |
+| EditMode 测试 | ✅ 33/33 | EditMode-fix-results.xml |
+| PlayMode 测试 | ✅ 17/17 | PlayMode-fix-results.xml |
+| 关卡可解性 | ✅ 8/8 | fix-validate-levels.log：1/1/3/3/4/6/3/9 推；独立 Python BFS 一致 |
+| 求解状态归并 | ✅ 生效 | Level08 搜索状态 5281 → 1172，最短推动数不变 |
+| Windows 64 构建 | ✅ 成功 | fix-build.log：Build Finished, Result: Success |
+| 构建含本轮新代码 | ✅ 已核对 | Runtime.dll 含 SolverSession / BoxDimensions / IsStaticDeadSquare / HasActivePush / MenuLayoutSpec；旧 IsDeadWallLine 已消失 |
+| P0-1 Resume 输入锁反了 | ✅ 修复 | PlayMode：ResumeFromPlaying_UnlocksPlayer / ResumeFromAnimation_KeepsPlayerLockedUntilPushFinishes |
+| P0-2 死锁贴墙误判 | ✅ 修复 | EditMode：WallHasExit_SolvableStateIsNotDeadlocked（贴墙有开口反例） |
+| P0-3 推动动画协程状态风险 | ✅ 修复 | PlayMode：CancelPushThenReturnToMenu_ / CancelPushThenRestart_ |
+| P1-4 视觉 / 碰撞边界统一 | ✅ 修复 | BoxDimensions 单一数据源，Prefab / 资源生成器 / 回归测试三方一致 |
+| P1-5 菜单布局两套参数 | ✅ 修复 | EditMode：MenuLayout_ApplyUsesExactlyTheComputedRects；PlayMode：真实 GetWorldCorners 不重叠 |
+| P1-6 同步 BFS 阻塞主线程 | ✅ 改造 | 分帧 SolverSession + generation 取消 + 局面缓存 + 玩家可达区域归并 |
+| P1-7 辅助瞄准过宽 | ✅ 收紧 | 32° → 14°，多箱显示「第 N 号箱」并做距离 tie-break |
+| P2 字体回退 / 通关反馈 | ✅ 部分 | UIFactory 候选扩展 + 内置字体兜底；Victory 面板补目标归位与下一关 |
+| 实机 GUI 通关、截图、帧率、鼠标手感 | ⚪ 未验证 | 无桌面会话，仍需人工在目标 Windows 机器上验收 |
+| 音效、材质光照重做、授权字体包、macOS 构建 | ⚪ 未做 | 属审查 P2/P3；本轮刻意不改关卡与场景，避免不可验证的体验改动 |
+
+明确未做的事：未改八关地图、未更换渲染管线、未堆特效、未声称锁定 60FPS（VSync 仍启用）。
+详见第十节。
+
+--------------------------------------------------------------------------------
+FirstPersonSokoban 修复版静态验证记录（历史版本）
+日期：2026-11-11
+
+一、已执行并通过
+1. 独立 BFS 可解性验证
+   Level01.txt：最少推动 1 次，搜索状态 16。
+   Level02.txt：最少推动 1 次，搜索状态 13。
+   Level03.txt：最少推动 3 次，搜索状态 355。
+2. Unity 资源交付
+   实际场景 1 个、Prefab 5 个、材质 10 个。
+   Assets 下 65 个 GUID 全部唯一，资源与目录均有对应 .meta。
+   场景、Prefab、材质和 EditorBuildSettings 的外部 GUID 引用全部可解析。
+   场景与 Prefab 的内部 fileID 引用全部可解析，未发现重复 fileID。
+3. 源码与配置
+   JSON 和 asmdef 均可按 JSON 解析。
+   C# 文件通过基础括号结构检查。
+   已移除 InitializeOnLoad 自动重建和 NewSceneMode.Single 场景替换。
+   PlayMode 测试使用 InMemorySaveStore，不直接写入真实 PlayerPrefs。
+
+二、主要修复
+- 修正 ValidPush_MovesExactlyOneCellAndCompletesGoal 的地图、推动方向和目标不一致。
+- ProjectSetup 改为显式菜单执行，只补缺失资产，使用 Additive 场景并保留构建列表。
+- 测试程序集增加 UnityEngine.TestRunner / UnityEditor.TestRunner 引用。
+- 推动增加站位容差校验，玩家跟进保留间距。
+- 初始朝向由 LevelCatalog.json 配置。
+- 编辑器关卡验证直接调用共享 LevelSolver，区分无解和搜索预算耗尽。
+- 成绩区分累计推动 PushCount 与有效推动 EffectivePushCount。
+- 补齐 PuzzleScene.unity、5 个 Prefab、10 个材质、Build Settings 和稳定 .meta。
+
+三、未执行，不能视为已通过
+- 当前环境没有 Unity Editor，未进行 Unity 实际编译。
+- 未运行 Unity EditMode / PlayMode Test Runner。
+- 未进行第一人称实机通关、边角推动和连续输入人工验收。
+- 未生成实机截图或 Windows 独立构建。
+
+四、Unity 验收入口
+1. 使用 Unity 2022.3 LTS 打开工程根目录。
+2. 打开 Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity。
+3. 运行 Test Runner 中全部 EditMode 和 PlayMode 测试。
+4. 执行 First Person Sokoban -> Validate All Levels。
+5. 实机验证三关、边角站位、快速连续 E、动画中 Z/R、撤销、重置和存档。
+6. 只有在现有资源意外丢失时，才执行 Setup Missing Game Assets。
+
+五、交付文件清单（不含 .meta）
+- 关卡与目录 4：LevelCatalog.json、Level01/02/03.txt
+- 核心逻辑 12：BoardState / PushRules / LevelSolver / LevelCatalog /
+  LevelValidator / LevelLoader / PuzzleGameManager / GameBootstrap 等
+- 玩家与交互 4：FirstPersonController / BoxInteractor / BoxView / GoalView
+- UI 与存档 4：UIFactory / GameUIController / ISaveStore / SaveManager
+- Editor 工具 3：ProjectSetup / LevelValidationMenu / Editor.asmdef
+- 测试 5：CoreRuleTests / LevelSolvabilityTests / PlayModeSmokeTests / 两个 Test.asmdef
+- Unity 序列化资源 16：PuzzleScene.unity、5 个 Prefab、10 个 .mat
+- 工程配置与验证 7：manifest.json、ProjectVersion.txt、EditorBuildSettings.asset、
+  Runtime.asmdef、.gitignore、资源生成脚本、本验证记录
+- 另有 65 个 .meta，GUID 由相对路径确定性生成，全部唯一且引用可解析。
+
+六、工程配置说明
+- ProjectSettings 目录只显式提供 ProjectVersion.txt 与 EditorBuildSettings.asset；
+  其余 PlayerSettings / InputManager / GraphicsSettings 等由 Unity 2022.3 首次打开时
+  按默认值生成，属于正常行为，不影响场景与 Prefab 引用。
+- 本工程使用旧版 Input Manager（Input.GetAxis / Input.GetKeyDown），
+  未安装 com.unity.inputsystem。若本机把 Active Input Handling 切到 New，
+  需在 Player Settings 改回 Both 或 Old，否则 WASD 与鼠标输入会失效。
+- Tools/generate_serialized_assets.py 仅用于复现资源生成，写入时不会覆盖同名文件；
+  日常开发无需运行。
+- 本轮范围仍是三关可玩原型；未扩展到 8 关、音效、机关与关卡编辑器。
+
+七、真实 Unity Editor 验证（2026-11-11，取代第三节中对应"未执行"条目）
+环境：Unity 2022.3.62f3c1
+      （D:\SoftwareManagement\Unity\2022.3.62f3c1\Editor\Unity.exe），
+      Unity Hub 3.3.7，许可有效；全部命令使用 -batchmode -nographics。
+1. 编译：首次导入发现 4 个 CS0246 错误
+   （PlayModeSmokeTests.cs 缺少 using UnityEngine.TestTools;）。
+   修复后完整导入并编译成功，退出码 0，日志无编译错误。
+2. EditMode：13/13 通过。包含修正后的推动方向与通关断言、撤销/重置统计、
+   地图校验、三关 BFS 最少推动数 1/1/3。
+   结果：Validation/Logs/EditMode-results.xml
+3. PlayMode：首轮 1/2 失败，暴露真实 P0 缺陷 —— 相机位于角色胶囊体内部，
+   Physics.Raycast 先命中玩家自身（d=0.078）而非箱子（d=1.570），
+   导致低头对准箱子时按 E 完全无法推动。
+   已改为 RaycastAll + 按距离排序 + 跳过玩家自身碰撞体（保留墙体遮挡语义）。
+   修复后 2/2 通过：真实场景射线命中、推动一格、箱子动画终点与逻辑格
+   严格一致、触发通关、存档解锁。
+   结果：Validation/Logs/PlayMode-results.xml
+4. FirstPersonController 补充 SetLookPitch(float) 接口，避免外部直接改相机
+   俯仰被 Update() 覆盖；PlayMode 测试新增"准星必须命中箱子"回归断言。
+5. Validate All Levels 菜单在真实 Editor 中执行成功：
+   三关均可解，最少推动 1 / 1 / 3 次。
+6. Windows 64 位独立构建成功（退出码 0）：
+   BuildOutput/FirstPersonSokoban.exe + FirstPersonSokoban_Data + UnityPlayer.dll。
+   另打包为 FirstPersonSokoban-WindowsBuild.zip。
+7. Unity 自动生成完整 ProjectSettings/*.asset（含 InputManager.asset），
+   已随工程交付；ProjectVersion 升级为 2022.3.62f3c1。
+   运行 Test Runner 时不要同时传 -quit，否则测试尚未启动编辑器就退出。
+
+八、仍需人工验收（历史记录；本轮变化见第九节）
+- 未实际启动构建出的 exe 并人工通关（当前为无 GUI 批处理会话）；
+  未验证画面观感与操作手感、边角推动、快速连续 E、动画中 Z/R、
+  鼠标视角舒适度、UI 在不同分辨率下的排版。
+- 未提供实机截图或录屏。
+- 构建产物仅验证"生成成功"，未验证长时间运行稳定性。
+
+九、2026-11-11 优化轮（依据《审查与优化建议》）
+9.1 P1-1 交互可发现性
+- 新增 PushDiagnosis.cs：把「推不动」拆成 NoTarget / PlayerCellBlocked /
+  NotAdjacent / StanceOffset / TargetWall / TargetBox 六个互斥原因，UI 显示不同提示。
+- BoxInteractor 改为 RaycastNonAlloc + 复用 32 长度命中缓冲，取最近的非玩家命中，
+  不再每帧分配数组与排序；新增小角度（32°）瞄准辅助，辅助射线同样做遮挡校验，
+  不允许隔墙选箱。
+- Box.prefab 的碰撞体由 1.28×1.26×1.28 / 中心 0.63 改为
+  1.96×1.72×1.96 / 中心 0.86：既让平视准星能命中箱体（原相机 1.69 高于箱顶 1.26），
+  又把相邻箱净空从 0.72 压到 0.04，堵住物理穿缝。视觉箱体尺寸未改。
+- 首关新增常驻分步教学提示；瞄准时显示箱体高亮顶盖与目标格地面预览。
+- PlayMode 回归：完全水平视角、不预设 30° 俯角即可完成首关首推。
+
+9.2 P1-2 镜头舒适
+- AnimatePush 取消 0.08 秒强制对齐与动作前后两次 Teleport；箱子与玩家都从
+  各自当前实际位置按同一方向平移一格，保留站位偏移，避免横向吸附和末帧跳变。
+- 推动时长由 0.28 秒（0.08+0.20）改为 0.38 秒（标准）/ 0.55 秒（舒适模式），
+  玩家跟随比箱子滞后 6% 并用 SmoothStep 限制起停加速度；结束只做一次 <0.5m
+  的有界补差，不再瞬移。
+- 新增 GameSettings：鼠标灵敏度、FOV、反转 Y、舒适模式、全屏；暂停页与菜单
+  均有设置入口与退出按钮。设置 Store 可注入，测试不污染 PlayerPrefs。
+
+9.3 P1-3 运行期死锁
+- 新增 DeadlockDetector.cs：非目标角落、贴墙且该墙面无目标、2x2 冻结方块
+  三条静态规则 + 有预算 BFS（6000 状态）。LevelSolver 新增从当前局面求解的重载。
+- 明确区分 Playable / Deadlocked / Unknown：预算耗尽一律不提示「已无解」。
+- 每次推动后与撤销后重新判定，HUD 显示原因并引导 Z 撤销 / R 重置。
+- 审查给出的第二关案例（箱子连推两次到 (3,1)）已由 EditMode 与 PlayMode 双重覆盖；
+  初始可解局面、目标上的箱子不误报。
+
+9.4 P1-4 关卡列表布局
+- 「选择关卡」标题改为关卡面板子层、左锚点左 pivot（原右 pivot 使标题溢出面板 378 单位）。
+- 卡片改由 VerticalLayoutGroup + ContentSizeFitter + ScrollRect + RectMask2D 管理，
+  「进入最新关卡」按钮固定在面板底部、独立于滚动内容；3 关扩到 8 关也不会重叠。
+- 新增 MenuLayoutController：宽屏左右分栏，窄屏（宽高比 <1.45）改为标题在上、
+  面板在下的上下排列。Compute 为纯计算，EditMode 覆盖 16:9 / 16:10 / 4:3 /
+  1:1 / 竖屏共 8 种分辨率，验证两块区域不重叠。
+
+9.5 P1-5 失焦暂停与恢复
+- OnApplicationFocus / OnApplicationPause 自动暂停并释放鼠标；返回后由用户确认继续。
+- 暂停用 Time.timeScale=0 冻结动画协程，动画中的暂停请求不丢失，恢复后回到 Animating。
+- 计时改用 Time.deltaTime，暂停期间不累计。
+- BoardSnapshot 增加 PlayerYaw / PlayerPitch，撤销时通过
+  FirstPersonController.SetLookRotation 同步恢复视角。
+- 键盘 R 改为二次确认（2.5 秒窗口），菜单按钮仍可立即重置。
+
+9.6 物理 / 网格一致与内容扩充
+- 缝隙问题见 9.1；PlayMode 用 CheckCapsule 验证缝隙中心放不进角色胶囊。
+- 新增 Level04–Level08 共 5 关，难度由最少推动数
+  1/1/3/3/4/6/3/9（含内墙、转角、相邻双箱、狭口、长线绕行）。
+  每关均由独立 Python BFS（Tools/validate_levels.py）与真实 Editor
+  Validate All Levels 双重校验可解。
+- 存档改为稳定 levelId + 版本号 v2，旧版按序号的键按需读取迁移；
+  LevelCatalog.json 为每关补 id 并做重复校验。
+
+9.7 本轮真实验证结果
+- 编译：optimize-import.log，退出码 0，无 error CS。
+- EditMode：24/24 通过（EditMode-optimize-results.xml）。
+- PlayMode：10/10 通过（PlayMode-optimize-results.xml）。
+- Validate All Levels：8/8 可解，最少 1/1/3/3/4/6/3/9 推。
+- Windows x64 构建：Build Finished, Result: Success；构建 DLL 已核对包含本轮新符号。
+
+9.8 仍未验证 / 刻意未做
+- 仍未在 GUI 中人工通关、未提供截图或录屏；鼠标手感、眩晕、快速连按 E、
+  动画中 Z/R、长时间运行稳定性、不同分辨率下真实文字边界仍需人工验收。
+- 刻意未做：更换渲染管线、堆特效、音效资源、授权字体打包、macOS 构建、
+  8→12 关继续扩充、画质/帧率选项、Profiler 实测。
+  GameBootstrap 的 targetFrameRate=60 只是上限，默认质量配置启用 VSync，
+  不能据此声称已锁定 60FPS。
+- 已知偏离审查建议：一般求解搜索目前仍在推动结束后同步执行，只是把状态预算
+  硬限制在 6000（最复杂一关约 5400 状态），尚未改造为异步/分帧执行；
+  在目标机器上若观察到推动后掉帧，应优先把这段搜索挪到分帧协程。
+- 已知偏离审查建议：设置页用离散档位循环代替滑杆，窄屏排版由锚点预设切换
+  而非完整自适应布局引擎；两者均已在自动化用例中验证结构正确性，
+  但真实文字边界仍需实机目视确认。
+- 关卡数量本轮为 8 关（审查建议 8～12 关），列表已用 8 张卡片验证滚动容器；
+  继续扩到 12 关只需补地图与目录条目并跑 Tools/validate_levels.py。
+
+--------------------------------------------------------------------------------
+十、2026-11-11 第三轮：代码审查 P0/P1 修复（当前最新结论，取代 9.8 的偏离项）
+--------------------------------------------------------------------------------
+依据《FirstPersonSokoban 优化版代码审查》。范围约束：不重新开发、不推翻架构、
+不改八关地图与存档格式、不破坏既有 34 项测试（全部保留并通过）。
+
+10.1 逐文件修改清单（修改前问题 → 修改方式 → 测试证据）
+
+1) Scripts/Core/PuzzleGameManager.cs
+   前：Resume() 写 SetInputLocked(Phase == Playing)，条件反了 —— 正常恢复后玩家被
+       锁死，动画中恢复反而解锁；StartCoroutine(AnimatePush) 不保存句柄，暂停后
+       经 ShowMenu / RestartLevel 恢复 timeScale 会让旧协程继续操作已销毁的箱子；
+       Board.ApplyPush 在动画开始前已提交，中途退出留下半新半旧状态。
+   改：Resume 改 SetInputLocked(!isPlaying)、LockCursor(Playing || Animating)；
+       引入推动事务 pushRoutine + pendingSnapshot，撤销记录只在动画完整结束后入栈；
+       CancelActivePush(rollback) 分别在 LoadLevel（不回滚，整关重建）与 ShowMenu
+       （回滚箱子 / 玩家位置 / 视角 / 统计，不增加 UndoCount）调用；
+       RestartLevel / StartLevel 不再用 Phase==Animating 早退拦住事务；OnDestroy 兜底；
+       RefreshDeadlock 改分帧协程 + generation 取消 + 局面缓存；多箱提示显示「第 N 号箱」。
+   证：PlayMode ResumeFromPlaying_ / ResumeFromAnimation_ /
+       CancelPushThenReturnToMenu_ / CancelPushThenRestart_ / DeadlockSearch_（5 项）。
+
+2) Scripts/Core/DeadlockDetector.cs
+   前：IsDeadWallLine「贴墙且整行无目标」把「墙只有一小段、可沿墙滑到开口再转向
+       另一行目标」的可解局面误报为无解（审查反例地图）。
+   改：删除 IsDeadWallLine / HasGoalAlongRow / HasGoalAlongColumn；改由 BoardState 的
+       反向推动可达性静态死格表判定（充分条件，只漏报不误报）；保留非目标角落与
+       2x2 冻结；拆出 TryEvaluateStatic（瞬时） / CreateSession（分帧） /
+       Classify / Signature，同步 Evaluate 仅供测试与编辑器工具使用。
+   证：EditMode WallHasExit_SolvableStateIsNotDeadlocked（旧实现必失败）、
+       Deadlock_StaticDeadSquareTableKeepsTrueWallDeadlock（原第二关 (3,1) 仍判死锁）、
+       PlayMode DeadlockHint_（撤销后清除提示）。
+
+3) Scripts/Core/BoardState.cs
+   前：无静态死格信息；Restore 会把系统取消的动作也算成玩家撤销。
+   改：新增 IsStaticDeadSquare（从所有目标做反向推动 BFS，按 BoardState 懒计算缓存）
+       与 Rollback（回滚箱子 / 站位 / 累计推动数，不增加 UndoCount）。
+   证：EditMode BoardState_RollbackRestoresBoxesWithoutCountingAsUndo、
+       Deadlock_StaticDeadSquareTableKeepsTrueWallDeadlock。
+
+4) Scripts/Core/LevelSolver.cs
+   前：单次同步 BFS，状态键含玩家精确坐标；运行期每次推动在主线程同步跑最多 6000 状态。
+   改：新增可分帧的 SolverSession（Step(maxExpansions)），状态键把同一玩家可达区域
+       归并为其代表格；同步 Solve 复用同一会话，避免两套算法产生不同结论。
+   证：EditMode SolverSession_FrameSlicedResultMatchesSynchronousSolve /
+       SolverSession_MergesPlayerPositionsInSameReachableRegion；
+       Validate All Levels 最短推动数不变、Level08 状态 5281 → 1172。
+
+5) Scripts/UI/MenuLayoutController.cs
+   前：Compute 验证的矩形与 Apply 真正设置的尺寸是两套值（4:3 800×600 下真实
+       RectTransform 纵向交叠约 37 参考单位）。
+   改：新增 MenuLayoutSpec 单一数据源，Compute 的矩形与 Apply 的 anchor / pivot /
+       anchoredPosition / sizeDelta 全部由 ComputeSpec 派生；窄屏按可用高度动态分配
+       并保留 36 单位间隙；LastSpec 供回归读取。
+   证：EditMode MenuLayout_ApplyUsesExactlyTheComputedRects（8 种比例）、
+       PlayMode MenuLayout_RealRectTransformBoundsMatchComputedSpec（真实 GetWorldCorners）。
+
+6) Scripts/Interaction/BoxDimensions.cs（新增）
+   前：箱体尺寸散落在 Prefab 与资源生成器里，两边不一致。
+   改：碰撞体 1.96×1.72×1.96@0.86、视觉主体 1.90×1.70×1.90@0.86、边框 1.96、
+       角柱 ±0.93、高亮顶盖 1.90@1.75 集中定义。
+   证：EditMode BoxPrefab_VisualMatchesColliderAndSharedDimensions。
+
+7) Resources/Prefabs/Box.prefab
+   前：碰撞体 1.96 但可见主体只有 1.22，两侧各约 0.37 单位隐形阻挡。
+   改：主体 / 边框 / 角柱按 BoxDimensions 放大，视觉与碰撞每侧只差 0.03；
+       相邻箱净空仍 0.04 < 角色直径 0.64；碰撞体顶 1.72 > 相机眼高约 1.69。
+   证：EditMode BoxPrefab_；PlayMode TwoAdjacentBoxes_SeamIsNotPassable /
+       HorizontalView_FirstPushNeedsNoDeveloperPitch。
+
+8) Resources/Prefabs/Player.prefab
+   前：BoxInteractor 序列化里没有辅助角度字段，参数只能靠脚本默认值。
+   改：显式写入 assistAngle: 14、aimHeight: 0.9。
+   证：EditMode BoxInteractor_AssistAngleIsConservative。
+
+9) Editor/ProjectSetup.cs
+   前：CreateBox 仍用旧的 1.28×1.26×1.28 / 1.22 参数，重新生成资源会退回旧碰撞体。
+   改：CreateBox 全部改读 BoxDimensions（Setup Missing Game Assets 仍只补缺失资产）。
+   证：EditMode ProjectSetup_UsesSharedDimensionsNotLegacyConstants。
+
+10) Scripts/Interaction/BoxInteractor.cs
+    前：assistAngle=32°，多箱并排容易选中旁边那个；候选只按角度比较。
+    改：默认 14° 并写入 Prefab，暴露 AssistAngleDegrees；角度接近（≤1.5°）时
+        选距离更近的箱子；保留墙体遮挡校验，不允许隔墙选箱。
+    证：EditMode BoxInteractor_AssistAngleIsConservative；
+        PlayMode AimAssist_SelectsFrontBoxInMultiBoxLevel。
+
+11) Scripts/Interaction/BoxView.cs
+    前：瞄准高亮顶盖固定 y=1.32 / 宽 1.5，与放大后的箱体不匹配。
+    改：顶盖尺寸与位置改读 BoxDimensions。
+
+12) Scripts/UI/UIFactory.cs（P2）
+    前：字体候选仅 5 个，CreateDynamicFontFromOSFont 失败时没有兜底，Text 可能拿不到字体。
+    改：扩到 11 个中日韩候选并加异常保护，失败再退 Unity 内置
+        LegacyRuntime.ttf / Arial.ttf；仍不打包第三方字体文件，无授权不明资源。
+
+13) Scripts/UI/GameUIController.cs（P2）
+    前：通关面板未明确显示「目标归位」与下一关。
+    改：ShowVictory 增加 goalsCompleted / goalsTotal，面板显示目标归位、有效推动、
+        最佳有效解法与「进入下一关 NN 已解锁」；同步调用点。
+
+14) Tests/EditMode/OptimizationTests.cs、Tests/PlayMode/PlayModeOptimizationTests.cs
+    前：24 EditMode + 10 PlayMode，未覆盖暂停恢复、动画事务、真实布局、静态死格反例。
+    改：EditMode +9、PlayMode +7，合计 33 + 17。
+    证：EditMode-fix-results.xml 33/33、PlayMode-fix-results.xml 17/17。
+
+10.2 真实验证结果（Unity 2022.3.62f3c1，batchmode -nographics）
+- fix-import.log：编译退出码 0，无 error CS。
+- EditMode-fix-results.xml：33/33 通过，0 失败。
+- PlayMode-fix-results.xml：17/17 通过，0 失败。
+- fix-validate-levels.log：8/8 可解，最少 1/1/3/3/4/6/3/9 推；
+  归并后搜索状态 8/5/200/18/349/632/17/1172。
+- Tools/validate_levels.py（独立 Python BFS，与 C# 不共享算法）：8/8 可解，
+  最少推动数一致，状态 13/17/521/30/1405/2708/29/5281 —— 交叉印证归并没有改变
+  最短推动数，也没有把可解关卡误判为无解。
+- fix-build.log：Build Finished, Result: Success（退出码 0）；
+  FirstPersonSokoban_Data/Managed/FirstPersonSokoban.Runtime.dll 已重新生成，
+  核对含 SolverSession / BoxDimensions / IsStaticDeadSquare / HasActivePush /
+  MenuLayoutSpec / AssistAngleDegrees / DeadlockGeneration，已不含 IsDeadWallLine。
+- 静态复核：78 个 .meta（含目录）GUID 全部唯一、62 个资源文件 GUID 唯一、
+  无缺失 .meta、14 个外部 GUID 引用全部可解析、asmdef / JSON 有效、
+  33 个 C# 文件括号平衡；两个压缩包完整性 OK。
+
+10.3 关卡难度核查（P2，只分析、不改地图）
+| 关卡 | 尺寸 | 内墙 | 箱/目标 | 最少推动 | 归并后搜索状态 |
+| --- | --- | --- | --- | --- | --- |
+| L1 初次接触 | 7x7 | 0 | 1/1 | 1 | 8 |
+| L2 换个方向 | 8x8 | 0 | 1/1 | 1 | 5 |
+| L3 双重归位 | 9x8 | 0 | 2/2 | 3 | 200 |
+| L4 转个弯 | 8x7 | 2 | 1/1 | 3 | 18 |
+| L5 并排推进 | 9x8 | 0 | 2/2 | 4 | 349 |
+| L6 相邻两箱 | 9x8 | 0 | 2/2 | 6 | 632 |
+| L7 狭口 | 9x8 | 7 | 1/1 | 3 | 17 |
+| L8 绕行 | 10x9 | 2 | 2/2 | 9 | 1172 |
+- Level07 最少推动仅 3，但有 7 个内墙构成狭口，难度来自第一人称空间观察而非推动数；
+  Level04 同为 3 推但只有 2 个内墙。仅按最少推动数排序不能代表实际难度。
+- 按审查建议保留现有八关作为第一版基础，等实机完整通关、记录完成时间与错误分支后
+  再决定是否重排 / 重设计。本轮未改任何地图与 LevelCatalog。
+
+10.4 尚未验证 / 刻意未做（不能声称「游戏全部通过」）
+- 未实际启动 exe 人工通关；无实机截图或录屏。鼠标手感、眩晕、快速连按 E、
+  动画中 Z/R/ESC 组合、真实中文文字边界（尤其窄窗口）、不同分辨率 UI、
+  VSync 下实际帧率、长时间运行稳定性，全部待人工验收。
+- 未做：音效与音量菜单、授权中文字体文件打包、材质 / 光照重做、画质与帧率选项、
+  macOS 构建、Profiler GC / 帧时间实测、8→12 关扩充、后台线程异步搜索。
+- BFS 已改为「主线程分帧协程 + 可取消 + 缓存」，单帧预算 200 状态；
+  但尚未用 Profiler 在目标机器上量化帧时间，不能声称「已无掉帧」。
+- 设置仍为离散档位循环；关卡列表在 8 卡下验证过 ScrollRect，12 卡仍是结构推断。
+- 本轮未修改八关地图、存档格式、场景、其它 Prefab 与既有测试断言。

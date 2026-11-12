@@ -1,0 +1,60 @@
+{
+  "levels": [
+    {
+      "id": "tutorial-first-push",
+      "resource": "Level01",
+      "title": "初次接触",
+      "subtitle": "单箱教学 · 直线推动",
+      "initialYaw": 180
+    },
+    {
+      "id": "tutorial-around",
+      "resource": "Level02",
+      "title": "换个方向",
+      "subtitle": "空间观察 · 绕向推动",
+      "initialYaw": 180
+    },
+    {
+      "id": "two-boxes",
+      "resource": "Level03",
+      "title": "双重归位",
+      "subtitle": "双箱规划 · 多向归位",
+      "initialYaw": 180
+    },
+    {
+      "id": "corner-turn",
+      "resource": "Level04",
+      "title": "转个弯",
+      "subtitle": "内墙阻挡 · 两次转向",
+      "initialYaw": 180
+    },
+    {
+      "id": "paired-columns",
+      "resource": "Level05",
+      "title": "并排推进",
+      "subtitle": "双箱顺序 · 各自归列",
+      "initialYaw": 180
+    },
+    {
+      "id": "adjacent-boxes",
+      "resource": "Level06",
+      "title": "相邻两箱",
+      "subtitle": "先解一箱 · 腾出通道",
+      "initialYaw": 180
+    },
+    {
+      "id": "narrow-pocket",
+      "resource": "Level07",
+      "title": "狭口",
+      "subtitle": "窄道对齐 · 单次入位",
+      "initialYaw": 180
+    },
+    {
+      "id": "long-detour",
+      "resource": "Level08",
+      "title": "绕行",
+      "subtitle": "内墙绕行 · 长线规划",
+      "initialYaw": 180
+    }
+  ]
+}

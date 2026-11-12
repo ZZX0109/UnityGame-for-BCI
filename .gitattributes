@@ -1,0 +1,7 @@
+# Unity YAML 与脚本按文本处理，其余保持原样
+* text=auto
+*.png binary
+*.jpg binary
+*.fbx binary
+*.dll binary
+*.exe binary
