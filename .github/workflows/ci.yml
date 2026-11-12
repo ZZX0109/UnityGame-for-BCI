@@ -1,0 +1,135 @@
+# FirstPersonSokoban 云端 CI
+#
+# 三个任务：
+#   1. validate-levels  —— 纯 Python BFS 校验 8 个关卡可解，无任何依赖，永远运行。
+#   2. unity-tests      —— Unity EditMode + PlayMode 测试（GameCI），需要许可证 Secret。
+#   3. windows-build    —— Windows x64 构建，产物上传为 artifact，需要许可证 Secret。
+#
+# 首次使用前的配置（仓库 Settings → Secrets and variables → Actions）：
+#   UNITY_LICENSE        Personal 许可证的 .ulf 文件内容（见下方获取方法）
+#   UNITY_EMAIL          Unity 账号邮箱
+#   UNITY_PASSWORD       Unity 账号密码
+#   UNITY_AUTHENTICATOR_KEY  Unity 许可证服务器密钥（可选，与上面二选一）
+#
+# Personal 许可证 .ulf 获取方法（本机一次性操作）：
+#   1. 用 Unity Hub 打开一次本工程并登录，让本机激活 Personal 许可证；
+#   2. 复制 %LOCALAPPDATA%\Unity\Unity_lic.ulf 的全部内容
+#      （或用 docker 运行 gameci/unity license activation 流程，见
+#       https://docs.unity3d.com/Manual/Licenses.html 与 GameCI 文档）；
+#   3. 粘贴到 UNITY_LICENSE Secret。
+#
+# 注意：本工程使用中国版编辑器 2022.3.62f3c1（revision 1623fc0bbb97）。
+# GameCI 镜像基于国际版构建，若该精确版本拉取失败，把下方 UNITY_VERSION
+# 改为最接近的国际版（如 2022.3.62f1）重新激活许可证即可；
+# 测试与构建结果不受小版本号差异影响，但建议尽快对齐。
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  UNITY_VERSION: 2022.3.62f3c1
+  UNITY_IMAGE: unityci/editor:ubuntu-2223-base-3.1.1
+
+jobs:
+  validate-levels:
+    name: 关卡可解性（Python BFS）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 校验 8 个关卡均可解
+        run: python Tools/validate_levels.py
+
+  unity-tests:
+    name: Unity 测试（EditMode + PlayMode）
+    runs-on: ubuntu-latest
+    # 未配置许可证 Secret 时自动跳过，关卡验证仍会运行
+    if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
+    container: ${{ env.UNITY_IMAGE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 恢复 Library 缓存
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ env.UNITY_VERSION }}-
+            Library-
+
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          testMode: EditMode
+          artifactsPath: artifacts/editmode
+
+      - uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          testMode: PlayMode
+          artifactsPath: artifacts/playmode
+
+      - name: 上传测试结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts
+          retention-days: 14
+
+  windows-build:
+    name: Windows x64 构建
+    runs-on: ubuntu-latest
+    if: ${{ vars.UNITY_CI_ENABLED == 'true' }}
+    needs: [validate-levels]
+    container: ${{ env.UNITY_IMAGE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 恢复 Library 缓存
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ env.UNITY_VERSION }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ env.UNITY_VERSION }}-
+            Library-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_AUTHENTICATOR_KEY: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneWindows64
+          buildsPath: build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: FirstPersonSokoban-Windows64
+          path: build
+          retention-days: 30
