@@ -14,7 +14,7 @@ namespace ClawMachine
         public bool Observe(PrizePhysics prize, float dt)
         {
             if (!IsConfigured || !prize || !prize.IsConfigured || !prize.Profile || !prize.Released ||
-                prize.SessionId != sessionId || prize.AttemptId != attemptId || !Contains(prize.Collider.bounds) || !prize.IsStable)
+                prize.SessionId != sessionId || prize.AttemptId != attemptId || !Contains(prize.AllBounds) || !prize.IsStable)
             { dwell = 0; return false; }
             dwell += Mathf.Max(0, dt); return dwell >= prize.Profile.stableDwell;
         }

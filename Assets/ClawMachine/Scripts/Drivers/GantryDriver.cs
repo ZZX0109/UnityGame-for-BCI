@@ -10,6 +10,7 @@ namespace ClawMachine
         [SerializeField] private GripperController gripper;
         [SerializeField] private Transform bridge, trolley, cable;
         [SerializeField] private float railHeight = 1.92f;
+        [SerializeField] private float cableAnchorHeight = 0.325f;
         [SerializeField] private float acceleration = 1.5f;
         [SerializeField] private float tolerance = 0.005f;
         private Vector3 target, velocity;
@@ -19,6 +20,8 @@ namespace ClawMachine
         public ManipulatorStatus Status { get; private set; }
         public string Error { get; private set; } = "";
         public bool IsBusy => Status == ManipulatorStatus.Moving;
+        public bool IsSimulation => true;
+        public Vector3 CurrentVelocity => machineRoot ? machineRoot.TransformDirection(velocity) : Vector3.zero;
         public Pose CurrentToolPose => new Pose(toolBody.position, toolBody.rotation);
         public Vector3 LocalPosition => machineRoot.InverseTransformPoint(toolBody.position);
         public Bounds Workspace => new Bounds(workspaceVolume.center, workspaceVolume.size);
@@ -34,7 +37,20 @@ namespace ClawMachine
             if ((local - clamped).sqrMagnitude > 0.000001f) { Error = "Workspace limit"; return false; }
             aiming = false; target = local; speed = Mathf.Min(maxSpeed, 0.65f); Status = ManipulatorStatus.Moving; Error = ""; return true;
         }
-        public bool TrySetGripper(float openness) { if (!gripper || !Finite(openness)) return false; gripper.SetOpenness(openness); return true; }
+        public bool TrySetGripper(float openness) { if (!gripper || !Finite(openness)) return false; return gripper.TrySetOpenness(openness); }
+        public bool TryJog(Vector3 worldVelocity)
+        {
+            if (!IsConfigured || !Finite(worldVelocity) || worldVelocity.magnitude > 0.65f) return false;
+            Vector3 local = machineRoot.InverseTransformDirection(worldVelocity);
+            if (Mathf.Abs(local.y) > 0.001f) return false;
+            Aim(new Vector2(local.x, local.z).normalized, local.magnitude, 0); return true;
+        }
+        public bool TryReset(Pose pose)
+        {
+            if (!IsConfigured || !Finite(pose.position) || !Finite(pose.rotation) || Quaternion.Angle(pose.rotation, machineRoot.rotation) > 0.5f || !Workspace.Contains(ToLocal(pose.position))) return false;
+            ResetPose(ToLocal(pose.position)); return true;
+        }
+        public void Tick(float dt) { Step(dt); }
         public void Aim(Vector2 input, float maxSpeed, float dt)
         {
             if (!IsConfigured) return;
@@ -84,7 +100,7 @@ namespace ClawMachine
             Vector3 p = LocalPosition;
             if (bridge) bridge.localPosition = new Vector3(0, railHeight, p.z);
             if (trolley) trolley.localPosition = new Vector3(p.x, railHeight, p.z);
-            if (cable) { cable.localPosition = new Vector3(p.x, (railHeight + p.y + 0.15f) * 0.5f, p.z); cable.localScale = new Vector3(0.012f, Mathf.Max(0.005f, (railHeight - p.y - 0.15f) * 0.5f), 0.012f); }
+            if (cable) { cable.localPosition = new Vector3(p.x, (railHeight + p.y + cableAnchorHeight) * 0.5f, p.z); cable.localScale = new Vector3(0.012f, Mathf.Max(0.005f, (railHeight - p.y - cableAnchorHeight) * 0.5f), 0.012f); }
         }
         private static bool Finite(float p) => !float.IsNaN(p) && !float.IsInfinity(p);
         private static bool Finite(Vector3 p) => Finite(p.x) && Finite(p.y) && Finite(p.z);

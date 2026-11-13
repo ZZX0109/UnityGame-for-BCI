@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-11-13",
+  "remoteBaseCommit": "ecb1b13d52a58d804154ce31051d3d663f4f95f9",
+  "remoteBaseTree": "0ef44d8ececee7200732f654fed071dd3ba4c365",
+  "allImplementableSourceRequirements": "implemented",
+  "overallRuntimeAcceptance": "blocked_not_complete",
+  "engine": "2022.3.62f3c1",
+  "renderPipeline": "unchanged built-in",
+  "realHardwareConnected": false,
+  "requirements": [
+    {
+      "id": "P0_APPROACH",
+      "priority": "P0",
+      "implementation": "safe above all compound bounds, live actual surface raycast, distinct low-speed contact descent",
+      "source": "Scripts/Core/GraspPlanner.cs",
+      "test": "CoreAuditTests.Planner_UsesRaycastSurfaceAndAllPrizeClearanceInsteadOfCenterOfMass",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P0_COLLISION_STOP",
+      "priority": "P0",
+      "implementation": "physical pad/shaft/palm predicted geometry against prizes, cabinet and floor; blocked and unsafe clearance refuse motion",
+      "source": "Scripts/Gripper/GripperController.cs",
+      "test": "CoreAuditTests.PredictedToolMotion_RejectsFloorAndCabinetPenetrationBeforeMoving",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P0_SURFACE_CONTACT",
+      "priority": "P0",
+      "implementation": "outside probe centers, ComputePenetration threshold, opposing normals and span; collision-clipped closure",
+      "source": "Scripts/Gripper/GraspContactEvaluator.cs",
+      "test": "CoreAuditTests.SurfaceContact_RequiresAnOutsideCenterAndRejectsDeepPenetration",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P0_GRIP_SLIP",
+      "priority": "P0",
+      "implementation": "bounded FixedJoint, preserved pose, gravity eccentric torque/anchor drift/slip release",
+      "source": "Scripts/Gripper/GripperController.cs",
+      "test": "ClawSmokeTests (natural C03 off-center slip test)",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_EXECUTOR",
+      "priority": "P1",
+      "implementation": "world-space task, frame/workspace service, explicit tick/jog/reset/status/error contracts, no Gantry type dependency",
+      "source": "Scripts/Drivers/IManipulatorDriver.cs",
+      "test": "CoreAuditTests (alternate executor, fault/idle-feedback and safety tests)",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_SIM_ROBOT",
+      "priority": "P1",
+      "implementation": "alternate world-space tool simulator; no ROS/IK/serial/network/hardware",
+      "source": "Scripts/Drivers/SimulatedRobotArmDriver.cs",
+      "test": "CoreAuditTests.AlternateSimulator_RejectsInvalidPoseAndSupportsWorldSpaceResetAndStop",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_ORBIT",
+      "priority": "P1",
+      "implementation": "per-view bounded 12deg yaw/10deg pitch, finite values, safe radius, three distances",
+      "source": "Scripts/Camera/CraneCameraController.cs",
+      "test": "ClawCameraTests",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_PIP",
+      "priority": "P1",
+      "implementation": "Front plus side camera pair, owned 320x240/480x360 texture, off/performance option, listener/resource cleanup",
+      "source": "Scripts/Camera/CraneCameraController.cs",
+      "test": "ClawCameraSmokeTests",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_CANVAS_TMP",
+      "priority": "P1",
+      "implementation": "responsive Canvas/TMP menu/HUD/settings/pause/result, safe area/scroll, independent licensed Chinese dynamic bitmap font",
+      "source": "Scripts/UI/ClawGameUI.cs",
+      "test": "ClawCanvasAudioTests and ClawCanvasSmokeTests",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_CONTENT",
+      "priority": "P1",
+      "implementation": "C01-C03 seeded catalogs with regular box, compound plush and offset COM toy; target and strategy inspection",
+      "source": "Challenges/C01.asset;Challenges/C02.asset;Challenges/C03.asset",
+      "test": "Acceptance_C01;Acceptance_C02;Acceptance_C03",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P1_TARGET_SETTLEMENT",
+      "priority": "P1",
+      "implementation": "released current target, whole compound bounds stable dwell and once-only settlement; wrong object never awards",
+      "source": "Scripts/Prize/PrizeChuteDetector.cs",
+      "test": "ClawSmokeTests (wrong target and actual chute acceptance)",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "P2_AUDIO",
+      "priority": "P2",
+      "implementation": "ten distinct deterministic cues plus motor, volume/pause and owned cleanup",
+      "source": "Scripts/Audio/ClawAudioController.cs",
+      "test": "ClawCanvasAudioTests.StageCues_AreDistinctDeterministicAndWithinAudioHeadroom",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "RESET_POLICY",
+      "priority": "P1",
+      "implementation": "failed retry restores complete same seeded layout, clears velocities/identity and preserves used attempts; full reset clears counters",
+      "source": "Scripts/Core/GraspTaskController.cs",
+      "test": "ClawSmokeTests.FailedRetry_RestoresEverySeededPrizeAndPreservesUsedAttempt",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "MODULAR_ART",
+      "priority": "P2",
+      "implementation": "original owned rounded/ellipsoid meshes, modular prefabs, four procedural microtexture/normal maps, Standard materials",
+      "source": "Models/GeometryRecipes.json",
+      "test": "ClawImportedAssetTests",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "LIFECYCLE_STRESS",
+      "priority": "P1",
+      "implementation": "per-stage pause/reset, 30 actual grabs and 20 interrupted resets, real-time watchdogs and focus isolation",
+      "source": "Tests/PlayMode/ClawSmokeTests.cs",
+      "test": "Stress and Lifecycle categories",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    },
+    {
+      "id": "TMP_PACKAGE_BOOTSTRAP",
+      "priority": "P1",
+      "implementation": "pinned official TMP3.0.6/ugui1.0.0, canonical shared settings/shaders, independent source fonts, exact Editor resources prepare",
+      "source": "Assets/BCIShared/TMP",
+      "test": "ClawSceneBuilder.PrepareForValidation and package-reference Python regressions",
+      "sourceStatus": "implemented",
+      "unityExecution": "not_run",
+      "runtimeAcceptance": "blocked_required_editor_unavailable"
+    }
+  ],
+  "authoredTests": {
+    "editModeCasesFromAttributes": 41,
+    "playModeCasesFromAttributes": 11,
+    "acceptanceCategories": [
+      "Acceptance_C01",
+      "Acceptance_C02",
+      "Acceptance_C03"
+    ],
+    "executed": false,
+    "note": "Counts describe authored cases, not passing engine results."
+  },
+  "evidence": {
+    "sourceChecks": "passed; see STATIC_VALIDATION.txt",
+    "unityCompilation": "blocked_no_editor_or_compiler",
+    "editModeXML": "not_created",
+    "playModeXML": "not_created",
+    "windowsEXE": "not_created",
+    "windowsZIP": "not_created",
+    "screenshotsVideo": "not_created",
+    "performanceComfort": "not_run"
+  },
+  "deliveryGate": "Tools/run_game_delivery.py --game claw requires actual exact Editor plus all-passed nonzero scoped XML/all3 scenario categories, real graphics device, unchanged source and complete Windows payload",
+  "explicitNonGoals": [
+    "real hardware/ROS/EEG/BCI integration",
+    "robot inverse kinematics/calibration",
+    "cloth/soft-body simulation",
+    "C04/C05 beyond uploaded audit"
+  ]
+}

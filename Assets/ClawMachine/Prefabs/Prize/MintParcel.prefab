@@ -1,117 +1,118 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1234
+--- !u!1 &1243
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1235}
-  - component: {fileID: 1236}
-  - component: {fileID: 1237}
+  - component: {fileID: 1244}
+  - component: {fileID: 1245}
+  - component: {fileID: 1246}
   m_Layer: 0
-  m_Name: "Target - mint parcel"
+  m_Name: "Prize - mint-parcel"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1235
+--- !u!4 &1244
 Transform:
-  m_GameObject: {fileID: 1234}
+  m_GameObject: {fileID: 1243}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1239}
-  - {fileID: 1243}
-  - {fileID: 1247}
-  - {fileID: 1251}
+  - {fileID: 1248}
+  - {fileID: 1253}
+  - {fileID: 1257}
+  - {fileID: 1261}
   m_Father: {fileID: 0}
---- !u!1 &1238
+--- !u!1 &1247
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1239}
-  - component: {fileID: 1240}
-  - component: {fileID: 1241}
+  - component: {fileID: 1248}
+  - component: {fileID: 1249}
+  - component: {fileID: 1250}
+  - component: {fileID: 1251}
   m_Layer: 0
-  m_Name: "Rigid parcel"
+  m_Name: "Rounded rigid parcel"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1239
+--- !u!4 &1248
 Transform:
-  m_GameObject: {fileID: 1238}
+  m_GameObject: {fileID: 1247}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.22, y: 0.24, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1235}
---- !u!1 &1242
+  m_Father: {fileID: 1244}
+--- !u!1 &1252
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1243}
-  - component: {fileID: 1244}
-  - component: {fileID: 1245}
+  - component: {fileID: 1253}
+  - component: {fileID: 1254}
+  - component: {fileID: 1255}
   m_Layer: 0
   m_Name: "Ribbon X"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1243
+--- !u!4 &1253
 Transform:
-  m_GameObject: {fileID: 1242}
+  m_GameObject: {fileID: 1252}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.122, z: 0}
   m_LocalScale: {x: 0.224, y: 0.009, z: 0.032}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1235}
---- !u!1 &1246
+  m_Father: {fileID: 1244}
+--- !u!1 &1256
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1247}
-  - component: {fileID: 1248}
-  - component: {fileID: 1249}
+  - component: {fileID: 1257}
+  - component: {fileID: 1258}
+  - component: {fileID: 1259}
   m_Layer: 0
   m_Name: "Ribbon Z"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1247
+--- !u!4 &1257
 Transform:
-  m_GameObject: {fileID: 1246}
+  m_GameObject: {fileID: 1256}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.124, z: 0}
   m_LocalScale: {x: 0.033, y: 0.009, z: 0.204}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1235}
---- !u!1 &1250
+  m_Father: {fileID: 1244}
+--- !u!1 &1260
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1251}
-  - component: {fileID: 1252}
-  - component: {fileID: 1253}
+  - component: {fileID: 1261}
+  - component: {fileID: 1262}
+  - component: {fileID: 1263}
   m_Layer: 0
   m_Name: "Front ribbon"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1251
+--- !u!4 &1261
 Transform:
-  m_GameObject: {fileID: 1250}
+  m_GameObject: {fileID: 1260}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.102}
   m_LocalScale: {x: 0.033, y: 0.244, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1235}
---- !u!54 &1236
+  m_Father: {fileID: 1244}
+--- !u!54 &1245
 Rigidbody:
-  m_GameObject: {fileID: 1234}
+  m_GameObject: {fileID: 1243}
   serializedVersion: 4
   m_Mass: 0.3
   m_Drag: 0.05
@@ -124,22 +125,22 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!65 &1237
+--- !u!65 &1246
 BoxCollider:
-  m_GameObject: {fileID: 1234}
+  m_GameObject: {fileID: 1243}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 0.22, y: 0.24, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1240
+--- !u!33 &1249
 MeshFilter:
-  m_GameObject: {fileID: 1238}
+  m_GameObject: {fileID: 1247}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1241
+--- !u!23 &1250
 MeshRenderer:
-  m_GameObject: {fileID: 1238}
+  m_GameObject: {fileID: 1247}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -150,13 +151,23 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1244
+--- !u!114 &1251
+MonoBehaviour:
+  m_GameObject: {fileID: 1247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 0
+  bevel: 0.08
+--- !u!33 &1254
 MeshFilter:
-  m_GameObject: {fileID: 1242}
+  m_GameObject: {fileID: 1252}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1245
+--- !u!23 &1255
 MeshRenderer:
-  m_GameObject: {fileID: 1242}
+  m_GameObject: {fileID: 1252}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -167,13 +178,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: e4852b50746d111a32983c342ab00187, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1248
+--- !u!33 &1258
 MeshFilter:
-  m_GameObject: {fileID: 1246}
+  m_GameObject: {fileID: 1256}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1249
+--- !u!23 &1259
 MeshRenderer:
-  m_GameObject: {fileID: 1246}
+  m_GameObject: {fileID: 1256}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -184,13 +195,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: e4852b50746d111a32983c342ab00187, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1252
+--- !u!33 &1262
 MeshFilter:
-  m_GameObject: {fileID: 1250}
+  m_GameObject: {fileID: 1260}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1253
+--- !u!23 &1263
 MeshRenderer:
-  m_GameObject: {fileID: 1250}
+  m_GameObject: {fileID: 1260}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

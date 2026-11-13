@@ -26,7 +26,7 @@ namespace FirstPersonSokoban.Core
         private static void ConfigureEnvironment()
         {
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.31f, 0.36f, 0.40f, 1f);
+            RenderSettings.ambientLight = LabMaterials.Hex("D5C5AF");
             RenderSettings.ambientIntensity = 0.65f;
             RenderSettings.fog = false;
             // Room lighting is owned by the generated level and removed on reload.

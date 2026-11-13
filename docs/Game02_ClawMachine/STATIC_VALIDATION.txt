@@ -1,13 +1,14 @@
-C01 M0+M1 source checks
-UTC: 2026-11-12T06:19:22.919863+00:00
-Remote baseline commit: 03b00836358572d4d7a3c1cce34c23f517aea877
-Remote baseline tree: d8ee8e6e819e3230c9b230ec455af879ab4157db
-Unity Editor and C# compiler unavailable; no Unity XML/build/render evidence generated.
+Claw C01-C03 uploaded-audit source validation
+Actual executor UTC: 2026-11-13T03:08:09.305198+00:00
+Remote base commit: ecb1b13d52a58d804154ce31051d3d663f4f95f9
+Remote base tree: 0ef44d8ececee7200732f654fed071dd3ba4c365
+These are source checks, not Unity C# compilation or playthrough evidence.
 
 $ python docs/Game02_ClawMachine/validate_prototype.py
-C01 generated scene, prefab, materials, profiles and .meta: exact deterministic match.
-[OK] Bundled UI font: 129,292 bytes; 533 covered codepoints; current UI text covered.
-[OK] C01 local object/asset references, open chute path, isolation, entry scene and font.
+C01-C03 generated scene, prefabs, materials, profiles and .meta: exact deterministic match.
+[OK] Bundled UI font: 173,648 bytes; 636 covered codepoints; current UI text covered.
+[OK] Four original 64x64 texturemaps reproducible; no third-party image assets.
+[OK] C01-C03 local references, open chute path, configs/profiles, executor separation, Canvas/TMP, owned visual assets and font.
 NOT VERIFIED: C# compilation, Unity tests, PhysX grip/drop, camera/UI rendering, Windows build.
 
 Exit code: 0
@@ -58,14 +59,35 @@ test_pass_count_must_equal_total_even_without_skip_attribute (test_delivery_tool
 test_passed_xml_reports_actual_count (test_delivery_tools.TestEvidenceChecks.test_passed_xml_reports_actual_count) ... ok
 test_skipped_tests_rejected_even_when_run_says_passed (test_delivery_tools.TestEvidenceChecks.test_skipped_tests_rejected_even_when_run_says_passed) ... ok
 test_zero_tests_does_not_count_as_passed (test_delivery_tools.TestEvidenceChecks.test_zero_tests_does_not_count_as_passed) ... ok
+test_all_actual_scoped_scenario_cases_required (test_game_delivery.GameEvidenceChecks.test_all_actual_scoped_scenario_cases_required) ... ok
+test_case_failure_cannot_hide_behind_passed_summary (test_game_delivery.GameEvidenceChecks.test_case_failure_cannot_hide_behind_passed_summary) ... ok
+test_editor_version_must_be_actual_not_only_requested (test_game_delivery.GameEvidenceChecks.test_editor_version_must_be_actual_not_only_requested) ... ok
+test_empty_runtime_files_cannot_pass_payload_gate (test_game_delivery.GameEvidenceChecks.test_empty_runtime_files_cannot_pass_payload_gate) ... ok
+test_exe_alone_is_not_a_windows_delivery (test_game_delivery.GameEvidenceChecks.test_exe_alone_is_not_a_windows_delivery) ... ok
+test_inherited_suite_category_is_accepted (test_game_delivery.GameEvidenceChecks.test_inherited_suite_category_is_accepted) ... ok
+test_missing_editor_records_blocked_and_creates_no_unity_evidence (test_game_delivery.GameEvidenceChecks.test_missing_editor_records_blocked_and_creates_no_unity_evidence) ... ok
+test_only_c01_cannot_satisfy_three_challenge_acceptance (test_game_delivery.GameEvidenceChecks.test_only_c01_cannot_satisfy_three_challenge_acceptance) ... ok
+test_other_game_cannot_satisfy_scope (test_game_delivery.GameEvidenceChecks.test_other_game_cannot_satisfy_scope) ... ok
+test_passed_root_without_actual_cases_is_rejected (test_game_delivery.GameEvidenceChecks.test_passed_root_without_actual_cases_is_rejected) ... ok
+test_wrong_xml_editor_overrides_plausible_log (test_game_delivery.GameEvidenceChecks.test_wrong_xml_editor_overrides_plausible_log) ... ok
+test_different_lock_pin_cannot_silently_allow_asset (test_package_references.PackageReferenceChecks.test_different_lock_pin_cannot_silently_allow_asset) ... ok
+test_external_settings_requires_declared_dependency (test_package_references.PackageReferenceChecks.test_external_settings_requires_declared_dependency) ... ok
+test_verified_exact_pin_allows_source_only_checkout (test_package_references.PackageReferenceChecks.test_verified_exact_pin_allows_source_only_checkout) ... ok
+test_verified_pin_does_not_allow_unknown_other_guid (test_package_references.PackageReferenceChecks.test_verified_pin_does_not_allow_unknown_other_guid) ... ok
+test_wrong_cached_script_meta_is_rejected (test_package_references.PackageReferenceChecks.test_wrong_cached_script_meta_is_rejected) ... ok
 
 ----------------------------------------------------------------------
-Ran 22 tests in 0.041s
+Ran 38 tests in 0.086s
 
 OK
 
 Exit code: 0
 
-[OK] Every original branch blob unchanged except the authorized appended Build Settings scene.
-[OK] Original local hydrated baseline git tree equals remote full tree d8ee8e6e819e3230c9b230ec455af879ab4157db.
-[UNVERIFIED] Unity compilation, 14 EditMode tests, 2 PlayMode tests, actual grip/chute behavior, screenshots/videos, Windows EXE/ZIP, performance.
+$ python -m py_compile docs/Game02_ClawMachine/generate_prototype.py docs/Game02_ClawMachine/build_visual_assets.py docs/Game02_ClawMachine/build_ui_font.py docs/Game02_ClawMachine/validate_prototype.py
+
+Exit code: 0
+
+$ python Tools/run_game_delivery.py --game claw --output BuildOutput/ClawAuditEnvironmentBlocked
+[BLOCKED] Exact licensed Unity Editor unavailable; Unity tests and Windows build NOT RUN.
+Exit code: 2
+Only source-checks.log and game-validation-summary.json were created; no Unity XML/log, EXE, ZIP or video was fabricated.

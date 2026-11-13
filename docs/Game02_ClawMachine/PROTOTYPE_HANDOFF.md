@@ -1,70 +1,76 @@
-# C01 原型交付与验证边界
+# C01–C03 审查整改交付与验证边界
 
-本次实现设计任务单限定的 **M0 + M1**。代码、场景、机柜及部件 Prefab、C01 配置、独立字体和测试已提交；当前环境没有 Unity Editor 或 C# 编译器，因此不能宣称 Unity 编译、抓取手感、物理成功率、Windows 运行或画面验收已通过。
+本轮按 2026-11-13 用户上传的审查文件扩展实现，不再限于旧任务单的 M0+M1。审查要求的源代码、内容、资源、测试和真实交付门禁已实现。**本环境没有准确版本 Unity Editor、C# 编译器和授权配置，Unity 编译、实际物理、图形、Windows 程序与视频证据仍然阻塞，不能宣称全部实机需求已验收。** 逐项状态见 `AUDIT_COMPLETION.json` 与 `AUDIT_COMPLETION.md`。
 
-基线：`game02/claw-machine-3d`，远端提交 `03b00836358572d4d7a3c1cce34c23f517aea877`，完整树 `d8ee8e6e819e3230c9b230ec455af879ab4157db`。本地按全部 Git blob SHA 校验恢复该树后开发。未修改 FirstPersonSokoban、包依赖或 Unity 版本。Build Settings 仅在原 PuzzleScene 后追加 ClawMachineScene；专用构建命令只构建 Claw 场景。
+远端工作基线：`ecb1b13d52a58d804154ce31051d3d663f4f95f9`，树 `0ef44d8ececee7200732f654fed071dd3ba4c365`。保留 Unity **2022.3.62f3c1** 和原内置渲染管线。新增 TMP 固定为官方支持的 **3.0.6**；三个游戏共用 `Assets/BCIShared/TMP` 的唯一 TMP Settings 与原创建造兼容 Shader，各游戏仍使用独立授权字体。主线的新版本内容由上级集成流程同步，本游戏没有修改 Sokoban 运行代码。
 
 ## 打开与操作
 
-使用仓库原版 **Unity 2022.3.62f3c1** 打开项目；双击 `Assets/ClawMachine/Scenes/ClawMachineScene.unity`，或菜单 `Claw Machine > Open playable C01`，按 Play，再点击“开始 C01 定位教学”。无需运行生成器、联网、安装新包或连接设备。
+使用准确版本 Editor 打开项目后，选择 `Claw Machine > Prepare and validate resources`，再打开 `Assets/ClawMachine/Scenes/ClawMachineScene.unity` 并按 Play。准备过程验证共享 TMP 资源、独立中文字体、Shader 和场景引用，不会安装 Editor、接入硬件或把空白证据当作通过。
 
 | 操作 | 键位 / 界面 |
 |---|---|
-| 固定机柜 X/Z 移动 | A/D 左右，W 朝机柜内部 +Z，S 朝外 -Z |
-| 正面 / 左侧 / 右侧观察 | 1 / 2 / 3；切换视角不会重映射移动轴 |
-| 三种观察距离 | 滚轮，或菜单/设置的距离按钮 |
-| 完整自动抓取 | Enter / Space / 抓取按钮，仅定位阶段有效 |
-| 下一次尝试或本局结果 | Enter 或结果按钮 |
-| 暂停与继续 | Esc；物理、驱动及阶段计时同时冻结 |
-| 重开同局 | R 后确认，或界面按钮；相同 seed 恢复相同布局 |
-| 取消并返回菜单 | 暂停界面的返回按钮；回收连接、速度及物体状态 |
-| 设置 | 音量、文字大小、镜头距离与距离平滑 |
+| 机器局部 X/Z 移动 | A/D 左右；W 朝机柜内部 +Z；S 朝外 -Z |
+| 正面 / 左侧 / 右侧 | 1 / 2 / 3；方向不随镜头变换 |
+| 有限观察旋转 | 在机器画面内按右键拖动；偏航 ±12°、俯仰 ±10° |
+| 三种距离 | 滚轮或设置按钮；镜头保持机柜外的安全半径 |
+| 正面 + 侧面画中画 | C 或画中画按钮；省电 320×240 / 清晰 480×360，可关闭 |
+| 抓取 | Enter / Space；仅定位状态执行一次完整流程 |
+| 对象选择 | 侧栏选择观察对象与抓持提示；实际抓到谁由爪下物理接触决定，不自动吸附 |
+| 暂停 / 继续 | Esc；冻结运动、重力和计时；失焦自动暂停 |
+| 失败后再试 | 恢复所有物品的相同 seed 布局，保留已使用尝试次数 |
+| 重新挑战 | R 后确认；回收连接与速度，次数重新开始 |
+| 取消 / 返回 | 暂停侧栏；清除本轮状态并恢复初始布局 |
+| 设置 | 音量、文字大小、镜头平滑、距离、PIP 质量 |
 
-单个薄荷礼盒、5 次尝试、seed `20261112`。先对准左右，再侧视对准深度。一次 Enter 依次执行下降、闭爪、提升、移送、释放、稳定、结果。无付费、随机中奖、网络、EEG、BCI 或真实机械臂连接。
+## 三个挑战与抓持差异
 
-## 实现与资源
+| 挑战 | 目标与物品 | 策略与结果 |
+|---|---|---|
+| C01 | 单个薄荷礼盒，5 次，seed 20261113 | 规则盒体，练习正面 X 与侧面 Z 定位；侧面形成包围接触后才能抓持 |
+| C02 | 礼盒、云朵兔、狐狸同时存在，目标云朵兔，4 次，seed 20261114 | 兔子有头部、耳朵与躯干的复合刚体碰撞；对准躯干，避开头耳。抓错物品即使进入出口也不计奖 |
+| C03 | 三种物品，目标偏心狐狸，4 次，seed 20261115 | 右侧铜色配重对应 +0.055m 真实 Rigidbody 重心偏移。按外形中心抓会产生较大重力力矩并滑落；靠近配重点可稳定提升 |
 
-- `ClawSession` 为状态与结算权威，拒绝非法跳转、重复 Enter 和旧 session/attempt。`GraspTaskController` 按 FixedUpdate 执行，无旧协程回写。
-- `GantryDriver` 单次固定步积分连续输入，归一化对角速度、限制加速度和 XYZ 工作区，独立 Y 升降。姿态固定；不支持的工具旋转请求会被拒绝。运动无进展或自动阶段超时报错；人工观察与定位不计超时。
-- `GripperController` 为游戏级混合抓持：三指几何探针在实际奖品 Collider 上验证至少两个接触、中心偏移和高度，然后建立有断裂阈值的临时 FixedJoint。连接保留当前世界姿态，不把远处奖品瞬移到爪下。奖品保留 Rigidbody、重力和碰撞；断裂会记录滑落。
-- 出口有真实地板开孔、下落通道、碰撞侧壁与托盘。全奖品 bounds 必须进入有效区域，且本轮已释放、目标 ID 匹配、连续稳定 0.3s 才可计奖一次。仅碰到爪、进入 Trigger 边缘或仍被夹持不算成功。
-- reset / cancel / disable / quit 会停止驱动、立即解除连接引用、回收关节并清除奖品速度。游戏暂停使用 Time.timeScale，并在返回、重开、禁用及退出时恢复原值。
-- 机柜、导轨、滑车、吊线、三爪、玻璃、控台、出口、礼盒与街机背景均为本次原创基础几何。奶油白/银色、薄荷与少量暖色；没有顶棚网格。透明窗保留碰撞，但可看到机内与收集托盘。不是 PBR 毛绒或工程级抓取仿真。
-- 所有运行时连接均为序列化类型引用；无全局启动钩子，不会打开或接管 PuzzleScene。完整机柜 Prefab 自带 C01 引用；单独部件 Prefab 作为可复用模型/物理模板。场景与 Prefab 是生成器维护的独立快照，场景不依赖运行时查找或自动生成。
+挑战、目标 ID、seed、位置、尝试限制、抓持 profile 和成功规则均位于 `Challenges/*.asset`。Profile 分别设置质量、重心、接触深度、下降速度、表面容差、穿透上限、包围跨度、断裂力/力矩与稳定时间。没有随机中奖率，也没有软体仿真或医学疗效声明。
 
-运行时依赖仅为仓库现有 Unity 模块。`IClawInputSource` 分离键盘输入；`IManipulatorDriver` 保留任务级 Pose/夹爪/停止接口。当前任务规划仍直接使用 GantryDriver 的工作区、局部坐标、Aim/Step/ResetPose；未来 RobotArm 不是即插即用，必须再拆分任务空间、tick/reset 及安全适配器，不能声称只替换 Prefab 即可接入真机。
+## P0 抓取与通用执行器
 
-## 验证记录
+1. `GraspPlanner` 从机器上方向实际 Collider 射线获取表面。快接近高度高于所有活动奖品的完整复合 bounds；超过工作区时拒绝，不用重心作为下降终点。
+2. 到达安全位置后重新读取实际表面，停下速度，转入单独 `ContactDescent`，以 profile 的低速下降到由表面定义的抓持带。
+3. 下降每个固定步预测爪指/掌部碰撞，检查奖品、地板和机柜；有阻挡即停止。三指闭合采用碰撞裁剪与有限次二分，保留接触前的安全位置。
+4. 物理指垫球和指杆胶囊真实参与碰撞；`ComputePenetration`、指垫中心在表面外侧、间隙/穿透阈值、相反接触法线和足够接触跨度一起决定是否可抓。探针在物体内部、同侧两个触点或深度穿入都不会被误当成功。
+5. 合格后建立有断裂阈值的 FixedJoint，保持当前世界姿态。提升中检查实际断裂、锚点漂移和重力偏心力矩；滑落时解除连接并保留重力。
+6. 仅本轮已释放的指定目标，完整复合 bounds 进入出口并连续稳定 0.3s，才可结算一次；其他奖品、首次碰边、旧 session/attempt 或仍被夹持均不能获奖。
 
-实际执行的 Python 检查和原始输出见 `STATIC_VALIDATION.txt`。这些检查覆盖文件/GUID/importer、完整序列化引用、开孔的中央落物通路、确定性资源生成与字体覆盖；原 Sokoban 的八关可解性和现有 22 项 Python 工具测试仍通过。
+`GraspTaskController` 只依赖世界 Pose 的 `IManipulatorDriver`、`ClawTaskSpace` 与模拟抓手服务。位置、速度、tick、jog、reset、状态/错误反馈、停止和工作区约束分离；只接受声明为模拟的执行器。场景内的 `GantryDriver` 和可切换的 `SimulatedRobotArmDriver` 遵守相同合约。后者是替代的世界空间工具模拟器，**没有真实机械臂模型、IK、标定、ROS、串口、网络通信或硬件控制**。未来真机仍需独立硬件安全层；游戏程序不能成为唯一安全保护。
 
-新增 **14 项 EditMode** 测试：有限状态、重入、暂停、目标/释放/身份/稳定结算条件、重置、尝试上限、相机方向、六向限位、非法数值、Stop、144Hz 输入配合 50Hz 物理、独立 seed、不改变 Unity 全局随机状态、完整场景引用。新增 **2 项 PlayMode** 测试：真实对齐后抓取释放并落入出口；持有中暂停再重开，检查连接与身份回收。**两组 Unity 测试均未执行，没有可交付的真实 XML。**
+状态机检查执行器 Error，也检查实际到位距离与姿态；驱动器声称 Idle 但尚未到达不会被当作完成。自动阶段没有进展或超时会停止并回收约束。无协程在重开后继续回写。
 
-在已安装且授权的准确版本 Windows Editor 上，可运行：
+## UI、声音与原创资源
+
+- CanvasScaler、锚点、安全区域和可滚动侧栏替代 IMGUI；所有文字使用独立 **Claw UI Sans** 动态 TMP 位图字体，源自授权 Noto Sans CJK SC 子集。字型创建前载入共享 Shader；每个文字先在 inactive 状态绑定字体再激活，避免依赖全局默认字体。
+- PIP 只拥有一个额外 Camera 和 RenderTexture，不复制 AudioListener。切换质量、关闭、禁用和销毁均释放资源；界面清除旧纹理引用。
+- 移动、快接近、慢接触、闭爪、提升、移送、释放、滑落、成功、失败有不同原创确定性合成音及电机层；暂停和取消清理音频。
+- 原创圆角盒/椭球 Mesh 模块、模块化机柜部件、三类奖品、织物/塑料/拉丝纹理及织物法线图，使用原 Standard 金属度/光滑度参数；没有付费或授权不明的模型。视觉是小规模原创游戏资源，不冒充已验证的写实 PBR 或真实毛绒力学。没有顶棚网格。
+- 资源生成器保护已编辑的生成文件并保留 GUID；场景和完整机柜 Prefab 为自带引用的独立快照。单部件 Prefab 作为可复用模型/碰撞模板，在完整机柜中绑定环境碰撞引用。
+
+## 验证与交付
+
+实际静态输出见 `STATIC_VALIDATION.txt`。完整场景/Prefab 的局部引用、GUID/importer、三个挑战与独立 profile、表面规划边界、源代码隔离、原始纹理和字体可复现检查通过；它们不代替 C# 编译或 Unity 物理运行。
+
+新增/更新 Unity 测试覆盖：状态/重入/结算/seed/限位；内探针与深穿透拒绝；相反接触/包围跨度；真实表面高度；模拟接口与错误反馈；机柜/地板预测停止；相机限制/PIP 生命周期；三种分辨率布局；中文字体与活跃 Canvas 重建；不同声音；完整导入资源引用。PlayMode 有实际 `Acceptance_C01` / `Acceptance_C02` / `Acceptance_C03`、自然偏心滑落、抓错物品投放、每阶段暂停重开、失败恢复、30 次真实抓取与 20 次中途重开测试。
+
+**这些 Unity 测试在本环境均未运行。没有真实编译日志、NUnit XML、Windows EXE/ZIP、画面截图或视频，不能把源码测试数量当成已通过的游戏验收。**
+
+在有授权的准确 Editor、Windows Build Support 和可用图形设备的机器执行：
 
 ```powershell
-$project = (Get-Location).Path
-New-Item -ItemType Directory -Force BuildOutput/ClawMachineEvidence | Out-Null
-& $env:UNITY_EDITOR_PATH -batchmode -nographics -projectPath $project -runTests -testPlatform EditMode -testFilter ClawMachine.Tests.EditMode -testResults BuildOutput/ClawMachineEvidence/EditMode.xml -logFile BuildOutput/ClawMachineEvidence/EditMode.log
-& $env:UNITY_EDITOR_PATH -batchmode -nographics -projectPath $project -runTests -testPlatform PlayMode -testFilter ClawMachine.Tests.PlayMode -testResults BuildOutput/ClawMachineEvidence/PlayMode.xml -logFile BuildOutput/ClawMachineEvidence/PlayMode.log
-# 必须人工检查 XML 为非零测试且无 failed / skipped，再执行构建。
-& $env:UNITY_EDITOR_PATH -batchmode -quit -projectPath $project -executeMethod ClawMachine.Editor.ClawSceneBuilder.BuildWindows -logFile BuildOutput/ClawMachineEvidence/WindowsBuild.log
+$env:UNITY_EDITOR_PATH = 'D:/Unity/2022.3.62f3c1/Editor/Unity.exe'
+python Tools/run_game_delivery.py --game claw
 ```
 
-或在 Test Runner 按 `ClawMachine.Tests` 过滤，执行两种模式，再菜单 `Claw Machine > Build Windows C01`。输出入口 `BuildOutput/ClawMachine/ClawMachine.exe`，本次未生成或伪造 EXE / ZIP。
+统一流程先运行 `ClawMachine.Editor.ClawSceneBuilder.PrepareForValidation`，再执行本游戏 EditMode / PlayMode。只有真实 XML 非零且全部通过、没有跳过、三个 Acceptance 类别均实际出现、实际 Editor 版本匹配、源指纹未变，才构建 Windows 并校验完整程序目录后打包。PIP/TMP 需要图形设备，**不要加 `-nographics`**；Null renderer 跳过图形测试会使严格门禁失败。旧 `Tools/run_delivery.py` 仍是 Sokoban 专用流程，不能用来证明本游戏。
 
-人工验收仍需：正/左/右视角清晰度；正面对 X、侧面对 Z；成功和偏离抓取；每个阶段暂停与重置；30 次连续抓取及 20 次重开；1280×720、1366×768、1920×1080 中文 UI；Windows 真机性能及操控舒适度。保存真实 Editor 日志、XML、三视角截图/视频与构建记录后才可标记这些项目通过。
+构建入口 `ClawMachine.Editor.ClawSceneBuilder.BuildWindows` 支持 `-buildOutput <新的输出文件夹>`；默认 `BuildOutput/ClawMachine/ClawMachine.exe`。没有准确 Editor 时统一流程记录 blocked，不生成假的 XML、ZIP 或视频。`ENVIRONMENT_BLOCKED.json` 保留开发工作区运行的原始摘要；其中 sourceCommit 是运行当时 HEAD，实际未提交工作区由 sourceBeforeImport 标识，不是发布版运行证明。
 
-## 可复现编辑
-
-```bash
-python docs/Game02_ClawMachine/generate_prototype.py --check
-python docs/Game02_ClawMachine/validate_prototype.py
-python Tools/validate_project.py
-```
-
-普通 `generate_prototype.py` 只会创建缺失资源或更新与上次生成记录一致的资源；遇到手工改过的生成文件会停止，`.meta` GUID 永远先校验。确实要从脚本重建这些文件时，审查差异后用 `--force`。`GeneratedAssets.json` 记录内容摘要。字体重建与许可见 `ASSET_LICENSES.md`。
-
-## 后续范围
-
-尚未实现：C02–C05、多物体/重心挑战、PIP、鼠标小角度绕机、完整电机循环声、PBR 美术、存档、硬件/ROS/BCI/EEG/软体。C01 采用接触代理和刚性礼盒；FixedJoint 参数、物理实际成功路径与全部镜头/UI 需要在准确 Editor 内验收调整。此提交是可在 Unity 中打开和检验的 M0+M1 源码原型，不是已通过 Windows 实测的发布版本。
+仍须在目标 Windows 机器完成三视角/PIP可读性、三分辨率实际布局、抓持与滑落手感、30/20 长程稳定性、音效舒适度、CPU/GPU 性能与录屏验收。C04/C05、机器人 IK/真机、BCI/EEG、软体不属于此次上传审查要求，未实现也未宣称实现。

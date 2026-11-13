@@ -1,4 +1,4 @@
-"""Read-only, standard-library structural checks for the isolated C01 prototype.
+"""Read-only, standard-library structural checks for the C01-C03 audit implementation.
 
 These checks do not compile C#, simulate PhysX, render a screenshot or replace
 the authored Unity tests. Run Python Tools/validate_project.py as well.
@@ -65,19 +65,45 @@ def check():
         text=source.read_text()
         for forbidden in ('FirstPersonSokoban.', 'UnityEditor', 'System.Net', 'DllImport', 'UnityEngine.Random', 'FindObjectOfType', 'GameObject.Find'):
             if forbidden in text:errors.append(f'{source.name}: unexpected runtime dependency {forbidden}')
+    # Audit source requirements: configuration assets and dependencies, not gameplay proof.
+    manifests=json.loads((ROOT/'Packages/manifest.json').read_text())
+    if manifests['dependencies'].get('com.unity.textmeshpro')!='3.0.6':errors.append('TMP must remain pinned3.0.6')
+    targets=[];seeds=[]
+    for name in ('C01','C02','C03'):
+        path=BASE/'Challenges'/f'{name}.asset'
+        if not path.exists():errors.append('Missing challenge '+name);continue
+        data=path.read_text();target=re.search(r'^  targetId: (.+)$',data,re.M).group(1).strip('"')
+        spawns=re.findall(r'^  - prizeId: (.+)$',data,re.M)
+        if target not in spawns:errors.append(name+': target is not among configured spawns')
+        if name!='C01' and len(spawns)<3:errors.append(name+': needs three configured prize choices')
+        targets.append(target);seeds.append(re.search(r'^  seed: (.+)$',data,re.M).group(1))
+        if 'failedAttemptResetPolicy: 0' not in data:errors.append(name+': failed attempt policy not declared')
+    if len(set(targets))!=3 or len(set(seeds))!=3:errors.append('Challenge targets/seeds must differ across C01-C03')
+    task=(BASE/'Scripts/Core/GraspTaskController.cs').read_text()
+    task=re.sub(r'//[^\n]*','',task)
+    if re.search(r'\bGantryDriver\b',task):errors.append('Task planning still depends on Gantry implementation')
+    ui=(BASE/'Scripts/UI/ClawGameUI.cs').read_text()
+    if re.search(r'\bOnGUI\s*\(',ui):errors.append('UI still uses IMGUI')
+    for requirement in ('CanvasScaler','TextMeshProUGUI','TMP_FontAsset','RawImage','NormalizeSafeArea'):
+        if requirement not in ui:errors.append('Missing UI source capability '+requirement)
+    for path in ('Scripts/Drivers/SimulatedRobotArmDriver.cs','Scripts/Drivers/ClawTaskSpace.cs','Scripts/Audio/ClawAudioController.cs','Scripts/Presentation/ClawMeshModule.cs'):
+        if not (BASE/path).exists():errors.append('Missing audit source '+path)
+    for assembly in ('Scripts/ClawMachine.Runtime.asmdef','Tests/EditMode/ClawMachine.EditModeTests.asmdef','Tests/PlayMode/ClawMachine.PlayModeTests.asmdef'):
+        refs=json.loads((BASE/assembly).read_text()).get('references',[])
+        if not {'Unity.TextMeshPro','Unity.ugui'}<=set(refs):errors.append('TMP/UI assembly refs missing: '+assembly)
     # The exact Editor and baseline renderer remain unchanged.
     if '2022.3.62f3c1' not in (ROOT/'ProjectSettings/ProjectVersion.txt').read_text():errors.append('Editor version changed')
     build=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text()
     for path in ('Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity','Assets/ClawMachine/Scenes/ClawMachineScene.unity'):
         if path not in build:errors.append('Build Settings missing '+path)
-    for command in ([sys.executable,str(Path(__file__).with_name('generate_prototype.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_ui_font.py')),'--check']):
+    for command in ([sys.executable,str(Path(__file__).with_name('generate_prototype.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_ui_font.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_visual_assets.py')),'--check']):
         result=subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
         print(result.stdout,end='')
         if result.returncode:errors.append(result.stderr.strip() or result.stdout.strip())
     if errors:
         for message in errors:print('[FAIL]',message)
         return 1
-    print('[OK] C01 local object/asset references, open chute path, isolation, entry scene and font.')
+    print('[OK] C01-C03 local references, open chute path, configs/profiles, executor separation, Canvas/TMP, owned visual assets and font.')
     print('NOT VERIFIED: C# compilation, Unity tests, PhysX grip/drop, camera/UI rendering, Windows build.')
     return 0
 

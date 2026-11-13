@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace ClawMachine
 {
-    public enum GraspState { Idle, Aiming, Lowering, Closing, Lifting, Transporting, Releasing, Settling, Result, End, Resetting, Error }
-    public enum GraspFailure { None, Misaligned, NoContact, UnstableGrip, Slipped, MissedChute, Timeout, Cancelled, Configuration }
+    public enum GraspState { Idle, Aiming, Approaching, Lowering = Approaching, ContactDescent, Closing, Lifting, Transporting, Releasing, Settling, Result, End, Resetting, Error }
+    public enum GraspFailure { None, Misaligned, NoContact, Penetrating, Obstructed, UnstableGrip, Slipped, WrongTarget, MissedChute, Timeout, Cancelled, Configuration }
 
     // Single authority for transitions, attempt identity and once-only settlement.
     public sealed class ClawSession
@@ -31,7 +31,7 @@ namespace ClawMachine
         {
             if (Paused || State != GraspState.Aiming || Remaining == 0) return false;
             AttemptId++; Released = Awarded = false; Failure = GraspFailure.None;
-            Set(GraspState.Lowering); return true;
+            Set(GraspState.Approaching); return true;
         }
         public bool Advance(GraspState next)
         {
@@ -44,8 +44,9 @@ namespace ClawMachine
             switch (from)
             {
                 case GraspState.Idle: return to == GraspState.Aiming;
-                case GraspState.Aiming: return to == GraspState.Lowering;
-                case GraspState.Lowering: return to == GraspState.Closing;
+                case GraspState.Aiming: return to == GraspState.Approaching;
+                case GraspState.Approaching: return to == GraspState.ContactDescent;
+                case GraspState.ContactDescent: return to == GraspState.Closing;
                 case GraspState.Closing: return to == GraspState.Lifting;
                 case GraspState.Lifting: return to == GraspState.Transporting;
                 case GraspState.Transporting: return to == GraspState.Releasing;

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: c12cb84cd88ad3d4e3456695d5866d5f, type: 3}
+  m_Name: WeightedProfile
+  m_EditorClassIdentifier:
+  strategyHint: "狐狸右侧铜色配重更重。对准配重点，偏心抓取会滑落。"
+  mass: 0.45
+  centerOfMass: {x: 0.055, y: 0, z: 0}
+  maxCenterOffset: 0.08
+  contactTolerance: 0.008
+  maxPenetration: 0.003
+  surfaceCaptureDepth: 0.07
+  approachClearance: 0.16
+  contactDescentSpeed: 0.075
+  verticalTolerance: 0.045
+  minimumContactSpan: 0.1
+  breakForce: 18
+  breakTorque: 0.13
+  maximumGripDrift: 0.035
+  stableSpeed: 0.08
+  stableDwell: 0.3
+  settleTimeout: 3.2

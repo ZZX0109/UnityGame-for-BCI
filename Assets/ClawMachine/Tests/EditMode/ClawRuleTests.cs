@@ -23,6 +23,8 @@ namespace ClawMachine.Tests.EditMode
             Assert.IsFalse(session.BeginAttempt(), "A held or repeated Enter cannot start a second run.");
             Assert.IsFalse(session.Advance(GraspState.Transporting));
             Assert.AreEqual(GraspState.Lowering, session.State);
+            Assert.IsFalse(session.Advance(GraspState.Closing), "The slow contact descent cannot be skipped.");
+            Assert.IsTrue(session.Advance(GraspState.ContactDescent));
             Assert.IsTrue(session.Advance(GraspState.Closing));
             Assert.IsFalse(session.Advance(GraspState.Settling));
             Assert.AreEqual(1, session.AttemptId);
@@ -39,10 +41,10 @@ namespace ClawMachine.Tests.EditMode
             session.Pause(false);
             Assert.IsTrue(session.BeginAttempt());
             session.Pause(true);
-            Assert.IsFalse(session.Advance(GraspState.Closing));
+            Assert.IsFalse(session.Advance(GraspState.ContactDescent));
             Assert.AreEqual(GraspState.Lowering, session.State);
             session.Pause(false);
-            Assert.IsTrue(session.Advance(GraspState.Closing));
+            Assert.IsTrue(session.Advance(GraspState.ContactDescent));
         }
 
         [Test]
@@ -177,6 +179,8 @@ namespace ClawMachine.Tests.EditMode
                 Assert.IsFalse(driver.TryMoveTo(new Pose(new Vector3(float.NaN, 1, 0), Quaternion.identity), 0.35f));
                 Assert.IsFalse(driver.TryMoveTo(new Pose(new Vector3(0, float.PositiveInfinity, 0), Quaternion.identity), 0.35f));
                 Assert.IsFalse(driver.TryMoveTo(new Pose(valid.position, new Quaternion(float.NaN, 0, 0, 1)), 0.35f));
+                Assert.IsFalse(driver.TryReset(new Pose(valid.position, new Quaternion(float.NaN, 0, 0, 1))));
+                Assert.IsFalse(driver.TryReset(new Pose(valid.position, new Quaternion(0, 0, 0, 0))));
                 Bounds limits = driver.Workspace;
                 for (int axis = 0; axis < 3; axis++)
                 {
@@ -212,7 +216,7 @@ namespace ClawMachine.Tests.EditMode
         }
 
         [Test]
-        public void HeldAim_At144HzInputAnd50HzPhysicsMovesContinuously()
+        public void HeldWorldJog_At144HzCommandsAnd50HzPhysicsMovesContinuously()
         {
             float oldFixedDelta = Time.fixedDeltaTime;
             try
@@ -224,11 +228,11 @@ namespace ClawMachine.Tests.EditMode
                     float lastX = fixture.Driver.LocalPosition.x;
                     for (int render = 1; render <= 288; render++)
                     {
-                        fixture.Driver.Aim(Vector2.right, 0.35f, 1f / 144f);
+                        Assert.IsTrue(fixture.Driver.TryJog(Vector3.right * 0.35f));
                         float elapsed = render / 144f;
                         while (fixedSteps < 100 && (fixedSteps + 1) * 0.02f <= elapsed + 0.000001f)
                         {
-                            fixture.Driver.Step(0.02f); fixture.Physics.Simulate(0.02f); fixedSteps++;
+                            fixture.Driver.Tick(0.02f); fixture.Physics.Simulate(0.02f); fixedSteps++;
                             float x = fixture.Driver.LocalPosition.x;
                             Assert.Greater(x, lastX, "A held direction must survive render frames without a physics tick.");
                             lastX = x;
@@ -238,6 +242,7 @@ namespace ClawMachine.Tests.EditMode
                     Assert.Greater(fixture.Driver.LocalPosition.x, 0.5f, "The old per-frame tiny-target bug moved too slowly or stopped.");
                     Assert.LessOrEqual(fixture.Driver.LocalPosition.x, 0.70001f, "The simulator must obey the 0.35m/s speed bound.");
                     Assert.IsTrue(fixture.Driver.IsBusy);
+                    Assert.LessOrEqual(fixture.Driver.CurrentVelocity.magnitude, 0.35001f);
                 }
             }
             finally { Time.fixedDeltaTime = oldFixedDelta; }
@@ -338,6 +343,7 @@ namespace ClawMachine.Tests.EditMode
 
         private static void ToReleasing(ClawSession session)
         {
+            Assert.IsTrue(session.Advance(GraspState.ContactDescent));
             Assert.IsTrue(session.Advance(GraspState.Closing));
             Assert.IsTrue(session.Advance(GraspState.Lifting));
             Assert.IsTrue(session.Advance(GraspState.Transporting));

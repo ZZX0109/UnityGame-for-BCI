@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 
 namespace FirstPersonSokoban.Presentation
 {
-    /// <summary>A shallow visual-only induction target; completion never changes board logic.</summary>
+    /// <summary>A flush square gallery target; completion never changes board logic.</summary>
     public sealed class SensorPlatformVisual : MonoBehaviour
     {
         private readonly List<Mesh> meshes = new List<Mesh>();
@@ -38,64 +38,54 @@ namespace FirstPersonSokoban.Presentation
         {
             // Hide the old square indicator without removing any rule-bearing component.
             foreach (Renderer renderer in GetComponentsInChildren<Renderer>()) renderer.enabled = false;
-            var root = new GameObject("Embedded Sensor Platform");
+            var root = new GameObject("Gallery Floor Target");
             root.transform.SetParent(transform, false);
-            Primitive(root.transform, "Recessed Sensor Housing", PrimitiveType.Cylinder,
-                new Vector3(0, 0.012f, 0), new Vector3(1.78f, 0.009f, 1.78f), palette.Dark);
-            Ring(root.transform, "Machined Sensor Bezel", 0.855f, 0.89f, 0.023f, palette.Metal);
-            rings.Add(Ring(root.transform, "Sensor Activation Ring", 0.765f, 0.795f, 0.029f, palette.GoalActive));
-            Ring(root.transform, "Inner Sensor Track", 0.61f, 0.615f, 0.025f, palette.Trim);
-            for (int i = 0; i < 4; i++)
-            {
-                Quaternion angle = Quaternion.Euler(0, i * 90f, 0);
-                Transform tick = Primitive(root.transform, "Sensor Alignment Tick", PrimitiveType.Cube,
-                    angle * new Vector3(0, 0.029f, 0.69f), new Vector3(0.028f, 0.005f, 0.10f), palette.GoalActive).transform;
-                tick.localRotation = angle;
-                rings.Add(tick.GetComponent<Renderer>());
-            }
-            Primitive(root.transform, "Sensor Centre X", PrimitiveType.Cube,
-                new Vector3(0, 0.025f, 0), new Vector3(0.24f, 0.004f, 0.012f), palette.Trim);
-            Primitive(root.transform, "Sensor Centre Y", PrimitiveType.Cube,
-                new Vector3(0, 0.025f, 0), new Vector3(0.012f, 0.004f, 0.24f), palette.Trim);
-            sweepRenderer = Ring(root.transform, "Completion Sweep", 0.80f, 0.817f, 0.033f, palette.GoalComplete);
+            Primitive(root.transform, "Cream Target Inset", PrimitiveType.Cube,
+                new Vector3(0, 0.012f, 0), new Vector3(1.78f, 0.018f, 1.78f), palette.Wall);
+            rings.Add(SquareOutline(root.transform, "Terracotta Target Outline", 0.79f, 0.87f,
+                0.024f, palette.GoalActive));
+            sweepRenderer = SquareOutline(root.transform, "Completion Sweep", 0.73f, 0.76f,
+                0.029f, palette.GoalComplete);
             sweep = sweepRenderer.transform;
             sweep.gameObject.SetActive(false);
             block = new MaterialPropertyBlock();
             SetComplete(false);
         }
 
-        private Renderer Ring(Transform parent, string name, float inner, float outer, float height, Material material)
+        private Renderer SquareOutline(Transform parent, string name, float inner, float outer,
+            float height, Material material)
         {
-            const int segments = 64;
-            var vertices = new Vector3[(segments + 1) * 2];
-            var uv = new Vector2[vertices.Length];
-            var triangles = new int[segments * 6];
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                var direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
-                vertices[i * 2] = direction * inner;
-                vertices[i * 2 + 1] = direction * outer;
-                uv[i * 2] = new Vector2((float)i / segments, 0);
-                uv[i * 2 + 1] = new Vector2((float)i / segments, 1);
-                if (i == segments) continue;
-                int t = i * 6;
-                int v = i * 2;
-                triangles[t] = v; triangles[t + 1] = v + 2; triangles[t + 2] = v + 1;
-                triangles[t + 3] = v + 1; triangles[t + 4] = v + 2; triangles[t + 5] = v + 3;
-            }
+            // A single horizontal mesh keeps the square floor marking cheap and
+            // readable. Its eight vertices never add collision or raised obstacles.
             var mesh = new Mesh { name = name };
-            mesh.vertices = vertices;
-            mesh.uv = uv;
+            mesh.vertices = new[]
+            {
+                new Vector3(-outer, 0, -outer), new Vector3(-outer, 0, outer),
+                new Vector3(outer, 0, outer), new Vector3(outer, 0, -outer),
+                new Vector3(-inner, 0, -inner), new Vector3(-inner, 0, inner),
+                new Vector3(inner, 0, inner), new Vector3(inner, 0, -inner)
+            };
+            var triangles = new int[24];
+            for (int side = 0; side < 4; side++)
+            {
+                int next = (side + 1) % 4;
+                int offset = side * 6;
+                triangles[offset] = side;
+                triangles[offset + 1] = next;
+                triangles[offset + 2] = side + 4;
+                triangles[offset + 3] = next;
+                triangles[offset + 4] = next + 4;
+                triangles[offset + 5] = side + 4;
+            }
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             meshes.Add(mesh);
-            var ring = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
-            ring.transform.SetParent(parent, false);
-            ring.transform.localPosition = Vector3.up * height;
-            ring.GetComponent<MeshFilter>().sharedMesh = mesh;
-            Renderer renderer = ring.GetComponent<Renderer>();
+            var outline = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+            outline.transform.SetParent(parent, false);
+            outline.transform.localPosition = Vector3.up * height;
+            outline.GetComponent<MeshFilter>().sharedMesh = mesh;
+            Renderer renderer = outline.GetComponent<Renderer>();
             renderer.sharedMaterial = material;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
@@ -136,16 +126,16 @@ namespace FirstPersonSokoban.Presentation
         {
             sweep.gameObject.SetActive(true);
             const float duration = 0.65f;
-            Color success = new Color(0.447f, 0.886f, 0.541f);
+            Color success = LabMaterials.SuccessColor;
             for (float elapsed = 0; elapsed < duration; elapsed += Time.deltaTime)
             {
                 float fraction = Mathf.Clamp01(elapsed / duration);
-                float scale = GameSettings.ComfortMode ? 1f : Mathf.Lerp(0.55f, 1.08f, fraction);
+                float scale = GameSettings.ComfortMode ? 1f : Mathf.Lerp(0.70f, 1.08f, fraction);
                 sweep.localScale = new Vector3(scale, 1, scale);
                 // One gentle confirmation, not a repeated flash. No material allocation.
-                Color tint = Color.Lerp(success, new Color(0.12f, 0.18f, 0.18f), fraction);
+                Color tint = Color.Lerp(success, palette.Wall.color, fraction);
                 block.SetColor("_Color", tint);
-                block.SetColor("_EmissionColor", success * (1f - fraction) * 0.45f);
+                block.SetColor("_EmissionColor", success * (1f - fraction) * 0.08f);
                 sweepRenderer.SetPropertyBlock(block);
                 yield return null;
             }

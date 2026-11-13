@@ -1,4 +1,4 @@
-"""Deterministic offline authoring of the checked-in C01 scene/prefabs.
+"""Deterministic offline authoring of the checked-in C01-C03 scene/prefabs.
 
 Run from any directory with Python 3. No Unity, downloaded assets or dependencies.
 The manifest protects hand-edited generated assets: an ordinary run refuses to
@@ -122,16 +122,46 @@ def build():
         'Graphite':((.17,.20,.20,1),.6,.38), 'Mint':((.37,.68,.55,1),.08,.35),
         'Ribbon':((.94,.82,.48,1),.1,.32), 'Floor':((.74,.65,.53,1),.02,.25),
         'Backdrop':((.84,.78,.66,1),.03,.3), 'Light':((.96,.97,.91,1),.1,.55),
-        'Rose':((.73,.45,.39,1),.08,.3), 'Glass':((.69,.90,.85,.055),.1,.65)}
+        'Plush':((.84,.66,.59,1),.0,.19), 'Amber':((.75,.39,.19,1),.08,.31), 'Rose':((.73,.45,.39,1),.08,.3), 'Glass':((.69,.90,.85,.055),.1,.65)}
     for name,(color,metal,smooth) in materials.items():
         glass=name=='Glass'
         floats={'_Metallic':metal,'_Glossiness':smooth,'_Mode':3 if glass else 0,'_SrcBlend':5 if glass else 1,'_DstBlend':10 if glass else 0,'_ZWrite':0 if glass else 1}
         output('Materials/'+name+'.mat',HEADER+'--- !u!21 &2100000\nMaterial:\n  serializedVersion: 8\n  m_Name: '+name+'\n  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}\n  m_ValidKeywords: '+('[_ALPHAPREMULTIPLY_ON]' if glass else '[]')+'\n  m_InvalidKeywords: []\n  m_LightmapFlags: 4\n  m_EnableInstancingVariants: 1\n  m_CustomRenderQueue: '+('3000' if glass else '-1')+'\n  stringTagMap: '+('{RenderType: Transparent}' if glass else '{}')+'\n  m_SavedProperties:\n    serializedVersion: 3\n    m_TexEnvs: []\n    m_Ints: []\n    m_Floats:\n'+''.join('    - %s: %s\n'%p for p in floats.items())+'    m_Colors:\n    - _Color: {r: %s, g: %s, b: %s, a: %s}\n    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}\n'%color)
+    for name in ('Ivory','Silver','Plush','Amber','Mint'):
+        texture='FabricWeave' if name=='Plush' else 'SilverBrush' if name=='Silver' else 'IvoryMicrograin'
+        path=asset('Materials/'+name+'.mat')
+        env='    m_TexEnvs:\n    - _MainTex:\n        m_Texture: '+external('Textures/'+texture+'.png',2800000,3)+'\n        m_Scale: {x: 3, y: 3}\n        m_Offset: {x: 0, y: 0}\n'
+        if name=='Plush':
+            env+='    - _BumpMap:\n        m_Texture: '+external('Textures/FabricNormal.png',2800000,3)+'\n        m_Scale: {x: 5, y: 5}\n        m_Offset: {x: 0, y: 0}\n'
+            outputs[path]=outputs[path].replace('m_ValidKeywords: []','m_ValidKeywords: [_NORMALMAP]')
+        outputs[path]=outputs[path].replace('    m_TexEnvs: []\n',env)
     output('Materials/PrizeFriction.physicMaterial',HEADER+'--- !u!134 &13400000\nPhysicMaterial:\n  m_Name: PrizeFriction\n  dynamicFriction: 0.6\n  staticFriction: 0.7\n  bounciness: 0\n  frictionCombine: 0\n  bounceCombine: 2\n')
-    output('Challenges/C01Profile.asset',HEADER+'--- !u!114 &11400000\nMonoBehaviour:\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_Script: '+external('Scripts/Prize/PrizeProfile.cs')+'\n  m_Name: C01Profile\n  m_EditorClassIdentifier: \n  mass: 0.3\n  centerOfMass: {x: 0, y: 0, z: 0}\n  maxCenterOffset: 0.05\n  contactTolerance: 0.035\n  verticalTolerance: 0.045\n  breakForce: 24\n  stableSpeed: 0.08\n  stableDwell: 0.3\n  settleTimeout: 2.5\n')
-    output('Challenges/C01.asset',HEADER+'--- !u!114 &11400000\nMonoBehaviour:\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_Script: '+external('Scripts/Core/ClawChallengeDefinition.cs')+'\n  m_Name: C01\n  m_EditorClassIdentifier: \n  challengeId: C01\n  title: "C01 · 三轴定位教学"\n  prizeId: mint-parcel\n  targetId: mint-parcel\n  seed: 20261112\n  attemptLimit: 5\n  spawnPosition: {x: 0.08, y: 0.92, z: 0.08}\n  spawnEuler: {x: 0, y: 0, z: 0}\n  cameraPolicy: FrontLeftRight\n  successRule: ReleasedTargetFullyInsideChuteAndStable\n  graspProfile: '+external('Challenges/C01Profile.asset',11400000,2)+'\n')
+    profiles=[
+        ('C01Profile','中心抓取，规则侧面形成稳定三点接触。',.30,(0,0,0),.050,.09,24,1.2),
+        ('PlushProfile','云朵兔是复合刚体。对准躯干，慢速下降，避开耳朵和头部。',.22,(0,-.015,0),.045,.12,16,.55),
+        ('WeightedProfile','狐狸右侧铜色配重更重。对准配重点，偏心抓取会滑落。',.45,(.055,0,0),.080,.07,18,.13)]
+    for name,hint,mass,com,offset,depth,force,torque in profiles:
+        data=HEADER+'--- !u!114 &11400000\nMonoBehaviour:\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_Script: '+external('Scripts/Prize/PrizeProfile.cs')+'\n  m_Name: '+name+'\n  m_EditorClassIdentifier:\n'
+        data+='  strategyHint: '+json.dumps(hint,ensure_ascii=False)+'\n  mass: '+str(mass)+'\n  centerOfMass: '+vec(com)+'\n'
+        values=dict(maxCenterOffset=offset,contactTolerance=.008,maxPenetration=.003,surfaceCaptureDepth=depth,approachClearance=.16,contactDescentSpeed=.075,verticalTolerance=.045,minimumContactSpan=.10,breakForce=force,breakTorque=torque,maximumGripDrift=.035,stableSpeed=.08,stableDwell=.3,settleTimeout=3.2)
+        data+=''.join('  %s: %s\n'%pair for pair in values.items())
+        output('Challenges/'+name+'.asset',data)
+    slots=[('mint-parcel','薄荷礼盒','C01Profile'),('cloud-bunny','云朵兔','PlushProfile'),('amber-fox','偏心狐狸','WeightedProfile')]
+    layouts=[
+        ('C01','C01 · 三轴定位教学','对准薄荷礼盒。先看正面左右，再看侧面深度。','礼盒稳定，先练习安全接近与慢速接触。','mint-parcel',5,[(0,(.10,.92,.12))]),
+        ('C02','C02 · 云朵兔的邀请','三个物品中只有云朵兔是目标，抓错物体不会得分。','观察头部与躯干，选择躯干抓持带。','cloud-bunny',4,[(0,(-.28,.92,.20)),(1,(.08,.94,.25)),(2,(.30,.90,-.10))]),
+        ('C03','C03 · 偏心小狐狸','狐狸的右侧有铜色配重。居中外形不等于居中重心。','对准右侧配重点，偏心力矩过大会真实滑落。','amber-fox',4,[(0,(.29,.92,.30)),(1,(-.22,.94,.25)),(2,(.10,.90,-.08))])]
+    for index,(identifier,title,instructions,hint,target,attempts,spawns) in enumerate(layouts):
+        targetProfile=next(profile for key,display,profile in slots if key==target)
+        data=HEADER+'--- !u!114 &11400000\nMonoBehaviour:\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_Script: '+external('Scripts/Core/ClawChallengeDefinition.cs')+'\n  m_Name: '+identifier+'\n  m_EditorClassIdentifier:\n'
+        for key,value in dict(challengeId=identifier,title=title,instructions=instructions,gripHint=hint,prizeId=target,targetId=target).items():data+='  '+key+': '+json.dumps(value,ensure_ascii=False)+'\n'
+        data+='  seed: '+str(20261113+index)+'\n  attemptLimit: '+str(attempts)+'\n  failedAttemptResetPolicy: 0\n  cameraPolicy: FrontSidePipAndBoundedOrbit\n  successRule: ReleasedTargetFullyInsideChuteAndStable\n  graspProfile: '+external('Challenges/'+targetProfile+'.asset',11400000,2)+'\n  spawns:\n'
+        for slot,position in spawns:
+            key,display,profile=slots[slot]
+            data+='  - prizeId: '+key+'\n    displayName: '+json.dumps(display,ensure_ascii=False)+'\n    spawnPosition: '+vec(position)+'\n    spawnEuler: '+vec((0,0,0))+'\n    graspProfile: '+external('Challenges/'+profile+'.asset',11400000,2)+'\n'
+        output('Challenges/'+identifier+'.asset',data)
     s=Scene()
-    root=s.node('Claw Machine - C01 simulator')
+    root=s.node('Claw Atelier - three challenge simulator')
     cabinet=s.node('VisualCabinet',root)
     s.mesh('Rear plinth',cabinet,(0,.39,.26),(1.36,.76,.68),'Ivory',collide=True)
     s.mesh('Front right panel',cabinet,(.28,.40,-.58),(.72,.74,.12),'Ivory',collide=True)
@@ -164,7 +194,7 @@ def build():
     scoreNode=s.node('Settlement trigger - full prize dwell',chuteRoot,(-.34,.47,-.31))
     scoreBox=s.box(scoreNode,(.46,.48,.40),trigger=True)
     detector=s.mono(scoreNode,'Prize/PrizeChuteDetector',field('settlementVolume',scoreBox))
-    drop=s.node('Drop pose',root,(-.34,1.65,-.31))
+    drop=s.node('Drop pose',root,(-.34,1.56,-.31))
     s.mesh('Control console',cabinet,(.22,.84,-.72),(.85,.08,.25),'Ivory',collide=True)
     s.mesh('Grab button',cabinet,(.37,.90,-.73),(.055,.022,.055),'Rose',mesh=10206)
     s.mesh('Joystick stem',cabinet,(.02,.91,-.73),(.015,.055,.015),'Graphite',mesh=10206)
@@ -173,27 +203,61 @@ def build():
     bridge=s.mesh('X bridge',gantryRoot,(0,1.92,0),(1.08,.055,.06),'Silver')
     trolley=s.mesh('XZ trolley',gantryRoot,(0,1.92,0),(.20,.10,.16),'Graphite')
     cable=s.mesh('Y cable',gantryRoot,(0,1.86,0),(.012,.06,.012),'Graphite',mesh=10206)
-    tool=s.node('Tool - grip origin',gantryRoot,(0,1.65,0))
+    tool=s.node('Tool - grip origin',gantryRoot,(0,1.56,0))
     body=s.body(tool,True)
-    s.mesh('Gripper hub',tool,(0,.17,0),(.13,.065,.13),'Silver',mesh=10206)
-    fingers=[];pads=[]
+    s.mesh('Gripper hub',tool,(0,.30,0),(.13,.025,.13),'Silver',mesh=10206)
+    palm=s.box(tool,(.14,.05,.14),(0,.30,0))
+    fingers=[];pads=[];padColliders=[];physical=[palm]
     for i in range(3):
         angle=math.radians(90+i*120)
-        finger=s.node('Finger %d'%i,tool,(math.cos(angle)*.18,.07,math.sin(angle)*.18))
-        s.mesh('Silver finger',finger,(0,0,0),(.022,.18,.022),'Silver',mesh=10208)
-        s.mesh('Contact pad',finger,(0,-.07,0),(.033,.045,.033),'Mint',mesh=10207)
-        fingers.append(finger); pads.append(s.node('Contact probe',finger,(0,-.07,0)))
-    grip=s.mono(tool,'Gripper/GripperController',field('toolBody',body)+'  fingers:\n'+''.join('  - '+ref(n['t'])+'\n' for n in fingers)+'  contactPads:\n'+''.join('  - '+ref(n['t'])+'\n' for n in pads))
-    workspace=s.box(root,(.86,.74,.68),(0,1.28,0),trigger=True,enabled=False)
-    driver=s.mono(root,'Drivers/GantryDriver',transform_field('machineRoot',root)+field('workspaceVolume',workspace)+field('toolBody',body)+field('gripper',grip)+transform_field('bridge',bridge)+transform_field('trolley',trolley)+transform_field('cable',cable)+'  railHeight: 1.92\n  acceleration: 1.5\n  tolerance: 0.005\n')
-    prize=s.node('Target - mint parcel',root,(.08,.92,.08))
-    prizeBody=s.body(prize)
-    prizeCollider=s.box(prize,(.22,.24,.20))
-    s.mesh('Rigid parcel',prize,(0,0,0),(.22,.24,.20),'Mint')
-    s.mesh('Ribbon X',prize,(0,.122,0),(.224,.009,.032),'Ribbon')
-    s.mesh('Ribbon Z',prize,(0,.124,0),(.033,.009,.204),'Ribbon')
-    s.mesh('Front ribbon',prize,(0,0,-.102),(.033,.244,.008),'Ribbon')
-    prizePhysics=s.mono(prize,'Prize/PrizePhysics',field('body',prizeBody)+field('mainCollider',prizeCollider)+transform_field('machineRoot',root))
+        finger=s.node('Finger %d'%i,tool,(math.cos(angle)*.205,.13,math.sin(angle)*.205))
+        s.mesh('Silver finger',finger,(0,0,0),(.024,.14,.024),'Silver',mesh=10208)
+        s.mesh('Contact pad',finger,(0,-.13,0),(.036,.036,.036),'Mint',mesh=10207)
+        shaft=s.component(finger,136,'CapsuleCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.012\n  m_Height: 0.28\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n')
+        probe=s.node('Physical contact probe',finger,(0,-.13,0))
+        pad=s.component(probe,135,'SphereCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.018\n  m_Center: '+vec((0,0,0))+'\n')
+        fingers.append(finger);pads.append(probe);padColliders.append(pad);physical.extend([shaft,pad])
+    environment=[c for c in s.components if c['type']==65 and 'm_IsTrigger: 0' in c['fields']]
+    grip=s.mono(tool,'Gripper/GripperController',field('toolBody',body)+'  fingers:\n'+''.join('  - '+ref(n['t'])+'\n' for n in fingers)+'  contactPads:\n'+''.join('  - '+ref(n['t'])+'\n' for n in pads)+'  contactColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in padColliders)+'  physicalColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in physical)+'  environmentColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in environment if c!=palm)+'  openRadius: 0.205\n  closedRadius: 0.065\n')
+    workspace=s.box(root,(.86,.66,.68),(0,1.23,0),trigger=True,enabled=False)
+    taskSpace=s.mono(root,'Drivers/ClawTaskSpace',transform_field('machineFrame',root)+field('workspaceVolume',workspace)+transform_field('releasePoint',drop))
+    driver=s.mono(root,'Drivers/GantryDriver',transform_field('machineRoot',root)+field('workspaceVolume',workspace)+field('toolBody',body)+field('gripper',grip)+transform_field('bridge',bridge)+transform_field('trolley',trolley)+transform_field('cable',cable)+'  railHeight: 1.92\n  acceleration: 1.5\n  tolerance: 0.003\n')
+    robot=s.mono(root,'Drivers/SimulatedRobotArmDriver',field('simulatedTool',body)+field('taskSpace',taskSpace)+field('gripper',grip)+'  acceleration: 1.2\n')
+    prizeNodes=[];prizePhysics=[]
+    for slot,(key,display,profile) in enumerate(slots):
+        prize=s.node('Prize - '+key,root,(.10+slot*.1,.92,.12))
+        prizeBody=s.body(prize);colliders=[]
+        if slot==0:
+            main=s.box(prize,(.22,.24,.20));colliders.append(main)
+            visual=s.mesh('Rounded rigid parcel',prize,(0,0,0),(.22,.24,.20),'Mint');s.mono(visual,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.08\n')
+            s.mesh('Ribbon X',prize,(0,.122,0),(.224,.009,.032),'Ribbon')
+            s.mesh('Ribbon Z',prize,(0,.124,0),(.033,.009,.204),'Ribbon')
+            s.mesh('Front ribbon',prize,(0,0,-.102),(.033,.244,.008),'Ribbon')
+        elif slot==1:
+            main=s.component(prize,136,'CapsuleCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.11\n  m_Height: 0.26\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n');colliders.append(main)
+            visual=s.mesh('Cotton torso',prize,(0,0,0),(.22,.26,.22),'Plush');s.mono(visual,'Presentation/ClawMeshModule','  shape: 1\n  bevel: 0.08\n')
+            head=s.mesh('Bunny head',prize,(0,.16,0),(.14,.14,.14),'Plush',mesh=10207)
+            colliders.append(s.component(head,135,'SphereCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Center: '+vec((0,0,0))+'\n'))
+            for x in (-.04,.04):
+                ear=s.mesh('Bunny ear',prize,(x,.21,0),(.035,.065,.035),'Plush',mesh=10208)
+                colliders.append(s.component(ear,136,'CapsuleCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Height: 2\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n'))
+                # Each visible ear has its own compound capsule collider.
+                s.mesh('Bunny inner ear',prize,(x,.21,-.018),(.015,.07,.008),'Rose',mesh=10207)
+            for x in (-.032,.032):s.mesh('Bunny eye',prize,(x,.17,-.064),(.012,.016,.008),'Graphite',mesh=10207)
+            for x in (-.10,.10):s.mesh('Bunny paw',prize,(x,-.035,-.015),(.075,.10,.07),'Plush',mesh=10207)
+        else:
+            main=s.box(prize,(.24,.18,.16));colliders.append(main)
+            visual=s.mesh('Weighted fox body',prize,(0,0,0),(.24,.18,.16),'Amber');s.mono(visual,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.15\n')
+            head=s.mesh('Fox head',prize,(0,.13,0),(.14,.13,.13),'Amber',mesh=10207)
+            colliders.append(s.component(head,135,'SphereCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Center: '+vec((0,0,0))+'\n'))
+            for x in (-.045,.045):
+                ear=s.mesh('Fox ear',prize,(x,.205,0),(.045,.035,.045),'Amber',mesh=10208)
+                colliders.append(s.component(ear,136,'CapsuleCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Height: 2\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n'))
+            s.mesh('Visible offset brass weight',prize,(.055,.095,-.04),(.065,.035,.065),'Ribbon',mesh=10206)
+            for x in (-.03,.03):s.mesh('Fox eye',prize,(x,.14,-.060),(.012,.013,.008),'Graphite',mesh=10207)
+            s.mesh('Fox muzzle',prize,(0,.11,-.065),(.065,.045,.035),'Ivory',mesh=10207)
+        behaviour=s.mono(prize,'Prize/PrizePhysics',field('body',prizeBody)+field('mainCollider',main)+transform_field('machineRoot',root)+'  slotId: '+key+'\n  contactColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in colliders))
+        prizeNodes.append(prize);prizePhysics.append(behaviour)
     cameras=s.node('CameraRig',root)
     look=s.node('Cabinet look target',cameras,(0,1.13,0))
     cameraComps=[]
@@ -208,21 +272,28 @@ def build():
     cameraController=s.mono(cameras,'Camera/CraneCameraController','  views:\n'+''.join('  - '+ref(c['id'])+'\n' for c in cameraComps)+transform_field('lookTarget',look))
     managers=s.node('Managers',root)
     inputController=s.mono(managers,'Input/ClawInputController')
-    task=s.mono(managers,'Core/GraspTaskController',field('gantry',driver)+field('gripper',grip)+field('prize',prizePhysics)+field('chute',detector)+'  challenge: '+external('Challenges/C01.asset',11400000,2)+'\n'+transform_field('dropPose',drop)+'  aimSpeed: 0.35\n  lowerSpeed: 0.25\n  liftSpeed: 0.32\n  closeDuration: 0.5\n')
+    task=s.mono(managers,'Core/GraspTaskController',field('driverComponent',driver)+field('taskSpace',taskSpace)+field('gripper',grip)+'  prizes:\n'+''.join('  - '+ref(p['id'])+'\n' for p in prizePhysics)+field('chute',detector)+'  challenge: '+external('Challenges/C01.asset',11400000,2)+'\n  aimSpeed: 0.35\n  lowerSpeed: 0.25\n  liftSpeed: 0.32\n  closeDuration: 0.85\n')
     audio=s.component(managers,82,'AudioSource','  m_Enabled: 1\n  serializedVersion: 4\n  OutputAudioMixerGroup: {fileID: 0}\n  m_audioClip: {fileID: 0}\n  m_PlayOnAwake: 0\n  m_Volume: 1\n  m_Pitch: 1\n  Loop: 0\n  Mute: 0\n  Spatialize: 0\n  SpatializePostEffects: 0\n  Priority: 128\n  DopplerLevel: 0\n  MinDistance: 1\n  MaxDistance: 10\n  Pan2D: 0\n  rolloffMode: 0\n  BypassEffects: 0\n  BypassListenerEffects: 0\n  BypassReverbZones: 0\n')
-    manager=s.mono(managers,'Core/ClawGameManager',field('task',task)+field('keyboard',inputController)+field('cameras',cameraController)+field('audioSource',audio))
-    s.mono(managers,'UI/ClawGameUI',field('game',manager)+'  uiFont: '+external('Fonts/ClawUISans.otf',12800000,3)+'\n')
+    audioController=s.mono(managers,'Audio/ClawAudioController')
+    manager=s.mono(managers,'Core/ClawGameManager',field('task',task)+field('keyboard',inputController)+field('cameras',cameraController)+field('audioSource',audio)+field('audioController',audioController)+'  challenges:\n'+''.join('  - '+external('Challenges/C0'+str(i)+'.asset',11400000,2)+'\n' for i in (1,2,3)))
+    shaderRoot=ROOT/'Assets/BCIShared/TMP/Resources/BCIShared/TMP'
+    primaryGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmap.shader.meta').read_text()).group(1)
+    compatGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmapCompatibility.shader.meta').read_text()).group(1)
+    s.mono(managers,'UI/ClawGameUI',field('game',manager)+'  uiFont: '+external('Fonts/ClawUISans.otf',12800000,3)+'\n  bitmapShader: {fileID: 4800000, guid: '+primaryGuid+', type: 3}\n  bitmapCompatibilityShader: {fileID: 4800000, guid: '+compatGuid+', type: 3}\n')
     # Snapshot prefabs are self-contained, references stay typed and local.
     output('Prefabs/Machine/ClawMachine.prefab',s.render(descendants(root)))
     for name,node in [('Cabinet',cabinet),('Gantry',gantryRoot),('PrizeChute',chuteRoot),('PrizeBay',bay),('XBridge',bridge),('Trolley',trolley),('Cable',cable),('Gripper',tool)]:
+        savedFields=grip['fields']
+        if name in ('Gantry','Gripper'):
+            grip['fields']=re.sub(r'  environmentColliders:\n(?:  - \{fileID: \d+\}\n)*','  environmentColliders: []\n',grip['fields'])
         output('Prefabs/Machine/'+name+'.prefab',s.render(descendants(node)))
-    # Prize prefab is an art/physics template; scene's PrizePhysics provides its machine-frame binding.
-    prizeNodes=descendants(prize)
-    saved=prizePhysics['node']; prize['components'].remove(prizePhysics)
-    s.components.remove(prizePhysics)
-    oldPos=prize['position']; prize['position']=(0,0,0)
-    output('Prefabs/Prize/MintParcel.prefab',s.render(prizeNodes))
-    prize['position']=oldPos; prize['components'].append(prizePhysics); s.components.append(prizePhysics)
+        grip['fields']=savedFields
+    # Prize prefabs retain all visual/compoundphysics, scene supplies machine-frame binding.
+    for name,prize,behaviour in zip(('MintParcel','CloudBunny','AmberFox'),prizeNodes,prizePhysics):
+        prize['components'].remove(behaviour);s.components.remove(behaviour)
+        oldPos=prize['position'];prize['position']=(0,0,0)
+        output('Prefabs/Prize/'+name+'.prefab',s.render(descendants(prize)))
+        prize['position']=oldPos;prize['components'].append(behaviour);s.components.append(behaviour)
     room=s.node('ArcadeShell - open top')
     s.mesh('Warm gallery floor',room,(0,-.075,0),(10,.1,10),'Floor',collide=True)
     s.mesh('Rear gallery wall',room,(0,1.8,2.7),(10,3.8,.12),'Backdrop')
@@ -234,10 +305,10 @@ def build():
     settings='--- !u!29 &1\nOcclusionCullingSettings:\n  serializedVersion: 2\n  m_OcclusionBakeSettings:\n    smallestOccluder: 5\n    smallestHole: 0.25\n    backfaceThreshold: 100\n  m_SceneGUID: 00000000000000000000000000000000\n  m_OcclusionCullingData: {fileID: 0}\n--- !u!104 &2\nRenderSettings:\n  serializedVersion: 9\n  m_Fog: 0\n  m_AmbientSkyColor: {r: 0.78, g: 0.75, b: 0.67, a: 1}\n  m_AmbientEquatorColor: {r: 0.65, g: 0.64, b: 0.58, a: 1}\n  m_AmbientGroundColor: {r: 0.38, g: 0.37, b: 0.33, a: 1}\n  m_AmbientIntensity: 0.85\n  m_AmbientMode: 3\n  m_SkyboxMaterial: {fileID: 0}\n--- !u!157 &3\nLightmapSettings:\n  serializedVersion: 12\n  m_GIWorkflowMode: 1\n  m_LightmapsMode: 1\n  m_LightingSettings: {fileID: 0}\n--- !u!196 &4\nNavMeshSettings:\n  serializedVersion: 2\n  m_NavMeshData: {fileID: 0}\n'
     output('Scenes/ClawMachineScene.unity',HEADER+settings+s.render()[len(HEADER):])
     assemblies={
-        'Scripts/ClawMachine.Runtime.asmdef':dict(name='ClawMachine.Runtime',rootNamespace='ClawMachine',references=[],autoReferenced=True),
-        'Editor/ClawMachine.Editor.asmdef':dict(name='ClawMachine.Editor',rootNamespace='ClawMachine.Editor',references=['ClawMachine.Runtime'],includePlatforms=['Editor']),
-        'Tests/EditMode/ClawMachine.EditModeTests.asmdef':dict(name='ClawMachine.EditModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner'],includePlatforms=['Editor'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS']),
-        'Tests/PlayMode/ClawMachine.PlayModeTests.asmdef':dict(name='ClawMachine.PlayModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS'])}
+        'Scripts/ClawMachine.Runtime.asmdef':dict(name='ClawMachine.Runtime',rootNamespace='ClawMachine',references=['Unity.TextMeshPro','Unity.ugui'],autoReferenced=True),
+        'Editor/ClawMachine.Editor.asmdef':dict(name='ClawMachine.Editor',rootNamespace='ClawMachine.Editor',references=['ClawMachine.Runtime','Unity.TextMeshPro','Unity.ugui','BCIShared.TMP.Editor'],includePlatforms=['Editor']),
+        'Tests/EditMode/ClawMachine.EditModeTests.asmdef':dict(name='ClawMachine.EditModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner','Unity.TextMeshPro','Unity.ugui'],includePlatforms=['Editor'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS']),
+        'Tests/PlayMode/ClawMachine.PlayModeTests.asmdef':dict(name='ClawMachine.PlayModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner','Unity.TextMeshPro','Unity.ugui'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS'])}
     for path,data in assemblies.items():output(path,json.dumps(data,indent=2)+'\n')
 
 
@@ -245,10 +316,11 @@ def meta(path):
     rel=path.relative_to(ROOT).as_posix()
     text='fileFormatVersion: 2\nguid: '+guid(rel)+'\n'
     if path.is_dir():return text+'folderAsset: yes\nDefaultImporter:\n  externalObjects: {}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n'
-    importer={'.cs':'MonoImporter','.asmdef':'AssemblyDefinitionImporter','.json':'TextScriptImporter','.txt':'TextScriptImporter','.mat':'NativeFormatImporter','.asset':'NativeFormatImporter','.physicMaterial':'NativeFormatImporter','.prefab':'PrefabImporter','.otf':'TrueTypeFontImporter'}.get(path.suffix,'DefaultImporter')
+    importer={'.cs':'MonoImporter','.asmdef':'AssemblyDefinitionImporter','.json':'TextScriptImporter','.txt':'TextScriptImporter','.mat':'NativeFormatImporter','.asset':'NativeFormatImporter','.physicMaterial':'NativeFormatImporter','.prefab':'PrefabImporter','.otf':'TrueTypeFontImporter','.png':'TextureImporter'}.get(path.suffix,'DefaultImporter')
     text+=importer+':\n  externalObjects: {}\n'
     if path.suffix=='.cs':text+='  serializedVersion: 2\n  defaultReferences: []\n  executionOrder: 0\n  icon: {instanceID: 0}\n'
     if path.suffix in ('.asset','.mat','.physicMaterial'):text+='  mainObjectFileID: '+str({'.asset':11400000,'.mat':2100000,'.physicMaterial':13400000}[path.suffix])+'\n'
+    if path.suffix=='.png':text+='  serializedVersion: 12\n  isReadable: 0\n  mipmaps:\n    enableMipMap: 1\n  sRGBTexture: '+('0' if 'Normal' in path.name else '1')+'\n  textureType: '+('1' if 'Normal' in path.name else '0')+'\n  textureSettings:\n    serializedVersion: 2\n    filterMode: 1\n    aniso: 1\n    mipBias: 0\n    wrapU: 0\n    wrapV: 0\n    wrapW: 0\n'
     if path.suffix=='.otf':text+='  serializedVersion: 4\n  fontSize: 24\n  forceTextureCase: -2\n  includeFontData: 1\n  fontName: Claw UI Sans\n  fontNames:\n  - Claw UI Sans\n  fallbackFontReferences: []\n  fontRenderingMode: 0\n  ascentCalculationMode: 1\n'
     return text+'  userData: \n  assetBundleName: \n  assetBundleVariant: \n'
 
@@ -275,7 +347,7 @@ def main():
         else:mp.write_text('\n'.join(line.rstrip() for line in meta(p).splitlines())+'\n')
     if args.check:
         if changed:raise SystemExit('Generated assets differ: '+', '.join(changed))
-        print('C01 generated scene, prefab, materials, profiles and .meta: exact deterministic match.')
+        print('C01-C03 generated scene, prefabs, materials, profiles and .meta: exact deterministic match.')
     else:
         MANIFEST.write_text(json.dumps({p:hashlib.sha256(c.encode()).hexdigest() for p,c in sorted(outputs.items())},indent=2)+'\n')
         print('Authored',len(outputs),'assets; existing GUIDs preserved.')

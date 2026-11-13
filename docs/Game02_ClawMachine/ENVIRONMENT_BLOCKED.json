@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "game": "claw",
+  "status": "blocked",
+  "guiAcceptance": "not_run",
+  "windowsPlaythrough": "not_run",
+  "video": "not_run",
+  "performance": "not_run",
+  "build": "not_run",
+  "sourceCommit": "bb38f227beeda05aa7eb24668c170c95eb8fd849",
+  "staticChecks": "passed",
+  "sourceBeforeImport": "fc4c1a18e66603c62b7d98180cc482e3aeba1e9b4f3c81471a0a35ff95495efb",
+  "error": "Exact licensed Unity Editor unavailable; Unity tests and Windows build NOT RUN."
+}

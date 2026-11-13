@@ -3,7 +3,9 @@
   "references": [
     "ClawMachine.Runtime",
     "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "UnityEditor.TestRunner",
+    "Unity.TextMeshPro",
+    "Unity.ugui"
   ],
   "includePlatforms": [
     "Editor"

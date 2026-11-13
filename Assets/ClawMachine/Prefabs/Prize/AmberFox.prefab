@@ -1,0 +1,401 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1314
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1315}
+  - component: {fileID: 1316}
+  - component: {fileID: 1317}
+  m_Layer: 0
+  m_Name: "Prize - amber-fox"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1315
+Transform:
+  m_GameObject: {fileID: 1314}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1319}
+  - {fileID: 1324}
+  - {fileID: 1329}
+  - {fileID: 1334}
+  - {fileID: 1339}
+  - {fileID: 1343}
+  - {fileID: 1347}
+  - {fileID: 1351}
+  m_Father: {fileID: 0}
+--- !u!1 &1318
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1319}
+  - component: {fileID: 1320}
+  - component: {fileID: 1321}
+  - component: {fileID: 1322}
+  m_Layer: 0
+  m_Name: "Weighted fox body"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1319
+Transform:
+  m_GameObject: {fileID: 1318}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.24, y: 0.18, z: 0.16}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1323
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1324}
+  - component: {fileID: 1325}
+  - component: {fileID: 1326}
+  - component: {fileID: 1327}
+  m_Layer: 0
+  m_Name: "Fox head"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1324
+Transform:
+  m_GameObject: {fileID: 1323}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.13, z: 0}
+  m_LocalScale: {x: 0.14, y: 0.13, z: 0.13}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1328
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1329}
+  - component: {fileID: 1330}
+  - component: {fileID: 1331}
+  - component: {fileID: 1332}
+  m_Layer: 0
+  m_Name: "Fox ear"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1329
+Transform:
+  m_GameObject: {fileID: 1328}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.045, y: 0.205, z: 0}
+  m_LocalScale: {x: 0.045, y: 0.035, z: 0.045}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1333
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1334}
+  - component: {fileID: 1335}
+  - component: {fileID: 1336}
+  - component: {fileID: 1337}
+  m_Layer: 0
+  m_Name: "Fox ear"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1334
+Transform:
+  m_GameObject: {fileID: 1333}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.045, y: 0.205, z: 0}
+  m_LocalScale: {x: 0.045, y: 0.035, z: 0.045}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1338
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1339}
+  - component: {fileID: 1340}
+  - component: {fileID: 1341}
+  m_Layer: 0
+  m_Name: "Visible offset brass weight"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1339
+Transform:
+  m_GameObject: {fileID: 1338}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.055, y: 0.095, z: -0.04}
+  m_LocalScale: {x: 0.065, y: 0.035, z: 0.065}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1342
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1343}
+  - component: {fileID: 1344}
+  - component: {fileID: 1345}
+  m_Layer: 0
+  m_Name: "Fox eye"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1343
+Transform:
+  m_GameObject: {fileID: 1342}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.03, y: 0.14, z: -0.06}
+  m_LocalScale: {x: 0.012, y: 0.013, z: 0.008}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1346
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1347}
+  - component: {fileID: 1348}
+  - component: {fileID: 1349}
+  m_Layer: 0
+  m_Name: "Fox eye"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1347
+Transform:
+  m_GameObject: {fileID: 1346}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.03, y: 0.14, z: -0.06}
+  m_LocalScale: {x: 0.012, y: 0.013, z: 0.008}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!1 &1350
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1351}
+  - component: {fileID: 1352}
+  - component: {fileID: 1353}
+  m_Layer: 0
+  m_Name: "Fox muzzle"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1351
+Transform:
+  m_GameObject: {fileID: 1350}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.11, z: -0.065}
+  m_LocalScale: {x: 0.065, y: 0.045, z: 0.035}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315}
+--- !u!54 &1316
+Rigidbody:
+  m_GameObject: {fileID: 1314}
+  serializedVersion: 4
+  m_Mass: 0.3
+  m_Drag: 0.05
+  m_AngularDrag: 0.2
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 2
+--- !u!65 &1317
+BoxCollider:
+  m_GameObject: {fileID: 1314}
+  m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.24, y: 0.18, z: 0.16}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1320
+MeshFilter:
+  m_GameObject: {fileID: 1318}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1321
+MeshRenderer:
+  m_GameObject: {fileID: 1318}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!114 &1322
+MonoBehaviour:
+  m_GameObject: {fileID: 1318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 0
+  bevel: 0.15
+--- !u!33 &1325
+MeshFilter:
+  m_GameObject: {fileID: 1323}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1326
+MeshRenderer:
+  m_GameObject: {fileID: 1323}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!135 &1327
+SphereCollider:
+  m_GameObject: {fileID: 1323}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1330
+MeshFilter:
+  m_GameObject: {fileID: 1328}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1331
+MeshRenderer:
+  m_GameObject: {fileID: 1328}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!136 &1332
+CapsuleCollider:
+  m_GameObject: {fileID: 1328}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1335
+MeshFilter:
+  m_GameObject: {fileID: 1333}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1336
+MeshRenderer:
+  m_GameObject: {fileID: 1333}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!136 &1337
+CapsuleCollider:
+  m_GameObject: {fileID: 1333}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1340
+MeshFilter:
+  m_GameObject: {fileID: 1338}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1341
+MeshRenderer:
+  m_GameObject: {fileID: 1338}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: e4852b50746d111a32983c342ab00187, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1344
+MeshFilter:
+  m_GameObject: {fileID: 1342}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1345
+MeshRenderer:
+  m_GameObject: {fileID: 1342}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1348
+MeshFilter:
+  m_GameObject: {fileID: 1346}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1349
+MeshRenderer:
+  m_GameObject: {fileID: 1346}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1352
+MeshFilter:
+  m_GameObject: {fileID: 1350}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1353
+MeshRenderer:
+  m_GameObject: {fileID: 1350}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1

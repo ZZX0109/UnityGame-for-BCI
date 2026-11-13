@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace FirstPersonSokoban.Presentation
 {
-    /// <summary>Cosmetic shell for a training module. The existing grid collider stays authoritative.</summary>
+    /// <summary>Gallery-style ceramic crate; its existing grid collider stays authoritative.</summary>
     public sealed class TrainingModuleVisual : MonoBehaviour
     {
         private readonly List<Renderer> statusStrips = new List<Renderer>();
@@ -47,23 +47,26 @@ namespace FirstPersonSokoban.Presentation
                 Renderer renderer = body.GetComponent<Renderer>();
                 if (renderer != null) renderer.sharedMaterial = palette.Module;
             }
+            // Remove the prototype's heavy corner rails. The bevelled body is the
+            // whole visual shell; every new detail remains inside its physics bounds.
             foreach (Transform child in transform)
             {
                 Renderer renderer = child.GetComponent<Renderer>();
-                if (renderer == null || child.name == "Body") continue;
-                renderer.sharedMaterial = child.name.StartsWith("Corner") ? palette.Metal : palette.Trim;
-                if (child.name == "Top Frame") renderer.enabled = false;
+                if (renderer != null && child.name != "Body") renderer.enabled = false;
             }
-            var details = new GameObject("Training Module Shell");
+            var details = new GameObject("Gallery Crate Details");
             details.transform.SetParent(transform, false);
-            Cube(details.transform, "Inset Top Deck", new Vector3(0, 1.709f, 0),
-                new Vector3(1.56f, 0.012f, 1.56f), palette.Module);
-            for (int i = -1; i <= 1; i += 2)
-                Cube(details.transform, "Top Grip Channel", new Vector3(i * 0.36f, 1.718f, 0),
-                    new Vector3(0.045f, 0.003f, 1.24f), palette.Dark);
+            Cube(details.transform, "Recessed Crate Foot", new Vector3(0, 0.045f, 0),
+                new Vector3(1.82f, 0.06f, 1.82f), palette.Dark);
+            Triangle(details.transform, "Cream Top Colour Block", new[]
+            {
+                new Vector3(-0.83f, 1.711f, -0.83f),
+                new Vector3(-0.83f, 1.711f, 0.83f),
+                new Vector3(0.83f, 1.711f, 0.83f)
+            }, palette.Wall);
             for (int side = 0; side < 4; side++)
             {
-                var face = new GameObject("Service Face " + side);
+                var face = new GameObject("Gallery Crate Face " + side);
                 face.transform.SetParent(details.transform, false);
                 face.transform.localRotation = Quaternion.Euler(0, side * 90f, 0);
                 Face(face.transform, index);
@@ -109,26 +112,36 @@ namespace FirstPersonSokoban.Presentation
 
         private void Face(Transform face, int index)
         {
-            // Panels sit within +/-0.98, matching the unchanged 1.96-wide physics shell.
-            Cube(face, "Panel Recess", new Vector3(0, 0.86f, -0.953f),
-                new Vector3(1.62f, 1.24f, 0.012f), palette.Trim);
-            Cube(face, "Ceramic Service Panel", new Vector3(0, 0.86f, -0.963f),
-                new Vector3(1.54f, 1.16f, 0.008f), palette.Module);
-            Cube(face, "Recessed Grip", new Vector3(0, 1.29f, -0.971f),
-                new Vector3(1.02f, 0.10f, 0.008f), palette.Dark);
-            Cube(face, "Grip Lip", new Vector3(0, 1.325f, -0.977f),
-                new Vector3(0.91f, 0.023f, 0.004f), palette.Metal);
-            Cube(face, "Identification Inset", new Vector3(-0.48f, 0.64f, -0.971f),
-                new Vector3(0.34f, 0.27f, 0.008f), palette.Dark);
-            Renderer strip = Cube(face, "Status Strip", new Vector3(0.1f, 0.35f, -0.971f),
-                new Vector3(0.94f, 0.026f, 0.008f), palette.Trim);
+            // A restrained diagonal cream inlay gives the crate its identity,
+            // without service panels, glowing rails or exposed metal corners.
+            Triangle(face, "Cream Diagonal Colour Block", new[]
+            {
+                new Vector3(-0.85f, 0.12f, -0.951f),
+                new Vector3(-0.85f, 1.60f, -0.951f),
+                new Vector3(0.85f, 1.60f, -0.951f)
+            }, palette.Wall);
+            Cube(face, "Flush Grip", new Vector3(0, 1.28f, -0.954f),
+                new Vector3(0.44f, 0.055f, 0.006f), palette.Trim);
+            Renderer strip = Cube(face, "Crate State Mark", new Vector3(0.49f, 0.17f, -0.954f),
+                new Vector3(0.40f, 0.025f, 0.006f), palette.Trim);
             statusStrips.Add(strip);
-            Cube(face, "Panel Divider", new Vector3(0.42f, 0.82f, -0.971f),
-                new Vector3(0.006f, 0.43f, 0.006f), palette.Trim);
-            Label(face, "M" + (index + 1).ToString("00"), new Vector3(-0.48f, 0.64f, -0.978f),
-                new Vector2(0.26f, 0.14f), new Color(0.80f, 0.87f, 0.88f));
-            Label(face, "SPATIAL / MODULE", new Vector3(0.06f, 0.47f, -0.978f),
-                new Vector2(0.82f, 0.055f), new Color(0.18f, 0.26f, 0.29f));
+            Label(face, (index + 1).ToString("00"), new Vector3(0.49f, 0.34f, -0.960f),
+                new Vector2(0.25f, 0.15f), LabMaterials.Hex("F1E7D8"));
+        }
+
+        private void Triangle(Transform parent, string name, Vector3[] vertices, Material material)
+        {
+            var mesh = new Mesh { name = name };
+            mesh.vertices = vertices;
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one };
+            mesh.triangles = new[] { 0, 1, 2 };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            detailMeshes.Add(mesh);
+            var part = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+            part.transform.SetParent(parent, false);
+            part.GetComponent<MeshFilter>().sharedMesh = mesh;
+            part.GetComponent<Renderer>().sharedMaterial = material;
         }
 
         private void Label(Transform parent, string text, Vector3 position, Vector2 size, Color color)

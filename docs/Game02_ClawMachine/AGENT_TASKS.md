@@ -1,5 +1,7 @@
 # Game 02 · Coding Agent 实施任务单
 
+> 2026-11-13：用户上传代码审查并明确要求完成全部整改，已覆盖此文件原“只实现 M0+M1”的阶段限制。当前范围为 C01–C03、P0 抓取整改、通用模拟执行器、Canvas/TMP、有限观察/PIP、音效及真实验证门禁；见 AUDIT_COMPLETION.md。原阶段任务保留作历史依据。
+
 先阅读同目录 DESIGN_AND_DEVELOPMENT.md；该文档是唯一的本游戏设计依据。本分支只开发 Assets/ClawMachine，不修改 FirstPersonSokoban、StreetCrossing、main 或 Unity 版本。Unity 2022.3.62f3c1 / 旧 Input Manager / Windows x64；新增文件必须含 .meta、正确 asmdef 和许可说明。
 
 ## M0：工程隔离与灰盒场景

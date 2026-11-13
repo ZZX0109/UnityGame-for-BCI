@@ -7,12 +7,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c12cb84cd88ad3d4e3456695d5866d5f, type: 3}
   m_Name: C01Profile
   m_EditorClassIdentifier:
+  strategyHint: "中心抓取，规则侧面形成稳定三点接触。"
   mass: 0.3
   centerOfMass: {x: 0, y: 0, z: 0}
   maxCenterOffset: 0.05
-  contactTolerance: 0.035
+  contactTolerance: 0.008
+  maxPenetration: 0.003
+  surfaceCaptureDepth: 0.09
+  approachClearance: 0.16
+  contactDescentSpeed: 0.075
   verticalTolerance: 0.045
+  minimumContactSpan: 0.1
   breakForce: 24
+  breakTorque: 1.2
+  maximumGripDrift: 0.035
   stableSpeed: 0.08
   stableDwell: 0.3
-  settleTimeout: 2.5
+  settleTimeout: 3.2

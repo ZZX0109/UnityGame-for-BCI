@@ -2,7 +2,10 @@
   "name": "ClawMachine.Editor",
   "rootNamespace": "ClawMachine.Editor",
   "references": [
-    "ClawMachine.Runtime"
+    "ClawMachine.Runtime",
+    "Unity.TextMeshPro",
+    "Unity.ugui",
+    "BCIShared.TMP.Editor"
   ],
   "includePlatforms": [
     "Editor"

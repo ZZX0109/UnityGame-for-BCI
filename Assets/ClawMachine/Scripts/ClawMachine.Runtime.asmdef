@@ -1,6 +1,9 @@
 {
   "name": "ClawMachine.Runtime",
   "rootNamespace": "ClawMachine",
-  "references": [],
+  "references": [
+    "Unity.TextMeshPro",
+    "Unity.ugui"
+  ],
   "autoReferenced": true
 }
