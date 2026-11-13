@@ -5,7 +5,7 @@ Material:
   serializedVersion: 8
   m_Name: Amber
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_ValidKeywords: []
+  m_ValidKeywords: [_NORMALMAP]
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -15,17 +15,22 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 00decd88c216c80429203716c8051306, type: 3}
+        m_Texture: {fileID: 2800000, guid: 26d50c4043c0332c9928571abb81b9f7, type: 3}
         m_Scale: {x: 3, y: 3}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: fd212b03e417d4c00324a96712e33ef9, type: 3}
+        m_Scale: {x: 5, y: 5}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Metallic: 0.08
-    - _Glossiness: 0.31
+    - _Metallic: 0.0
+    - _BumpScale: 0.24
+    - _Glossiness: 0.22
     - _Mode: 0
     - _SrcBlend: 1
     - _DstBlend: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.75, g: 0.39, b: 0.19, a: 1}
+    - _Color: {r: 0.84, g: 0.43, b: 0.2, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

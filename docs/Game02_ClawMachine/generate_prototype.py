@@ -122,18 +122,20 @@ def build():
         'Graphite':((.17,.20,.20,1),.6,.38), 'Mint':((.37,.68,.55,1),.08,.35),
         'Ribbon':((.94,.82,.48,1),.1,.32), 'Floor':((.74,.65,.53,1),.02,.25),
         'Backdrop':((.84,.78,.66,1),.03,.3), 'Light':((.96,.97,.91,1),.1,.55),
-        'Plush':((.84,.66,.59,1),.0,.19), 'Amber':((.75,.39,.19,1),.08,.31), 'Rose':((.73,.45,.39,1),.08,.3), 'Glass':((.69,.90,.85,.055),.1,.65)}
+        'Plush':((.90,.78,.72,1),.0,.22), 'Amber':((.84,.43,.20,1),.0,.22), 'Rose':((.73,.45,.39,1),.08,.3), 'Glass':((.88,.95,.93,.07),.0,.82)}
     for name,(color,metal,smooth) in materials.items():
         glass=name=='Glass'
-        floats={'_Metallic':metal,'_Glossiness':smooth,'_Mode':3 if glass else 0,'_SrcBlend':5 if glass else 1,'_DstBlend':10 if glass else 0,'_ZWrite':0 if glass else 1}
+        floats={'_Metallic':metal,'_Glossiness':smooth,'_Mode':3 if glass else 0,'_SrcBlend':1,'_DstBlend':10 if glass else 0,'_ZWrite':0 if glass else 1}
         output('Materials/'+name+'.mat',HEADER+'--- !u!21 &2100000\nMaterial:\n  serializedVersion: 8\n  m_Name: '+name+'\n  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}\n  m_ValidKeywords: '+('[_ALPHAPREMULTIPLY_ON]' if glass else '[]')+'\n  m_InvalidKeywords: []\n  m_LightmapFlags: 4\n  m_EnableInstancingVariants: 1\n  m_CustomRenderQueue: '+('3000' if glass else '-1')+'\n  stringTagMap: '+('{RenderType: Transparent}' if glass else '{}')+'\n  m_SavedProperties:\n    serializedVersion: 3\n    m_TexEnvs: []\n    m_Ints: []\n    m_Floats:\n'+''.join('    - %s: %s\n'%p for p in floats.items())+'    m_Colors:\n    - _Color: {r: %s, g: %s, b: %s, a: %s}\n    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}\n'%color)
+    lightpath=asset('Materials/Light.mat')
+    outputs[lightpath]=outputs[lightpath].replace('m_LightmapFlags: 4','m_LightmapFlags: 2').replace('m_ValidKeywords: []','m_ValidKeywords: [_EMISSION]').replace('_EmissionColor: {r: 0, g: 0, b: 0, a: 1}', '_EmissionColor: {r: 1.8, g: 1.55, b: 1.2, a: 1}')
     for name in ('Ivory','Silver','Plush','Amber','Mint'):
-        texture='FabricWeave' if name=='Plush' else 'SilverBrush' if name=='Silver' else 'IvoryMicrograin'
+        texture='FabricWeave' if name in ('Plush','Amber') else 'SilverBrush' if name=='Silver' else 'IvoryMicrograin'
         path=asset('Materials/'+name+'.mat')
         env='    m_TexEnvs:\n    - _MainTex:\n        m_Texture: '+external('Textures/'+texture+'.png',2800000,3)+'\n        m_Scale: {x: 3, y: 3}\n        m_Offset: {x: 0, y: 0}\n'
-        if name=='Plush':
+        if name in ('Plush','Amber'):
             env+='    - _BumpMap:\n        m_Texture: '+external('Textures/FabricNormal.png',2800000,3)+'\n        m_Scale: {x: 5, y: 5}\n        m_Offset: {x: 0, y: 0}\n'
-            outputs[path]=outputs[path].replace('m_ValidKeywords: []','m_ValidKeywords: [_NORMALMAP]')
+            outputs[path]=outputs[path].replace('m_ValidKeywords: []','m_ValidKeywords: [_NORMALMAP]').replace('    - _Glossiness:', '    - _BumpScale: 0.24\n    - _Glossiness:')
         outputs[path]=outputs[path].replace('    m_TexEnvs: []\n',env)
     output('Materials/PrizeFriction.physicMaterial',HEADER+'--- !u!134 &13400000\nPhysicMaterial:\n  m_Name: PrizeFriction\n  dynamicFriction: 0.6\n  staticFriction: 0.7\n  bounciness: 0\n  frictionCombine: 0\n  bounceCombine: 2\n')
     profiles=[
@@ -199,6 +201,29 @@ def build():
     s.mesh('Grab button',cabinet,(.37,.90,-.73),(.055,.022,.055),'Rose',mesh=10206)
     s.mesh('Joystick stem',cabinet,(.02,.91,-.73),(.015,.055,.015),'Graphite',mesh=10206)
     s.mesh('Joystick ball',cabinet,(.02,.97,-.73),(.05,.05,.05),'Mint',mesh=10207)
+    trim=s.node('VisualRoot - cabinet joinery',cabinet)
+    themePanels=[]
+    themePanels.append(s.mesh('Challenge rear display card',trim,(0,1.13,.598),(1.20,.56,.012),'Mint'))
+    for x in (-.44,-.35,-.26):
+        s.mesh('Rear card cloud emboss',trim,(x,1.32,.588),(.11,.07,.005),'Ivory',mesh=10207)
+    for x in (-.66,.66):
+        for z in (-.58,.58):
+            foot=s.mesh('Brushed adjustable foot',trim,(x,.018,z),(.12,.035,.12),'Graphite')
+            s.mono(foot,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.15\n')
+        themePanels.append(s.mesh('Side inset mint band',trim,(x*1.012,.49,.18),(.012,.32,.60),'Mint'))
+        for y in (.40,.44,.48,.52):
+            s.mesh('Side panel ventilation slot',trim,(x*1.025,y,.28),(.008,.008,.20),'Graphite')
+    face=s.mesh('Inset porcelain control fascia',trim,(.22,.888,-.73),(.72,.014,.15),'Mint')
+    s.mono(face,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.14\n')
+    for x in (-.17,.60):
+        s.mesh('Console countersunk screw',trim,(x,.892,-.80),(.011,.004,.011),'Silver',mesh=10206)
+    for z in (-.80,-.65):
+        s.mesh('Console brass edge',trim,(.22,.89,z),(.72,.005,.004),'Ribbon')
+    for x in (-.49,-.40,-.31):
+        s.mesh('Marquee cloud emblem',trim,(x,2.14,-.64),(.10,.065,.012),'Rose',mesh=10207)
+    for x in (-.52,-.30,-.08,.14,.36,.58):
+        s.mesh('Front plinth recessed flute',trim,(x,.29,-.646),(.009,.24,.005),'Mint')
+    s.mesh('Collection opening brass brow',trim,(-.34,.74,-.55),(.45,.012,.014),'Ribbon')
     gantryRoot=s.node('GantryRoot',root)
     bridge=s.mesh('X bridge',gantryRoot,(0,1.92,0),(1.08,.055,.06),'Silver')
     trolley=s.mesh('XZ trolley',gantryRoot,(0,1.92,0),(.20,.10,.16),'Graphite')
@@ -235,7 +260,7 @@ def build():
             s.mesh('Front ribbon',prize,(0,0,-.102),(.033,.244,.008),'Ribbon')
         elif slot==1:
             main=s.component(prize,136,'CapsuleCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.11\n  m_Height: 0.26\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n');colliders.append(main)
-            visual=s.mesh('Cotton torso',prize,(0,0,0),(.22,.26,.22),'Plush');s.mono(visual,'Presentation/ClawMeshModule','  shape: 1\n  bevel: 0.08\n')
+            visual=s.mesh('Cotton torso',prize,(0,0,0),(.22,.26,.22),'Plush');s.mono(visual,'Presentation/ClawMeshModule','  shape: 2\n  bevel: 0.08\n')
             head=s.mesh('Bunny head',prize,(0,.16,0),(.14,.14,.14),'Plush',mesh=10207)
             colliders.append(s.component(head,135,'SphereCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Center: '+vec((0,0,0))+'\n'))
             for x in (-.04,.04):
@@ -247,7 +272,7 @@ def build():
             for x in (-.10,.10):s.mesh('Bunny paw',prize,(x,-.035,-.015),(.075,.10,.07),'Plush',mesh=10207)
         else:
             main=s.box(prize,(.24,.18,.16));colliders.append(main)
-            visual=s.mesh('Weighted fox body',prize,(0,0,0),(.24,.18,.16),'Amber');s.mono(visual,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.15\n')
+            visual=s.mesh('Weighted fox body',prize,(0,0,0),(.24,.18,.16),'Amber');s.mono(visual,'Presentation/ClawMeshModule','  shape: 2\n  bevel: 0.15\n')
             head=s.mesh('Fox head',prize,(0,.13,0),(.14,.13,.13),'Amber',mesh=10207)
             colliders.append(s.component(head,135,'SphereCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Center: '+vec((0,0,0))+'\n'))
             for x in (-.045,.045):
@@ -256,6 +281,33 @@ def build():
             s.mesh('Visible offset brass weight',prize,(.055,.095,-.04),(.065,.035,.065),'Ribbon',mesh=10206)
             for x in (-.03,.03):s.mesh('Fox eye',prize,(x,.14,-.060),(.012,.013,.008),'Graphite',mesh=10207)
             s.mesh('Fox muzzle',prize,(0,.11,-.065),(.065,.045,.035),'Ivory',mesh=10207)
+        decor=s.node('VisualRoot - noncontact character details',prize)
+        if slot==0:
+            for x in (-.07,.07):
+                s.mesh('Parcel foil corner',decor,(x,.123,-.06),(.018,.003,.045),'Silver')
+            for x in (-.032,.032):
+                loop=s.mesh('Ribbon bow loop',decor,(x,.135,0),(.065,.027,.045),'Ribbon',mesh=10207)
+        elif slot==1:
+            for x in (-.025,.025):
+                s.mesh('Bunny stitched muzzle',decor,(x,.137,-.064),(.044,.034,.025),'Ivory',mesh=10207)
+            s.mesh('Bunny embroidered nose',decor,(0,.151,-.081),(.018,.012,.011),'Rose',mesh=10207)
+            for x in (-.048,.048):
+                s.mesh('Bunny cheek blush',decor,(x,.142,-.054),(.020,.014,.009),'Rose',mesh=10207)
+            s.mesh('Bunny belly patch',decor,(0,-.015,-.095),(.125,.14,.025),'Ivory',mesh=10207)
+            for y in range(9):
+                s.mesh('Bunny hand stitch',decor,(-.004,-.078+y*.016,-.109),(.012,.002,.002),'Rose',mesh=10208,euler=(0,0,50))
+        else:
+            tail=s.mesh('Fox curled fabric tail',decor,(-.12,-.005,.025),(.22,.22,.16),'Amber')
+            s.mono(tail,'Presentation/ClawMeshModule','  shape: 3\n  bevel: 0.08\n')
+            s.mesh('Fox cream tail tip',decor,(-.119,.059,.025),(.044,.045,.048),'Ivory',mesh=10207)
+            s.mesh('Fox cream chest',decor,(0,-.008,-.078),(.112,.11,.022),'Ivory',mesh=10207)
+            s.mesh('Fox embroidered nose',decor,(0,.118,-.086),(.023,.017,.012),'Graphite',mesh=10207)
+            for x in (-.047,.047):
+                s.mesh('Fox inner ear patch',decor,(x,.206,-.015),(.025,.031,.009),'Rose',mesh=10207)
+            for x in (-.06,.06):
+                s.mesh('Fox small paw',decor,(x,-.061,-.04),(.062,.05,.055),'Amber',mesh=10207)
+            for y in range(7):
+                s.mesh('Fox hand stitch',decor,(-.004,-.052+y*.014,-.091),(.011,.002,.002),'Rose',mesh=10208,euler=(0,0,50))
         behaviour=s.mono(prize,'Prize/PrizePhysics',field('body',prizeBody)+field('mainCollider',main)+transform_field('machineRoot',root)+'  slotId: '+key+'\n  contactColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in colliders))
         prizeNodes.append(prize);prizePhysics.append(behaviour)
     cameras=s.node('CameraRig',root)
@@ -265,7 +317,7 @@ def build():
         target=(0,1.13,0); dx,dy,dz=[target[j]-pos[j] for j in range(3)]
         yaw=math.degrees(math.atan2(dx,dz)); pitch=-math.degrees(math.atan2(dy,math.hypot(dx,dz)))
         cam=s.node(name+' camera',cameras,pos,euler=(pitch,yaw,0))
-        c=s.component(cam,20,'Camera','  m_Enabled: %d\n  serializedVersion: 2\n  m_ClearFlags: 2\n  m_BackGroundColor: {r: 0.84, g: 0.79, b: 0.69, a: 1}\n  m_projectionMatrixMode: 1\n  m_GateFitMode: 2\n  m_FOVAxisMode: 0\n  m_SensorSize: {x: 36, y: 24}\n  m_LensShift: {x: 0, y: 0}\n  m_FocalLength: 50\n  m_NormalizedViewPortRect:\n    serializedVersion: 2\n    x: 0\n    y: 0\n    width: 0.747\n    height: 1\n  near clip plane: 0.03\n  far clip plane: 30\n  field of view: 42\n  orthographic: 0\n  orthographic size: 5\n  m_Depth: 0\n  m_CullingMask:\n    serializedVersion: 2\n    m_Bits: 4294967295\n  m_RenderingPath: -1\n  m_TargetTexture: {fileID: 0}\n  m_TargetDisplay: 0\n  m_TargetEye: 3\n  m_HDR: 0\n  m_AllowMSAA: 1\n  m_AllowDynamicResolution: 0\n  m_ForceIntoRT: 0\n  m_OcclusionCulling: 1\n'% (i==0))
+        c=s.component(cam,20,'Camera','  m_Enabled: %d\n  serializedVersion: 2\n  m_ClearFlags: 2\n  m_BackGroundColor: {r: 0.84, g: 0.79, b: 0.69, a: 1}\n  m_projectionMatrixMode: 1\n  m_GateFitMode: 2\n  m_FOVAxisMode: 0\n  m_SensorSize: {x: 36, y: 24}\n  m_LensShift: {x: 0, y: 0}\n  m_FocalLength: 50\n  m_NormalizedViewPortRect:\n    serializedVersion: 2\n    x: 0\n    y: 0\n    width: 1\n    height: 1\n  near clip plane: 0.03\n  far clip plane: 30\n  field of view: 42\n  orthographic: 0\n  orthographic size: 5\n  m_Depth: 0\n  m_CullingMask:\n    serializedVersion: 2\n    m_Bits: 4294967295\n  m_RenderingPath: -1\n  m_TargetTexture: {fileID: 0}\n  m_TargetDisplay: 0\n  m_TargetEye: 3\n  m_HDR: 0\n  m_AllowMSAA: 1\n  m_AllowDynamicResolution: 0\n  m_ForceIntoRT: 0\n  m_OcclusionCulling: 1\n'% (i==0))
         cameraComps.append(c)
     # One listener for every view, located at the machine instead of one per camera.
     s.component(cameras,81,'AudioListener','  m_Enabled: 1\n')
@@ -280,6 +332,12 @@ def build():
     primaryGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmap.shader.meta').read_text()).group(1)
     compatGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmapCompatibility.shader.meta').read_text()).group(1)
     s.mono(managers,'UI/ClawGameUI',field('game',manager)+'  uiFont: '+external('Fonts/ClawUISans.otf',12800000,3)+'\n  bitmapShader: {fileID: 4800000, guid: '+primaryGuid+', type: 3}\n  bitmapCompatibilityShader: {fileID: 4800000, guid: '+compatGuid+', type: 3}\n')
+    s.mono(root,'Presentation/ClawChallengeDisplay',field('game',manager)+'  accents:\n'+''.join('  - '+ref(next(c['id'] for c in panel['components'] if c['type']==23))+'\n' for panel in themePanels))
+    # Round the visible shell without changing any collision geometry or ancestor.
+    softened={'Rear plinth','Front right panel','Left plinth rail','Corner frame','Top side rail','Marquee - no ceiling mesh','Control console','X bridge','XZ trolley'}
+    for node in s.nodes:
+        if node['name'] in softened:
+            s.mono(node,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.055\n')
     # Snapshot prefabs are self-contained, references stay typed and local.
     output('Prefabs/Machine/ClawMachine.prefab',s.render(descendants(root)))
     for name,node in [('Cabinet',cabinet),('Gantry',gantryRoot),('PrizeChute',chuteRoot),('PrizeBay',bay),('XBridge',bridge),('Trolley',trolley),('Cable',cable),('Gripper',tool)]:
@@ -300,6 +358,23 @@ def build():
     for x in (-2.0,2.0):
         s.mesh('Distant arcade plinth',room,(x,.6,1.8),(.8,1.2,.7),'Rose' if x<0 else 'Mint')
         s.mesh('Distant arcade display',room,(x,1.4,1.8),(.8,.5,.7),'Ivory')
+    for x in (-2.0,2.0):
+        for side in (-.37,.37):
+            post=s.mesh('Background machine frame',room,(x+side,1.27,1.43),(.055,1.35,.055),'Mint' if x<0 else 'Rose')
+            s.mono(post,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.12\n')
+        s.mesh('Background machine top',room,(x,1.92,1.70),(.86,.15,.76),'Ivory')
+        s.mesh('Background machine glass',room,(x,1.34,1.43),(.68,1.04,.012),'Glass')
+        for offset in (-.18,0,.18):
+            s.mesh('Display pastel toy',room,(x+offset,1.12,1.65),(.14,.21,.14),'Plush' if offset==0 else 'Amber',mesh=10207)
+    for x in (-4,-3,-2,-1,0,1,2,3,4):
+        s.mesh('Floor parquet seam',room,(x,-.023,0),(.007,.001,10),'Backdrop')
+    for z in (-4,-2,0,2,4):
+        s.mesh('Floor cross seam',room,(0,-.022,z),(10,.001,.007),'Backdrop')
+    shelf=s.mesh('Rear showroom display shelf',room,(0,1.10,2.48),(1.65,.06,.32),'Ivory')
+    s.mono(shelf,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.14\n')
+    for x in (-.58,-.28,.02,.32,.62):
+        s.mesh('Shelf pastel parcel',room,(x,1.28,2.48),(.21,.30,.19),'Mint' if x<0 else 'Rose')
+    s.mono(room,'Presentation/ClawShowroomLighting')
     light=s.node('Soft key light',room,(0,3,-2),euler=(38,-28,0))
     s.component(light,108,'Light','  m_Enabled: 1\n  serializedVersion: 10\n  m_Type: 1\n  m_Shape: 0\n  m_Color: {r: 1, g: 0.94, b: 0.82, a: 1}\n  m_Intensity: 1.05\n  m_Range: 10\n  m_SpotAngle: 30\n  m_InnerSpotAngle: 21.8\n  m_CookieSize: 10\n  m_Shadows:\n    m_Type: 2\n    m_Resolution: -1\n    m_CustomResolution: -1\n    m_Strength: 0.65\n    m_Bias: 0.05\n    m_NormalBias: 0.4\n    m_NearPlane: 0.2\n  m_Cookie: {fileID: 0}\n  m_DrawHalo: 0\n  m_Flare: {fileID: 0}\n  m_RenderMode: 0\n  m_CullingMask:\n    serializedVersion: 2\n    m_Bits: 4294967295\n  m_RenderingLayerMask: 1\n  m_Lightmapping: 4\n  m_BounceIntensity: 1\n  m_ColorTemperature: 5500\n  m_UseColorTemperature: 0\n')
     settings='--- !u!29 &1\nOcclusionCullingSettings:\n  serializedVersion: 2\n  m_OcclusionBakeSettings:\n    smallestOccluder: 5\n    smallestHole: 0.25\n    backfaceThreshold: 100\n  m_SceneGUID: 00000000000000000000000000000000\n  m_OcclusionCullingData: {fileID: 0}\n--- !u!104 &2\nRenderSettings:\n  serializedVersion: 9\n  m_Fog: 0\n  m_AmbientSkyColor: {r: 0.78, g: 0.75, b: 0.67, a: 1}\n  m_AmbientEquatorColor: {r: 0.65, g: 0.64, b: 0.58, a: 1}\n  m_AmbientGroundColor: {r: 0.38, g: 0.37, b: 0.33, a: 1}\n  m_AmbientIntensity: 0.85\n  m_AmbientMode: 3\n  m_SkyboxMaterial: {fileID: 0}\n--- !u!157 &3\nLightmapSettings:\n  serializedVersion: 12\n  m_GIWorkflowMode: 1\n  m_LightmapsMode: 1\n  m_LightingSettings: {fileID: 0}\n--- !u!196 &4\nNavMeshSettings:\n  serializedVersion: 2\n  m_NavMeshData: {fileID: 0}\n'

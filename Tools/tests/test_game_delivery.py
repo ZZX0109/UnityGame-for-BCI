@@ -37,6 +37,10 @@ class GameEvidenceChecks(unittest.TestCase):
         self.assertEqual(3, result["passed"])
         self.assertEqual(3, len(result["cases"]))
 
+    def test_optional_capture_cases_cannot_count_as_delivery_evidence(self):
+        with self.assertRaisesRegex(ValueError, "Optional VisualCapture"):
+            delivery.read_scoped_tests(self.write(xml(categories=("VisualCapture",))), "ClawMachine.Tests")
+
     def test_passed_root_without_actual_cases_is_rejected(self):
         path = self.write('<test-run result="Passed" total="3" passed="3"/>')
         with self.assertRaisesRegex(ValueError, "case count"):

@@ -1,400 +1,402 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1174
+--- !u!1 &1313
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1175}
+  - component: {fileID: 1314}
   m_Layer: 0
   m_Name: "GantryRoot"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1175
+--- !u!4 &1314
 Transform:
-  m_GameObject: {fileID: 1174}
+  m_GameObject: {fileID: 1313}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1177}
-  - {fileID: 1181}
-  - {fileID: 1185}
-  - {fileID: 1189}
+  - {fileID: 1316}
+  - {fileID: 1320}
+  - {fileID: 1324}
+  - {fileID: 1328}
   m_Father: {fileID: 0}
---- !u!1 &1176
+--- !u!1 &1315
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1177}
-  - component: {fileID: 1178}
-  - component: {fileID: 1179}
+  - component: {fileID: 1316}
+  - component: {fileID: 1317}
+  - component: {fileID: 1318}
+  - component: {fileID: 1672}
   m_Layer: 0
   m_Name: "X bridge"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1177
+--- !u!4 &1316
 Transform:
-  m_GameObject: {fileID: 1176}
+  m_GameObject: {fileID: 1315}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.92, z: 0}
   m_LocalScale: {x: 1.08, y: 0.055, z: 0.06}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1175}
---- !u!1 &1180
+  m_Father: {fileID: 1314}
+--- !u!1 &1319
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1181}
-  - component: {fileID: 1182}
-  - component: {fileID: 1183}
+  - component: {fileID: 1320}
+  - component: {fileID: 1321}
+  - component: {fileID: 1322}
+  - component: {fileID: 1673}
   m_Layer: 0
   m_Name: "XZ trolley"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1181
+--- !u!4 &1320
 Transform:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.92, z: 0}
   m_LocalScale: {x: 0.2, y: 0.1, z: 0.16}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1175}
---- !u!1 &1184
+  m_Father: {fileID: 1314}
+--- !u!1 &1323
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1185}
-  - component: {fileID: 1186}
-  - component: {fileID: 1187}
+  - component: {fileID: 1324}
+  - component: {fileID: 1325}
+  - component: {fileID: 1326}
   m_Layer: 0
   m_Name: "Y cable"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1185
+--- !u!4 &1324
 Transform:
-  m_GameObject: {fileID: 1184}
+  m_GameObject: {fileID: 1323}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.86, z: 0}
   m_LocalScale: {x: 0.012, y: 0.06, z: 0.012}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1175}
---- !u!1 &1188
+  m_Father: {fileID: 1314}
+--- !u!1 &1327
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1189}
-  - component: {fileID: 1190}
-  - component: {fileID: 1195}
-  - component: {fileID: 1238}
+  - component: {fileID: 1328}
+  - component: {fileID: 1329}
+  - component: {fileID: 1334}
+  - component: {fileID: 1377}
   m_Layer: 0
   m_Name: "Tool - grip origin"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1189
+--- !u!4 &1328
 Transform:
-  m_GameObject: {fileID: 1188}
+  m_GameObject: {fileID: 1327}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.56, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1192}
-  - {fileID: 1197}
-  - {fileID: 1211}
-  - {fileID: 1225}
-  m_Father: {fileID: 1175}
---- !u!1 &1191
+  - {fileID: 1331}
+  - {fileID: 1336}
+  - {fileID: 1350}
+  - {fileID: 1364}
+  m_Father: {fileID: 1314}
+--- !u!1 &1330
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1192}
-  - component: {fileID: 1193}
-  - component: {fileID: 1194}
+  - component: {fileID: 1331}
+  - component: {fileID: 1332}
+  - component: {fileID: 1333}
   m_Layer: 0
   m_Name: "Gripper hub"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1192
+--- !u!4 &1331
 Transform:
-  m_GameObject: {fileID: 1191}
+  m_GameObject: {fileID: 1330}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 0.13, y: 0.025, z: 0.13}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1189}
---- !u!1 &1196
+  m_Father: {fileID: 1328}
+--- !u!1 &1335
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1197}
-  - component: {fileID: 1206}
+  - component: {fileID: 1336}
+  - component: {fileID: 1345}
   m_Layer: 0
   m_Name: "Finger 0"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1197
+--- !u!4 &1336
 Transform:
-  m_GameObject: {fileID: 1196}
+  m_GameObject: {fileID: 1335}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.255263e-17, y: 0.13, z: 0.205}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1199}
-  - {fileID: 1203}
-  - {fileID: 1208}
-  m_Father: {fileID: 1189}
---- !u!1 &1198
+  - {fileID: 1338}
+  - {fileID: 1342}
+  - {fileID: 1347}
+  m_Father: {fileID: 1328}
+--- !u!1 &1337
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1199}
-  - component: {fileID: 1200}
-  - component: {fileID: 1201}
+  - component: {fileID: 1338}
+  - component: {fileID: 1339}
+  - component: {fileID: 1340}
   m_Layer: 0
   m_Name: "Silver finger"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1199
+--- !u!4 &1338
 Transform:
-  m_GameObject: {fileID: 1198}
+  m_GameObject: {fileID: 1337}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.024, y: 0.14, z: 0.024}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1197}
---- !u!1 &1202
+  m_Father: {fileID: 1336}
+--- !u!1 &1341
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1203}
-  - component: {fileID: 1204}
-  - component: {fileID: 1205}
+  - component: {fileID: 1342}
+  - component: {fileID: 1343}
+  - component: {fileID: 1344}
   m_Layer: 0
   m_Name: "Contact pad"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1203
+--- !u!4 &1342
 Transform:
-  m_GameObject: {fileID: 1202}
+  m_GameObject: {fileID: 1341}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 0.036, y: 0.036, z: 0.036}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1197}
---- !u!1 &1207
+  m_Father: {fileID: 1336}
+--- !u!1 &1346
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1208}
-  - component: {fileID: 1209}
+  - component: {fileID: 1347}
+  - component: {fileID: 1348}
   m_Layer: 0
   m_Name: "Physical contact probe"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1208
+--- !u!4 &1347
 Transform:
-  m_GameObject: {fileID: 1207}
+  m_GameObject: {fileID: 1346}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1197}
---- !u!1 &1210
+  m_Father: {fileID: 1336}
+--- !u!1 &1349
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1211}
-  - component: {fileID: 1220}
+  - component: {fileID: 1350}
+  - component: {fileID: 1359}
   m_Layer: 0
   m_Name: "Finger 1"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1211
+--- !u!4 &1350
 Transform:
-  m_GameObject: {fileID: 1210}
+  m_GameObject: {fileID: 1349}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.1775352, y: 0.13, z: -0.1025}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1213}
-  - {fileID: 1217}
-  - {fileID: 1222}
-  m_Father: {fileID: 1189}
---- !u!1 &1212
+  - {fileID: 1352}
+  - {fileID: 1356}
+  - {fileID: 1361}
+  m_Father: {fileID: 1328}
+--- !u!1 &1351
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1213}
-  - component: {fileID: 1214}
-  - component: {fileID: 1215}
+  - component: {fileID: 1352}
+  - component: {fileID: 1353}
+  - component: {fileID: 1354}
   m_Layer: 0
   m_Name: "Silver finger"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1213
+--- !u!4 &1352
 Transform:
-  m_GameObject: {fileID: 1212}
+  m_GameObject: {fileID: 1351}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.024, y: 0.14, z: 0.024}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1211}
---- !u!1 &1216
+  m_Father: {fileID: 1350}
+--- !u!1 &1355
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1217}
-  - component: {fileID: 1218}
-  - component: {fileID: 1219}
+  - component: {fileID: 1356}
+  - component: {fileID: 1357}
+  - component: {fileID: 1358}
   m_Layer: 0
   m_Name: "Contact pad"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1217
+--- !u!4 &1356
 Transform:
-  m_GameObject: {fileID: 1216}
+  m_GameObject: {fileID: 1355}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 0.036, y: 0.036, z: 0.036}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1211}
---- !u!1 &1221
+  m_Father: {fileID: 1350}
+--- !u!1 &1360
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1222}
-  - component: {fileID: 1223}
+  - component: {fileID: 1361}
+  - component: {fileID: 1362}
   m_Layer: 0
   m_Name: "Physical contact probe"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1222
+--- !u!4 &1361
 Transform:
-  m_GameObject: {fileID: 1221}
+  m_GameObject: {fileID: 1360}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1211}
---- !u!1 &1224
+  m_Father: {fileID: 1350}
+--- !u!1 &1363
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1225}
-  - component: {fileID: 1234}
+  - component: {fileID: 1364}
+  - component: {fileID: 1373}
   m_Layer: 0
   m_Name: "Finger 2"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1225
+--- !u!4 &1364
 Transform:
-  m_GameObject: {fileID: 1224}
+  m_GameObject: {fileID: 1363}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.1775352, y: 0.13, z: -0.1025}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1227}
-  - {fileID: 1231}
-  - {fileID: 1236}
-  m_Father: {fileID: 1189}
---- !u!1 &1226
+  - {fileID: 1366}
+  - {fileID: 1370}
+  - {fileID: 1375}
+  m_Father: {fileID: 1328}
+--- !u!1 &1365
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1227}
-  - component: {fileID: 1228}
-  - component: {fileID: 1229}
+  - component: {fileID: 1366}
+  - component: {fileID: 1367}
+  - component: {fileID: 1368}
   m_Layer: 0
   m_Name: "Silver finger"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1227
+--- !u!4 &1366
 Transform:
-  m_GameObject: {fileID: 1226}
+  m_GameObject: {fileID: 1365}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.024, y: 0.14, z: 0.024}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1225}
---- !u!1 &1230
+  m_Father: {fileID: 1364}
+--- !u!1 &1369
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1231}
-  - component: {fileID: 1232}
-  - component: {fileID: 1233}
+  - component: {fileID: 1370}
+  - component: {fileID: 1371}
+  - component: {fileID: 1372}
   m_Layer: 0
   m_Name: "Contact pad"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1231
+--- !u!4 &1370
 Transform:
-  m_GameObject: {fileID: 1230}
+  m_GameObject: {fileID: 1369}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 0.036, y: 0.036, z: 0.036}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1225}
---- !u!1 &1235
+  m_Father: {fileID: 1364}
+--- !u!1 &1374
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1236}
-  - component: {fileID: 1237}
+  - component: {fileID: 1375}
+  - component: {fileID: 1376}
   m_Layer: 0
   m_Name: "Physical contact probe"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1236
+--- !u!4 &1375
 Transform:
-  m_GameObject: {fileID: 1235}
+  m_GameObject: {fileID: 1374}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1225}
---- !u!33 &1178
+  m_Father: {fileID: 1364}
+--- !u!33 &1317
 MeshFilter:
-  m_GameObject: {fileID: 1176}
+  m_GameObject: {fileID: 1315}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1179
+--- !u!23 &1318
 MeshRenderer:
-  m_GameObject: {fileID: 1176}
+  m_GameObject: {fileID: 1315}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -405,13 +407,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1182
+--- !u!33 &1321
 MeshFilter:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1183
+--- !u!23 &1322
 MeshRenderer:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -422,13 +424,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1186
+--- !u!33 &1325
 MeshFilter:
-  m_GameObject: {fileID: 1184}
+  m_GameObject: {fileID: 1323}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1187
+--- !u!23 &1326
 MeshRenderer:
-  m_GameObject: {fileID: 1184}
+  m_GameObject: {fileID: 1323}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -439,9 +441,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!54 &1190
+--- !u!54 &1329
 Rigidbody:
-  m_GameObject: {fileID: 1188}
+  m_GameObject: {fileID: 1327}
   serializedVersion: 4
   m_Mass: 0.3
   m_Drag: 0.05
@@ -454,13 +456,13 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!33 &1193
+--- !u!33 &1332
 MeshFilter:
-  m_GameObject: {fileID: 1191}
+  m_GameObject: {fileID: 1330}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1194
+--- !u!23 &1333
 MeshRenderer:
-  m_GameObject: {fileID: 1191}
+  m_GameObject: {fileID: 1330}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -471,22 +473,22 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
   m_ScaleInLightmap: 1
---- !u!65 &1195
+--- !u!65 &1334
 BoxCollider:
-  m_GameObject: {fileID: 1188}
+  m_GameObject: {fileID: 1327}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 0.14, y: 0.05, z: 0.14}
   m_Center: {x: 0, y: 0.3, z: 0}
---- !u!33 &1200
+--- !u!33 &1339
 MeshFilter:
-  m_GameObject: {fileID: 1198}
+  m_GameObject: {fileID: 1337}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1201
+--- !u!23 &1340
 MeshRenderer:
-  m_GameObject: {fileID: 1198}
+  m_GameObject: {fileID: 1337}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -497,13 +499,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1204
+--- !u!33 &1343
 MeshFilter:
-  m_GameObject: {fileID: 1202}
+  m_GameObject: {fileID: 1341}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1205
+--- !u!23 &1344
 MeshRenderer:
-  m_GameObject: {fileID: 1202}
+  m_GameObject: {fileID: 1341}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -514,9 +516,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1206
+--- !u!136 &1345
 CapsuleCollider:
-  m_GameObject: {fileID: 1196}
+  m_GameObject: {fileID: 1335}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -524,21 +526,21 @@ CapsuleCollider:
   m_Height: 0.28
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!135 &1209
+--- !u!135 &1348
 SphereCollider:
-  m_GameObject: {fileID: 1207}
+  m_GameObject: {fileID: 1346}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.018
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1214
+--- !u!33 &1353
 MeshFilter:
-  m_GameObject: {fileID: 1212}
+  m_GameObject: {fileID: 1351}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1215
+--- !u!23 &1354
 MeshRenderer:
-  m_GameObject: {fileID: 1212}
+  m_GameObject: {fileID: 1351}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -549,13 +551,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1218
+--- !u!33 &1357
 MeshFilter:
-  m_GameObject: {fileID: 1216}
+  m_GameObject: {fileID: 1355}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1219
+--- !u!23 &1358
 MeshRenderer:
-  m_GameObject: {fileID: 1216}
+  m_GameObject: {fileID: 1355}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -566,9 +568,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1220
+--- !u!136 &1359
 CapsuleCollider:
-  m_GameObject: {fileID: 1210}
+  m_GameObject: {fileID: 1349}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -576,21 +578,21 @@ CapsuleCollider:
   m_Height: 0.28
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!135 &1223
+--- !u!135 &1362
 SphereCollider:
-  m_GameObject: {fileID: 1221}
+  m_GameObject: {fileID: 1360}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.018
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1228
+--- !u!33 &1367
 MeshFilter:
-  m_GameObject: {fileID: 1226}
+  m_GameObject: {fileID: 1365}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1229
+--- !u!23 &1368
 MeshRenderer:
-  m_GameObject: {fileID: 1226}
+  m_GameObject: {fileID: 1365}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -601,13 +603,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 318bbbd16f35f31181ce73bf8faf4c37, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1232
+--- !u!33 &1371
 MeshFilter:
-  m_GameObject: {fileID: 1230}
+  m_GameObject: {fileID: 1369}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1233
+--- !u!23 &1372
 MeshRenderer:
-  m_GameObject: {fileID: 1230}
+  m_GameObject: {fileID: 1369}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -618,9 +620,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: d0bc1c811c9b897802f5df190d32b52c, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1234
+--- !u!136 &1373
 CapsuleCollider:
-  m_GameObject: {fileID: 1224}
+  m_GameObject: {fileID: 1363}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -628,43 +630,63 @@ CapsuleCollider:
   m_Height: 0.28
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!135 &1237
+--- !u!135 &1376
 SphereCollider:
-  m_GameObject: {fileID: 1235}
+  m_GameObject: {fileID: 1374}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.018
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1238
+--- !u!114 &1377
 MonoBehaviour:
-  m_GameObject: {fileID: 1188}
+  m_GameObject: {fileID: 1327}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd0792adc11b4d0590533129a8f5cbc9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  toolBody: {fileID: 1190}
+  toolBody: {fileID: 1329}
   fingers:
-  - {fileID: 1197}
-  - {fileID: 1211}
-  - {fileID: 1225}
+  - {fileID: 1336}
+  - {fileID: 1350}
+  - {fileID: 1364}
   contactPads:
-  - {fileID: 1208}
-  - {fileID: 1222}
-  - {fileID: 1236}
+  - {fileID: 1347}
+  - {fileID: 1361}
+  - {fileID: 1375}
   contactColliders:
-  - {fileID: 1209}
-  - {fileID: 1223}
-  - {fileID: 1237}
+  - {fileID: 1348}
+  - {fileID: 1362}
+  - {fileID: 1376}
   physicalColliders:
-  - {fileID: 1195}
-  - {fileID: 1206}
-  - {fileID: 1209}
-  - {fileID: 1220}
-  - {fileID: 1223}
-  - {fileID: 1234}
-  - {fileID: 1237}
+  - {fileID: 1334}
+  - {fileID: 1345}
+  - {fileID: 1348}
+  - {fileID: 1359}
+  - {fileID: 1362}
+  - {fileID: 1373}
+  - {fileID: 1376}
   environmentColliders: []
   openRadius: 0.205
   closedRadius: 0.065
+--- !u!114 &1672
+MonoBehaviour:
+  m_GameObject: {fileID: 1315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 0
+  bevel: 0.055
+--- !u!114 &1673
+MonoBehaviour:
+  m_GameObject: {fileID: 1319}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 0
+  bevel: 0.055

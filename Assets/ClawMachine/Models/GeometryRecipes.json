@@ -3,6 +3,8 @@
   "units": "meters; unit mesh transformed by authored prefab dimensions",
   "roundedBox": {"faceSegments": 6, "bevelRange": [0.01, 0.25], "normals": "analytic rounded-surface", "uv": "per-face"},
   "ellipsoid": {"longitude": 24, "latitude": 16, "uv": "latitude-longitude"},
+  "plushBody": {"longitude": 32, "latitude": 24, "shape": "ellipsoid narrowed 20 percent at the shoulders, inside original unit bounds"},
+  "curvedTail": {"rings": 28, "sides": 16, "shape": "closed tapered curved tube, explicit finite endpoint caps", "collision": "decoration only"},
   "ownership": "Each module owns and releases its generated Mesh on disable; shared builtin source mesh is restored",
   "collision": "Simplified authored compound primitive colliders remain authoritative and independent of visual mesh"
 }

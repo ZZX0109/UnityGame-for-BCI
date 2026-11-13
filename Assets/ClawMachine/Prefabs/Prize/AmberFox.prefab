@@ -1,209 +1,560 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1314
+--- !u!1 &1533
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1315}
-  - component: {fileID: 1316}
-  - component: {fileID: 1317}
+  - component: {fileID: 1534}
+  - component: {fileID: 1535}
+  - component: {fileID: 1536}
   m_Layer: 0
   m_Name: "Prize - amber-fox"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1315
+--- !u!4 &1534
 Transform:
-  m_GameObject: {fileID: 1314}
+  m_GameObject: {fileID: 1533}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1319}
-  - {fileID: 1324}
-  - {fileID: 1329}
-  - {fileID: 1334}
-  - {fileID: 1339}
-  - {fileID: 1343}
-  - {fileID: 1347}
-  - {fileID: 1351}
+  - {fileID: 1538}
+  - {fileID: 1543}
+  - {fileID: 1548}
+  - {fileID: 1553}
+  - {fileID: 1558}
+  - {fileID: 1562}
+  - {fileID: 1566}
+  - {fileID: 1570}
+  - {fileID: 1574}
   m_Father: {fileID: 0}
---- !u!1 &1318
+--- !u!1 &1537
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1319}
-  - component: {fileID: 1320}
-  - component: {fileID: 1321}
-  - component: {fileID: 1322}
+  - component: {fileID: 1538}
+  - component: {fileID: 1539}
+  - component: {fileID: 1540}
+  - component: {fileID: 1541}
   m_Layer: 0
   m_Name: "Weighted fox body"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1319
+--- !u!4 &1538
 Transform:
-  m_GameObject: {fileID: 1318}
+  m_GameObject: {fileID: 1537}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.24, y: 0.18, z: 0.16}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1323
+  m_Father: {fileID: 1534}
+--- !u!1 &1542
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1324}
-  - component: {fileID: 1325}
-  - component: {fileID: 1326}
-  - component: {fileID: 1327}
+  - component: {fileID: 1543}
+  - component: {fileID: 1544}
+  - component: {fileID: 1545}
+  - component: {fileID: 1546}
   m_Layer: 0
   m_Name: "Fox head"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1324
+--- !u!4 &1543
 Transform:
-  m_GameObject: {fileID: 1323}
+  m_GameObject: {fileID: 1542}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.13, z: 0}
   m_LocalScale: {x: 0.14, y: 0.13, z: 0.13}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1328
+  m_Father: {fileID: 1534}
+--- !u!1 &1547
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1329}
-  - component: {fileID: 1330}
-  - component: {fileID: 1331}
-  - component: {fileID: 1332}
+  - component: {fileID: 1548}
+  - component: {fileID: 1549}
+  - component: {fileID: 1550}
+  - component: {fileID: 1551}
   m_Layer: 0
   m_Name: "Fox ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1329
+--- !u!4 &1548
 Transform:
-  m_GameObject: {fileID: 1328}
+  m_GameObject: {fileID: 1547}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.045, y: 0.205, z: 0}
   m_LocalScale: {x: 0.045, y: 0.035, z: 0.045}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1333
+  m_Father: {fileID: 1534}
+--- !u!1 &1552
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1334}
-  - component: {fileID: 1335}
-  - component: {fileID: 1336}
-  - component: {fileID: 1337}
+  - component: {fileID: 1553}
+  - component: {fileID: 1554}
+  - component: {fileID: 1555}
+  - component: {fileID: 1556}
   m_Layer: 0
   m_Name: "Fox ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1334
+--- !u!4 &1553
 Transform:
-  m_GameObject: {fileID: 1333}
+  m_GameObject: {fileID: 1552}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.045, y: 0.205, z: 0}
   m_LocalScale: {x: 0.045, y: 0.035, z: 0.045}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1338
+  m_Father: {fileID: 1534}
+--- !u!1 &1557
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1339}
-  - component: {fileID: 1340}
-  - component: {fileID: 1341}
+  - component: {fileID: 1558}
+  - component: {fileID: 1559}
+  - component: {fileID: 1560}
   m_Layer: 0
   m_Name: "Visible offset brass weight"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1339
+--- !u!4 &1558
 Transform:
-  m_GameObject: {fileID: 1338}
+  m_GameObject: {fileID: 1557}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.055, y: 0.095, z: -0.04}
   m_LocalScale: {x: 0.065, y: 0.035, z: 0.065}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1342
+  m_Father: {fileID: 1534}
+--- !u!1 &1561
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1343}
-  - component: {fileID: 1344}
-  - component: {fileID: 1345}
+  - component: {fileID: 1562}
+  - component: {fileID: 1563}
+  - component: {fileID: 1564}
   m_Layer: 0
   m_Name: "Fox eye"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1343
+--- !u!4 &1562
 Transform:
-  m_GameObject: {fileID: 1342}
+  m_GameObject: {fileID: 1561}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.03, y: 0.14, z: -0.06}
   m_LocalScale: {x: 0.012, y: 0.013, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1346
+  m_Father: {fileID: 1534}
+--- !u!1 &1565
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1347}
-  - component: {fileID: 1348}
-  - component: {fileID: 1349}
+  - component: {fileID: 1566}
+  - component: {fileID: 1567}
+  - component: {fileID: 1568}
   m_Layer: 0
   m_Name: "Fox eye"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1347
+--- !u!4 &1566
 Transform:
-  m_GameObject: {fileID: 1346}
+  m_GameObject: {fileID: 1565}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.03, y: 0.14, z: -0.06}
   m_LocalScale: {x: 0.012, y: 0.013, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!1 &1350
+  m_Father: {fileID: 1534}
+--- !u!1 &1569
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1351}
-  - component: {fileID: 1352}
-  - component: {fileID: 1353}
+  - component: {fileID: 1570}
+  - component: {fileID: 1571}
+  - component: {fileID: 1572}
   m_Layer: 0
   m_Name: "Fox muzzle"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1351
+--- !u!4 &1570
 Transform:
-  m_GameObject: {fileID: 1350}
+  m_GameObject: {fileID: 1569}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.11, z: -0.065}
   m_LocalScale: {x: 0.065, y: 0.045, z: 0.035}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1315}
---- !u!54 &1316
+  m_Father: {fileID: 1534}
+--- !u!1 &1573
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1574}
+  m_Layer: 0
+  m_Name: "VisualRoot - noncontact character details"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1574
+Transform:
+  m_GameObject: {fileID: 1573}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1576}
+  - {fileID: 1581}
+  - {fileID: 1585}
+  - {fileID: 1589}
+  - {fileID: 1593}
+  - {fileID: 1597}
+  - {fileID: 1601}
+  - {fileID: 1605}
+  - {fileID: 1609}
+  - {fileID: 1613}
+  - {fileID: 1617}
+  - {fileID: 1621}
+  - {fileID: 1625}
+  - {fileID: 1629}
+  - {fileID: 1633}
+  m_Father: {fileID: 1534}
+--- !u!1 &1575
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1576}
+  - component: {fileID: 1577}
+  - component: {fileID: 1578}
+  - component: {fileID: 1579}
+  m_Layer: 0
+  m_Name: "Fox curled fabric tail"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1576
+Transform:
+  m_GameObject: {fileID: 1575}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.12, y: -0.005, z: 0.025}
+  m_LocalScale: {x: 0.22, y: 0.22, z: 0.16}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1580
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1581}
+  - component: {fileID: 1582}
+  - component: {fileID: 1583}
+  m_Layer: 0
+  m_Name: "Fox cream tail tip"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1581
+Transform:
+  m_GameObject: {fileID: 1580}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.119, y: 0.059, z: 0.025}
+  m_LocalScale: {x: 0.044, y: 0.045, z: 0.048}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1584
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1585}
+  - component: {fileID: 1586}
+  - component: {fileID: 1587}
+  m_Layer: 0
+  m_Name: "Fox cream chest"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1585
+Transform:
+  m_GameObject: {fileID: 1584}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.008, z: -0.078}
+  m_LocalScale: {x: 0.112, y: 0.11, z: 0.022}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1588
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1589}
+  - component: {fileID: 1590}
+  - component: {fileID: 1591}
+  m_Layer: 0
+  m_Name: "Fox embroidered nose"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1589
+Transform:
+  m_GameObject: {fileID: 1588}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.118, z: -0.086}
+  m_LocalScale: {x: 0.023, y: 0.017, z: 0.012}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1592
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1593}
+  - component: {fileID: 1594}
+  - component: {fileID: 1595}
+  m_Layer: 0
+  m_Name: "Fox inner ear patch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1593
+Transform:
+  m_GameObject: {fileID: 1592}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.047, y: 0.206, z: -0.015}
+  m_LocalScale: {x: 0.025, y: 0.031, z: 0.009}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1596
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1597}
+  - component: {fileID: 1598}
+  - component: {fileID: 1599}
+  m_Layer: 0
+  m_Name: "Fox inner ear patch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1597
+Transform:
+  m_GameObject: {fileID: 1596}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.047, y: 0.206, z: -0.015}
+  m_LocalScale: {x: 0.025, y: 0.031, z: 0.009}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1600
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1601}
+  - component: {fileID: 1602}
+  - component: {fileID: 1603}
+  m_Layer: 0
+  m_Name: "Fox small paw"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1601
+Transform:
+  m_GameObject: {fileID: 1600}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.06, y: -0.061, z: -0.04}
+  m_LocalScale: {x: 0.062, y: 0.05, z: 0.055}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1604
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1605}
+  - component: {fileID: 1606}
+  - component: {fileID: 1607}
+  m_Layer: 0
+  m_Name: "Fox small paw"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1605
+Transform:
+  m_GameObject: {fileID: 1604}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.06, y: -0.061, z: -0.04}
+  m_LocalScale: {x: 0.062, y: 0.05, z: 0.055}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1608
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1609}
+  - component: {fileID: 1610}
+  - component: {fileID: 1611}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1609
+Transform:
+  m_GameObject: {fileID: 1608}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.052, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1612
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1613}
+  - component: {fileID: 1614}
+  - component: {fileID: 1615}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1613
+Transform:
+  m_GameObject: {fileID: 1612}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.038, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1616
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1617}
+  - component: {fileID: 1618}
+  - component: {fileID: 1619}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1617
+Transform:
+  m_GameObject: {fileID: 1616}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.024, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1620
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1621}
+  - component: {fileID: 1622}
+  - component: {fileID: 1623}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1621
+Transform:
+  m_GameObject: {fileID: 1620}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.01, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1624
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1625}
+  - component: {fileID: 1626}
+  - component: {fileID: 1627}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1625
+Transform:
+  m_GameObject: {fileID: 1624}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.004, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1628
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1629}
+  - component: {fileID: 1630}
+  - component: {fileID: 1631}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1629
+Transform:
+  m_GameObject: {fileID: 1628}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.018, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!1 &1632
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1633}
+  - component: {fileID: 1634}
+  - component: {fileID: 1635}
+  m_Layer: 0
+  m_Name: "Fox hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1633
+Transform:
+  m_GameObject: {fileID: 1632}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.032, z: -0.091}
+  m_LocalScale: {x: 0.011, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1574}
+--- !u!54 &1535
 Rigidbody:
-  m_GameObject: {fileID: 1314}
+  m_GameObject: {fileID: 1533}
   serializedVersion: 4
   m_Mass: 0.3
   m_Drag: 0.05
@@ -216,22 +567,22 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!65 &1317
+--- !u!65 &1536
 BoxCollider:
-  m_GameObject: {fileID: 1314}
+  m_GameObject: {fileID: 1533}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 0.24, y: 0.18, z: 0.16}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1320
+--- !u!33 &1539
 MeshFilter:
-  m_GameObject: {fileID: 1318}
+  m_GameObject: {fileID: 1537}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1321
+--- !u!23 &1540
 MeshRenderer:
-  m_GameObject: {fileID: 1318}
+  m_GameObject: {fileID: 1537}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -242,23 +593,23 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
   m_ScaleInLightmap: 1
---- !u!114 &1322
+--- !u!114 &1541
 MonoBehaviour:
-  m_GameObject: {fileID: 1318}
+  m_GameObject: {fileID: 1537}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  shape: 0
+  shape: 2
   bevel: 0.15
---- !u!33 &1325
+--- !u!33 &1544
 MeshFilter:
-  m_GameObject: {fileID: 1323}
+  m_GameObject: {fileID: 1542}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1326
+--- !u!23 &1545
 MeshRenderer:
-  m_GameObject: {fileID: 1323}
+  m_GameObject: {fileID: 1542}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -269,21 +620,21 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
   m_ScaleInLightmap: 1
---- !u!135 &1327
+--- !u!135 &1546
 SphereCollider:
-  m_GameObject: {fileID: 1323}
+  m_GameObject: {fileID: 1542}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1330
+--- !u!33 &1549
 MeshFilter:
-  m_GameObject: {fileID: 1328}
+  m_GameObject: {fileID: 1547}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1331
+--- !u!23 &1550
 MeshRenderer:
-  m_GameObject: {fileID: 1328}
+  m_GameObject: {fileID: 1547}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -294,9 +645,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1332
+--- !u!136 &1551
 CapsuleCollider:
-  m_GameObject: {fileID: 1328}
+  m_GameObject: {fileID: 1547}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -304,13 +655,13 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1335
+--- !u!33 &1554
 MeshFilter:
-  m_GameObject: {fileID: 1333}
+  m_GameObject: {fileID: 1552}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1336
+--- !u!23 &1555
 MeshRenderer:
-  m_GameObject: {fileID: 1333}
+  m_GameObject: {fileID: 1552}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -321,9 +672,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1337
+--- !u!136 &1556
 CapsuleCollider:
-  m_GameObject: {fileID: 1333}
+  m_GameObject: {fileID: 1552}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -331,13 +682,13 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1340
+--- !u!33 &1559
 MeshFilter:
-  m_GameObject: {fileID: 1338}
+  m_GameObject: {fileID: 1557}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1341
+--- !u!23 &1560
 MeshRenderer:
-  m_GameObject: {fileID: 1338}
+  m_GameObject: {fileID: 1557}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -348,13 +699,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: e4852b50746d111a32983c342ab00187, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1344
+--- !u!33 &1563
 MeshFilter:
-  m_GameObject: {fileID: 1342}
+  m_GameObject: {fileID: 1561}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1345
+--- !u!23 &1564
 MeshRenderer:
-  m_GameObject: {fileID: 1342}
+  m_GameObject: {fileID: 1561}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -365,13 +716,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1348
+--- !u!33 &1567
 MeshFilter:
-  m_GameObject: {fileID: 1346}
+  m_GameObject: {fileID: 1565}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1349
+--- !u!23 &1568
 MeshRenderer:
-  m_GameObject: {fileID: 1346}
+  m_GameObject: {fileID: 1565}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -382,13 +733,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1352
+--- !u!33 &1571
 MeshFilter:
-  m_GameObject: {fileID: 1350}
+  m_GameObject: {fileID: 1569}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1353
+--- !u!23 &1572
 MeshRenderer:
-  m_GameObject: {fileID: 1350}
+  m_GameObject: {fileID: 1569}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -398,4 +749,269 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_Materials:
   - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1577
+MeshFilter:
+  m_GameObject: {fileID: 1575}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1578
+MeshRenderer:
+  m_GameObject: {fileID: 1575}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!114 &1579
+MonoBehaviour:
+  m_GameObject: {fileID: 1575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 3
+  bevel: 0.08
+--- !u!33 &1582
+MeshFilter:
+  m_GameObject: {fileID: 1580}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1583
+MeshRenderer:
+  m_GameObject: {fileID: 1580}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1586
+MeshFilter:
+  m_GameObject: {fileID: 1584}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1587
+MeshRenderer:
+  m_GameObject: {fileID: 1584}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1590
+MeshFilter:
+  m_GameObject: {fileID: 1588}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1591
+MeshRenderer:
+  m_GameObject: {fileID: 1588}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1594
+MeshFilter:
+  m_GameObject: {fileID: 1592}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1595
+MeshRenderer:
+  m_GameObject: {fileID: 1592}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1598
+MeshFilter:
+  m_GameObject: {fileID: 1596}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1599
+MeshRenderer:
+  m_GameObject: {fileID: 1596}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1602
+MeshFilter:
+  m_GameObject: {fileID: 1600}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1603
+MeshRenderer:
+  m_GameObject: {fileID: 1600}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1606
+MeshFilter:
+  m_GameObject: {fileID: 1604}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1607
+MeshRenderer:
+  m_GameObject: {fileID: 1604}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: fd389432e0ace8a5ae6ed857dfc3a1ea, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1610
+MeshFilter:
+  m_GameObject: {fileID: 1608}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1611
+MeshRenderer:
+  m_GameObject: {fileID: 1608}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1614
+MeshFilter:
+  m_GameObject: {fileID: 1612}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1615
+MeshRenderer:
+  m_GameObject: {fileID: 1612}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1618
+MeshFilter:
+  m_GameObject: {fileID: 1616}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1619
+MeshRenderer:
+  m_GameObject: {fileID: 1616}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1622
+MeshFilter:
+  m_GameObject: {fileID: 1620}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1623
+MeshRenderer:
+  m_GameObject: {fileID: 1620}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1626
+MeshFilter:
+  m_GameObject: {fileID: 1624}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1627
+MeshRenderer:
+  m_GameObject: {fileID: 1624}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1630
+MeshFilter:
+  m_GameObject: {fileID: 1628}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1631
+MeshRenderer:
+  m_GameObject: {fileID: 1628}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1634
+MeshFilter:
+  m_GameObject: {fileID: 1632}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1635
+MeshRenderer:
+  m_GameObject: {fileID: 1632}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
   m_ScaleInLightmap: 1

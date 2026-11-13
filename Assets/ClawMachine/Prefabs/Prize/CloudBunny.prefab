@@ -1,253 +1,603 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1265
+--- !u!1 &1422
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1266}
-  - component: {fileID: 1267}
-  - component: {fileID: 1268}
+  - component: {fileID: 1423}
+  - component: {fileID: 1424}
+  - component: {fileID: 1425}
   m_Layer: 0
   m_Name: "Prize - cloud-bunny"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1266
+--- !u!4 &1423
 Transform:
-  m_GameObject: {fileID: 1265}
+  m_GameObject: {fileID: 1422}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1270}
-  - {fileID: 1275}
-  - {fileID: 1280}
-  - {fileID: 1285}
-  - {fileID: 1289}
-  - {fileID: 1294}
-  - {fileID: 1298}
-  - {fileID: 1302}
-  - {fileID: 1306}
-  - {fileID: 1310}
+  - {fileID: 1427}
+  - {fileID: 1432}
+  - {fileID: 1437}
+  - {fileID: 1442}
+  - {fileID: 1446}
+  - {fileID: 1451}
+  - {fileID: 1455}
+  - {fileID: 1459}
+  - {fileID: 1463}
+  - {fileID: 1467}
+  - {fileID: 1471}
   m_Father: {fileID: 0}
---- !u!1 &1269
+--- !u!1 &1426
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1270}
-  - component: {fileID: 1271}
-  - component: {fileID: 1272}
-  - component: {fileID: 1273}
+  - component: {fileID: 1427}
+  - component: {fileID: 1428}
+  - component: {fileID: 1429}
+  - component: {fileID: 1430}
   m_Layer: 0
   m_Name: "Cotton torso"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1270
+--- !u!4 &1427
 Transform:
-  m_GameObject: {fileID: 1269}
+  m_GameObject: {fileID: 1426}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.22, y: 0.26, z: 0.22}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1274
+  m_Father: {fileID: 1423}
+--- !u!1 &1431
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1275}
-  - component: {fileID: 1276}
-  - component: {fileID: 1277}
-  - component: {fileID: 1278}
+  - component: {fileID: 1432}
+  - component: {fileID: 1433}
+  - component: {fileID: 1434}
+  - component: {fileID: 1435}
   m_Layer: 0
   m_Name: "Bunny head"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1275
+--- !u!4 &1432
 Transform:
-  m_GameObject: {fileID: 1274}
+  m_GameObject: {fileID: 1431}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.16, z: 0}
   m_LocalScale: {x: 0.14, y: 0.14, z: 0.14}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1279
+  m_Father: {fileID: 1423}
+--- !u!1 &1436
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1280}
-  - component: {fileID: 1281}
-  - component: {fileID: 1282}
-  - component: {fileID: 1283}
+  - component: {fileID: 1437}
+  - component: {fileID: 1438}
+  - component: {fileID: 1439}
+  - component: {fileID: 1440}
   m_Layer: 0
   m_Name: "Bunny ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1280
+--- !u!4 &1437
 Transform:
-  m_GameObject: {fileID: 1279}
+  m_GameObject: {fileID: 1436}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.04, y: 0.21, z: 0}
   m_LocalScale: {x: 0.035, y: 0.065, z: 0.035}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1284
+  m_Father: {fileID: 1423}
+--- !u!1 &1441
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1285}
-  - component: {fileID: 1286}
-  - component: {fileID: 1287}
+  - component: {fileID: 1442}
+  - component: {fileID: 1443}
+  - component: {fileID: 1444}
   m_Layer: 0
   m_Name: "Bunny inner ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1285
+--- !u!4 &1442
 Transform:
-  m_GameObject: {fileID: 1284}
+  m_GameObject: {fileID: 1441}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.04, y: 0.21, z: -0.018}
   m_LocalScale: {x: 0.015, y: 0.07, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1288
+  m_Father: {fileID: 1423}
+--- !u!1 &1445
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1289}
-  - component: {fileID: 1290}
-  - component: {fileID: 1291}
-  - component: {fileID: 1292}
+  - component: {fileID: 1446}
+  - component: {fileID: 1447}
+  - component: {fileID: 1448}
+  - component: {fileID: 1449}
   m_Layer: 0
   m_Name: "Bunny ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1289
+--- !u!4 &1446
 Transform:
-  m_GameObject: {fileID: 1288}
+  m_GameObject: {fileID: 1445}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.04, y: 0.21, z: 0}
   m_LocalScale: {x: 0.035, y: 0.065, z: 0.035}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1293
+  m_Father: {fileID: 1423}
+--- !u!1 &1450
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1294}
-  - component: {fileID: 1295}
-  - component: {fileID: 1296}
+  - component: {fileID: 1451}
+  - component: {fileID: 1452}
+  - component: {fileID: 1453}
   m_Layer: 0
   m_Name: "Bunny inner ear"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1294
+--- !u!4 &1451
 Transform:
-  m_GameObject: {fileID: 1293}
+  m_GameObject: {fileID: 1450}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.04, y: 0.21, z: -0.018}
   m_LocalScale: {x: 0.015, y: 0.07, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1297
+  m_Father: {fileID: 1423}
+--- !u!1 &1454
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1298}
-  - component: {fileID: 1299}
-  - component: {fileID: 1300}
+  - component: {fileID: 1455}
+  - component: {fileID: 1456}
+  - component: {fileID: 1457}
   m_Layer: 0
   m_Name: "Bunny eye"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1298
+--- !u!4 &1455
 Transform:
-  m_GameObject: {fileID: 1297}
+  m_GameObject: {fileID: 1454}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.032, y: 0.17, z: -0.064}
   m_LocalScale: {x: 0.012, y: 0.016, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1301
+  m_Father: {fileID: 1423}
+--- !u!1 &1458
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1302}
-  - component: {fileID: 1303}
-  - component: {fileID: 1304}
+  - component: {fileID: 1459}
+  - component: {fileID: 1460}
+  - component: {fileID: 1461}
   m_Layer: 0
   m_Name: "Bunny eye"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1302
+--- !u!4 &1459
 Transform:
-  m_GameObject: {fileID: 1301}
+  m_GameObject: {fileID: 1458}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.032, y: 0.17, z: -0.064}
   m_LocalScale: {x: 0.012, y: 0.016, z: 0.008}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1305
+  m_Father: {fileID: 1423}
+--- !u!1 &1462
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1306}
-  - component: {fileID: 1307}
-  - component: {fileID: 1308}
+  - component: {fileID: 1463}
+  - component: {fileID: 1464}
+  - component: {fileID: 1465}
   m_Layer: 0
   m_Name: "Bunny paw"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1306
+--- !u!4 &1463
 Transform:
-  m_GameObject: {fileID: 1305}
+  m_GameObject: {fileID: 1462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.1, y: -0.035, z: -0.015}
   m_LocalScale: {x: 0.075, y: 0.1, z: 0.07}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!1 &1309
+  m_Father: {fileID: 1423}
+--- !u!1 &1466
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1310}
-  - component: {fileID: 1311}
-  - component: {fileID: 1312}
+  - component: {fileID: 1467}
+  - component: {fileID: 1468}
+  - component: {fileID: 1469}
   m_Layer: 0
   m_Name: "Bunny paw"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1310
+--- !u!4 &1467
 Transform:
-  m_GameObject: {fileID: 1309}
+  m_GameObject: {fileID: 1466}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.1, y: -0.035, z: -0.015}
   m_LocalScale: {x: 0.075, y: 0.1, z: 0.07}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1266}
---- !u!54 &1267
+  m_Father: {fileID: 1423}
+--- !u!1 &1470
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1471}
+  m_Layer: 0
+  m_Name: "VisualRoot - noncontact character details"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1471
+Transform:
+  m_GameObject: {fileID: 1470}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1473}
+  - {fileID: 1477}
+  - {fileID: 1481}
+  - {fileID: 1485}
+  - {fileID: 1489}
+  - {fileID: 1493}
+  - {fileID: 1497}
+  - {fileID: 1501}
+  - {fileID: 1505}
+  - {fileID: 1509}
+  - {fileID: 1513}
+  - {fileID: 1517}
+  - {fileID: 1521}
+  - {fileID: 1525}
+  - {fileID: 1529}
+  m_Father: {fileID: 1423}
+--- !u!1 &1472
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1473}
+  - component: {fileID: 1474}
+  - component: {fileID: 1475}
+  m_Layer: 0
+  m_Name: "Bunny stitched muzzle"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1473
+Transform:
+  m_GameObject: {fileID: 1472}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.025, y: 0.137, z: -0.064}
+  m_LocalScale: {x: 0.044, y: 0.034, z: 0.025}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1476
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1477}
+  - component: {fileID: 1478}
+  - component: {fileID: 1479}
+  m_Layer: 0
+  m_Name: "Bunny stitched muzzle"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1477
+Transform:
+  m_GameObject: {fileID: 1476}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.025, y: 0.137, z: -0.064}
+  m_LocalScale: {x: 0.044, y: 0.034, z: 0.025}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1480
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1481}
+  - component: {fileID: 1482}
+  - component: {fileID: 1483}
+  m_Layer: 0
+  m_Name: "Bunny embroidered nose"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1481
+Transform:
+  m_GameObject: {fileID: 1480}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.151, z: -0.081}
+  m_LocalScale: {x: 0.018, y: 0.012, z: 0.011}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1484
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1485}
+  - component: {fileID: 1486}
+  - component: {fileID: 1487}
+  m_Layer: 0
+  m_Name: "Bunny cheek blush"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1485
+Transform:
+  m_GameObject: {fileID: 1484}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.048, y: 0.142, z: -0.054}
+  m_LocalScale: {x: 0.02, y: 0.014, z: 0.009}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1488
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1489}
+  - component: {fileID: 1490}
+  - component: {fileID: 1491}
+  m_Layer: 0
+  m_Name: "Bunny cheek blush"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1489
+Transform:
+  m_GameObject: {fileID: 1488}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.048, y: 0.142, z: -0.054}
+  m_LocalScale: {x: 0.02, y: 0.014, z: 0.009}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1492
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1493}
+  - component: {fileID: 1494}
+  - component: {fileID: 1495}
+  m_Layer: 0
+  m_Name: "Bunny belly patch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1493
+Transform:
+  m_GameObject: {fileID: 1492}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.015, z: -0.095}
+  m_LocalScale: {x: 0.125, y: 0.14, z: 0.025}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1496
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1497}
+  - component: {fileID: 1498}
+  - component: {fileID: 1499}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1497
+Transform:
+  m_GameObject: {fileID: 1496}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.078, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1500
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1501}
+  - component: {fileID: 1502}
+  - component: {fileID: 1503}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1501
+Transform:
+  m_GameObject: {fileID: 1500}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.062, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1504
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1505}
+  - component: {fileID: 1506}
+  - component: {fileID: 1507}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1505
+Transform:
+  m_GameObject: {fileID: 1504}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.046, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1508
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1509}
+  - component: {fileID: 1510}
+  - component: {fileID: 1511}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1509
+Transform:
+  m_GameObject: {fileID: 1508}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.03, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1512
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1513}
+  - component: {fileID: 1514}
+  - component: {fileID: 1515}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1513
+Transform:
+  m_GameObject: {fileID: 1512}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: -0.014, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1516
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1517}
+  - component: {fileID: 1518}
+  - component: {fileID: 1519}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1517
+Transform:
+  m_GameObject: {fileID: 1516}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.002, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1520
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1521}
+  - component: {fileID: 1522}
+  - component: {fileID: 1523}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1521
+Transform:
+  m_GameObject: {fileID: 1520}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.018, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1524
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1525}
+  - component: {fileID: 1526}
+  - component: {fileID: 1527}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1525
+Transform:
+  m_GameObject: {fileID: 1524}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.034, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!1 &1528
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1529}
+  - component: {fileID: 1530}
+  - component: {fileID: 1531}
+  m_Layer: 0
+  m_Name: "Bunny hand stitch"
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &1529
+Transform:
+  m_GameObject: {fileID: 1528}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0.4226183, w: 0.9063078}
+  m_LocalPosition: {x: -0.004, y: 0.05, z: -0.109}
+  m_LocalScale: {x: 0.012, y: 0.002, z: 0.002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1471}
+--- !u!54 &1424
 Rigidbody:
-  m_GameObject: {fileID: 1265}
+  m_GameObject: {fileID: 1422}
   serializedVersion: 4
   m_Mass: 0.3
   m_Drag: 0.05
@@ -260,9 +610,9 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!136 &1268
+--- !u!136 &1425
 CapsuleCollider:
-  m_GameObject: {fileID: 1265}
+  m_GameObject: {fileID: 1422}
   m_Material: {fileID: 13400000, guid: 76a9fa097ef75101e780cc47011e4fb3, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -270,13 +620,13 @@ CapsuleCollider:
   m_Height: 0.26
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1271
+--- !u!33 &1428
 MeshFilter:
-  m_GameObject: {fileID: 1269}
+  m_GameObject: {fileID: 1426}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1272
+--- !u!23 &1429
 MeshRenderer:
-  m_GameObject: {fileID: 1269}
+  m_GameObject: {fileID: 1426}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -287,23 +637,23 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
   m_ScaleInLightmap: 1
---- !u!114 &1273
+--- !u!114 &1430
 MonoBehaviour:
-  m_GameObject: {fileID: 1269}
+  m_GameObject: {fileID: 1426}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  shape: 1
+  shape: 2
   bevel: 0.08
---- !u!33 &1276
+--- !u!33 &1433
 MeshFilter:
-  m_GameObject: {fileID: 1274}
+  m_GameObject: {fileID: 1431}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1277
+--- !u!23 &1434
 MeshRenderer:
-  m_GameObject: {fileID: 1274}
+  m_GameObject: {fileID: 1431}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -314,21 +664,21 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
   m_ScaleInLightmap: 1
---- !u!135 &1278
+--- !u!135 &1435
 SphereCollider:
-  m_GameObject: {fileID: 1274}
+  m_GameObject: {fileID: 1431}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1281
+--- !u!33 &1438
 MeshFilter:
-  m_GameObject: {fileID: 1279}
+  m_GameObject: {fileID: 1436}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1282
+--- !u!23 &1439
 MeshRenderer:
-  m_GameObject: {fileID: 1279}
+  m_GameObject: {fileID: 1436}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -339,9 +689,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1283
+--- !u!136 &1440
 CapsuleCollider:
-  m_GameObject: {fileID: 1279}
+  m_GameObject: {fileID: 1436}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -349,13 +699,13 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1286
+--- !u!33 &1443
 MeshFilter:
-  m_GameObject: {fileID: 1284}
+  m_GameObject: {fileID: 1441}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1287
+--- !u!23 &1444
 MeshRenderer:
-  m_GameObject: {fileID: 1284}
+  m_GameObject: {fileID: 1441}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -366,13 +716,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1290
+--- !u!33 &1447
 MeshFilter:
-  m_GameObject: {fileID: 1288}
+  m_GameObject: {fileID: 1445}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1291
+--- !u!23 &1448
 MeshRenderer:
-  m_GameObject: {fileID: 1288}
+  m_GameObject: {fileID: 1445}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -383,9 +733,9 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
   m_ScaleInLightmap: 1
---- !u!136 &1292
+--- !u!136 &1449
 CapsuleCollider:
-  m_GameObject: {fileID: 1288}
+  m_GameObject: {fileID: 1445}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -393,13 +743,13 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!33 &1295
+--- !u!33 &1452
 MeshFilter:
-  m_GameObject: {fileID: 1293}
+  m_GameObject: {fileID: 1450}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1296
+--- !u!23 &1453
 MeshRenderer:
-  m_GameObject: {fileID: 1293}
+  m_GameObject: {fileID: 1450}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -410,13 +760,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1299
+--- !u!33 &1456
 MeshFilter:
-  m_GameObject: {fileID: 1297}
+  m_GameObject: {fileID: 1454}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1300
+--- !u!23 &1457
 MeshRenderer:
-  m_GameObject: {fileID: 1297}
+  m_GameObject: {fileID: 1454}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -427,13 +777,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1303
+--- !u!33 &1460
 MeshFilter:
-  m_GameObject: {fileID: 1301}
+  m_GameObject: {fileID: 1458}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1304
+--- !u!23 &1461
 MeshRenderer:
-  m_GameObject: {fileID: 1301}
+  m_GameObject: {fileID: 1458}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -444,13 +794,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1307
+--- !u!33 &1464
 MeshFilter:
-  m_GameObject: {fileID: 1305}
+  m_GameObject: {fileID: 1462}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1308
+--- !u!23 &1465
 MeshRenderer:
-  m_GameObject: {fileID: 1305}
+  m_GameObject: {fileID: 1462}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -461,13 +811,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
   m_ScaleInLightmap: 1
---- !u!33 &1311
+--- !u!33 &1468
 MeshFilter:
-  m_GameObject: {fileID: 1309}
+  m_GameObject: {fileID: 1466}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1312
+--- !u!23 &1469
 MeshRenderer:
-  m_GameObject: {fileID: 1309}
+  m_GameObject: {fileID: 1466}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -477,4 +827,259 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_Materials:
   - {fileID: 2100000, guid: bcf9b1fa2e8bae702f80b102ffc4292c, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1474
+MeshFilter:
+  m_GameObject: {fileID: 1472}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1475
+MeshRenderer:
+  m_GameObject: {fileID: 1472}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1478
+MeshFilter:
+  m_GameObject: {fileID: 1476}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1479
+MeshRenderer:
+  m_GameObject: {fileID: 1476}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1482
+MeshFilter:
+  m_GameObject: {fileID: 1480}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1483
+MeshRenderer:
+  m_GameObject: {fileID: 1480}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1486
+MeshFilter:
+  m_GameObject: {fileID: 1484}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1487
+MeshRenderer:
+  m_GameObject: {fileID: 1484}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1490
+MeshFilter:
+  m_GameObject: {fileID: 1488}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1491
+MeshRenderer:
+  m_GameObject: {fileID: 1488}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1494
+MeshFilter:
+  m_GameObject: {fileID: 1492}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1495
+MeshRenderer:
+  m_GameObject: {fileID: 1492}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 16fb459c3b35e1204cd9de8c89963e03, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1498
+MeshFilter:
+  m_GameObject: {fileID: 1496}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1499
+MeshRenderer:
+  m_GameObject: {fileID: 1496}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1502
+MeshFilter:
+  m_GameObject: {fileID: 1500}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1503
+MeshRenderer:
+  m_GameObject: {fileID: 1500}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1506
+MeshFilter:
+  m_GameObject: {fileID: 1504}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1507
+MeshRenderer:
+  m_GameObject: {fileID: 1504}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1510
+MeshFilter:
+  m_GameObject: {fileID: 1508}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1511
+MeshRenderer:
+  m_GameObject: {fileID: 1508}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1514
+MeshFilter:
+  m_GameObject: {fileID: 1512}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1515
+MeshRenderer:
+  m_GameObject: {fileID: 1512}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1518
+MeshFilter:
+  m_GameObject: {fileID: 1516}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1519
+MeshRenderer:
+  m_GameObject: {fileID: 1516}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1522
+MeshFilter:
+  m_GameObject: {fileID: 1520}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1523
+MeshRenderer:
+  m_GameObject: {fileID: 1520}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1526
+MeshFilter:
+  m_GameObject: {fileID: 1524}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1527
+MeshRenderer:
+  m_GameObject: {fileID: 1524}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
+  m_ScaleInLightmap: 1
+--- !u!33 &1530
+MeshFilter:
+  m_GameObject: {fileID: 1528}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1531
+MeshRenderer:
+  m_GameObject: {fileID: 1528}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 7c059fd8ed6935dfcb96ea66b67130ac, type: 2}
   m_ScaleInLightmap: 1

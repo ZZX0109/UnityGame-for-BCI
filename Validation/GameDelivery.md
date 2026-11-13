@@ -41,3 +41,7 @@ python Tools/run_game_delivery.py --game street
 即使此脚本成功，Windows 人工游玩、画面与中文布局、视线可读性、操作舒适度、物理手感、性能和游玩视频仍单独标为 `not_run`。在目标 Windows 机器逐场景完整游玩，保存录屏和实际性能数据后才能据实更新验收表。
 
 当前开发环境没有 Editor、C# 编译器或授权配置，无法在此环境完成上述真实 Unity/Windows 证据。交付脚本会如实保留这一阻塞，不制造“通过”的 XML、EXE 或视频。
+
+## 独立画面采集
+
+`python Tools/run_visual_capture.py --game claw` 单独运行有界面截图测试，详见 `VisualCapture.md`。普通测试入口通过 `!VisualCapture` 排除这类可选采集，避免未设置截图目录时的 Ignore 被误记为交付失败；交付证据解析也拒绝用截图测试代替实际玩法验收。实际截图、人工审查、完整游玩和性能验收仍需分别完成。

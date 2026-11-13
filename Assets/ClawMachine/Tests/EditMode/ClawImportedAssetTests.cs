@@ -48,7 +48,8 @@ namespace ClawMachine.Tests.EditMode
         [Test]
         public void OriginalMeshes_HaveUvAndVisibleOutwardTriangles()
         {
-            Mesh[] meshes = { ClawMeshModule.RoundedBox(6, 0.08f), ClawMeshModule.Ellipsoid(24, 16) };
+            Mesh[] meshes = { ClawMeshModule.RoundedBox(6, 0.08f), ClawMeshModule.Ellipsoid(24, 16),
+                ClawMeshModule.PlushBody(32, 24), ClawMeshModule.CurvedTail(28, 16) };
             try
             {
                 foreach (Mesh mesh in meshes)
@@ -56,6 +57,14 @@ namespace ClawMachine.Tests.EditMode
                     Assert.AreEqual(mesh.vertexCount, mesh.normals.Length);
                     Assert.AreEqual(mesh.vertexCount, mesh.uv.Length);
                     Vector3[] vertices = mesh.vertices, normals = mesh.normals; int[] indices = mesh.triangles;
+                    foreach (Vector3 point in vertices)
+                    {
+                        Assert.IsFalse(float.IsNaN(point.x) || float.IsNaN(point.y) || float.IsNaN(point.z));
+                        Assert.IsFalse(float.IsInfinity(point.x) || float.IsInfinity(point.y) || float.IsInfinity(point.z));
+                        Assert.LessOrEqual(Mathf.Abs(point.x), 0.501f);
+                        Assert.LessOrEqual(Mathf.Abs(point.y), 0.501f);
+                        Assert.LessOrEqual(Mathf.Abs(point.z), 0.501f);
+                    }
                     int visible = 0;
                     for (int i = 0; i < indices.Length; i += 3)
                     {

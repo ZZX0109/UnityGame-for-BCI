@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace ClawMachine
 {
@@ -13,6 +14,8 @@ namespace ClawMachine
         [SerializeField, Range(0.02f, 1)] private float dragDegreesPerPixel = 0.15f;
         [SerializeField] private bool pipEnabled;
         [SerializeField] private bool pipLowQuality = true;
+        [SerializeField, Range(20, 40)] private float pipFieldOfView = 30;
+        [SerializeField, Range(0, 0.4f)] private float pipTargetLift = 0.18f;
         private Vector3[] presetOffsets;
         private readonly Vector2[] orbitAngles = new Vector2[3];
         private readonly RaycastHit[] obstructionHits = new RaycastHit[24];
@@ -21,6 +24,7 @@ namespace ClawMachine
         private bool dragging;
         private Vector3 lastMousePosition;
         private int selected, distance = 1;
+        private Rect observationViewport = new Rect(0, 0, 1, 1);
         public event Action Changed;
         public bool Smooth { get; set; } = true;
         public UnityEngine.Camera CurrentCamera => IsConfigured ? views[selected] : null;
@@ -30,6 +34,7 @@ namespace ClawMachine
         public Vector2 OrbitAngles => orbitAngles[selected];
         public int SelectedView => selected + 1;
         public int ObservationDistance => distance;
+        public Rect ObservationViewport => observationViewport;
         public string PipViewName => selected == 0 ? "左侧 Left" : "正面 Front";
         public string ViewName => selected == 0 ? "正面 Front" : selected == 1 ? "左侧 Left" : "右侧 Right";
         public string DistanceName => distance == 0 ? "近" : distance == 1 ? "标准" : "远";
@@ -48,7 +53,8 @@ namespace ClawMachine
         private void Update()
         {
             if (!IsConfigured) return;
-            if (Input.GetMouseButtonDown(1) && CurrentCamera.pixelRect.Contains(Input.mousePosition))
+            if (Input.GetMouseButtonDown(1) && CurrentCamera.pixelRect.Contains(Input.mousePosition) &&
+                (!EventSystem.current || !EventSystem.current.IsPointerOverGameObject()))
             {
                 dragging = true;
                 lastMousePosition = Input.mousePosition;
@@ -69,6 +75,16 @@ namespace ClawMachine
             dragging = false;
             UpdatePipPose();
             Changed?.Invoke();
+        }
+        // Menus can reserve a side panel. During play the compact HUD returns
+        // the entire screen to the main view without touching machine coordinates.
+        public void SetObservationViewport(Rect viewport)
+        {
+            if (!ClawCameraOrbit.IsFinite(viewport.x) || !ClawCameraOrbit.IsFinite(viewport.y) ||
+                !ClawCameraOrbit.IsFinite(viewport.width) || !ClawCameraOrbit.IsFinite(viewport.height)) return;
+            float x = Mathf.Clamp(viewport.x, 0, 0.95f), y = Mathf.Clamp(viewport.y, 0, 0.95f);
+            observationViewport = new Rect(x, y, Mathf.Clamp(viewport.width, 0.05f, 1 - x), Mathf.Clamp(viewport.height, 0.05f, 1 - y));
+            if (views != null) foreach (UnityEngine.Camera view in views) if (view) view.rect = observationViewport;
         }
         public void CycleDistance()
         {
@@ -206,10 +222,14 @@ namespace ClawMachine
             pipCamera.rect = new Rect(0, 0, 1, 1);
             pipCamera.allowHDR = false;
             pipCamera.allowMSAA = false;
+            // The inset is a working-area view, not a miniature copy of the
+            // complete cabinet. Keep the claw and prize bay legible at 320x240.
+            pipCamera.fieldOfView = ClawCameraOrbit.IsFinite(pipFieldOfView) ? Mathf.Clamp(pipFieldOfView, 20, 40) : 30;
             int uiLayer = LayerMask.NameToLayer("UI");
             if (uiLayer >= 0) pipCamera.cullingMask &= ~(1 << uiLayer);
             pipCamera.transform.position = DesiredPosition(side);
-            pipCamera.transform.LookAt(lookTarget.position, transform.up);
+            float lift = ClawCameraOrbit.IsFinite(pipTargetLift) ? Mathf.Clamp(pipTargetLift, 0, 0.4f) : 0.18f;
+            pipCamera.transform.LookAt(lookTarget.position + transform.up * lift, transform.up);
             pipCamera.enabled = pipEnabled && isActiveAndEnabled;
         }
         private void ReleasePipResources()

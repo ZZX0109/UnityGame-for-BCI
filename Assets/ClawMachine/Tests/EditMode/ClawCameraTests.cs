@@ -69,6 +69,24 @@ namespace ClawMachine.Tests.EditMode
         }
 
         [Test]
+        public void ObservationViewport_ReservesMenusAndRestoresWholeGameViewWithoutChangingAxes()
+        {
+            using (var fixture = new CameraFixture())
+            {
+                CraneCameraController camera = fixture.Controller;
+                camera.SetObservationViewport(new Rect(0, 0, 0.74f, 1));
+                foreach (Camera view in fixture.Views) Assert.AreEqual(new Rect(0, 0, 0.74f, 1), view.rect);
+                camera.Select(3);
+                Assert.AreEqual(new Rect(0, 0, 0.74f, 1), camera.CurrentCamera.rect);
+                camera.SetObservationViewport(new Rect(float.NaN, 0, 1, 1));
+                Assert.AreEqual(new Rect(0, 0, 0.74f, 1), camera.ObservationViewport);
+                camera.SetObservationViewport(new Rect(0, 0, 1, 1));
+                foreach (Camera view in fixture.Views) Assert.AreEqual(new Rect(0, 0, 1, 1), view.rect);
+                Assert.AreEqual(Vector3.forward, ClawMotion.MachineDirection(Vector2.up));
+            }
+        }
+
+        [Test]
         public void Distances_CycleThreeOptionsAndIgnoreNonFiniteZoom()
         {
             using (var fixture = new CameraFixture())

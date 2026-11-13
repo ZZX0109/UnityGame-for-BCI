@@ -5,11 +5,12 @@ namespace FirstPersonSokoban.SaveSystem
 {
     /// <summary>
     /// 成绩按稳定 levelId 存储而不是关卡序号：目录重排后旧成绩不会错配。
-    /// 旧版按序号存储的键会按需读取一次做迁移，不覆盖既有数据。
+    /// Revision 1 keeps legacy score compatibility. Revised maps use isolated score keys;
+    /// unlock progress remains independent of map revisions.
     /// </summary>
     public static class SaveManager
     {
-        public const int SaveVersion = 2;
+        public const int SaveVersion = 3;
 
         private const string Prefix = "FPSokoban.v2.";
         private const string LegacyBestPushKey = "FPSokoban.BestEffectivePushes.";
@@ -26,8 +27,17 @@ namespace FirstPersonSokoban.SaveSystem
 
         public static void ResetStore() => store = new PlayerPrefsSaveStore();
 
-        private static string BestPushKey(int levelIndex) => Prefix + "best." + LevelCatalog.GetId(levelIndex);
-        private static string BestTimeKey(int levelIndex) => Prefix + "time." + LevelCatalog.GetId(levelIndex);
+        private static string ScoreId(int levelIndex)
+        {
+            string id = LevelCatalog.GetId(levelIndex);
+            int revision = LevelCatalog.GetRevision(levelIndex);
+            // Revision 1 retains its original key. Never import a score from an
+            // earlier layout into a revision that may have a different solution.
+            return revision == 1 ? id : id + ".r" + revision;
+        }
+
+        private static string BestPushKey(int levelIndex) => Prefix + "best." + ScoreId(levelIndex);
+        private static string BestTimeKey(int levelIndex) => Prefix + "time." + ScoreId(levelIndex);
 
         public static void RecordCompletion(int levelIndex, int effectivePushes, float seconds, int levelCount)
         {
@@ -45,13 +55,15 @@ namespace FirstPersonSokoban.SaveSystem
         public static int GetBestPushes(int levelIndex)
         {
             int value = store.GetInt(BestPushKey(levelIndex), -1);
-            return value >= 0 ? value : store.GetInt(LegacyBestPushKey + levelIndex, -1);
+            if (value >= 0 || LevelCatalog.GetRevision(levelIndex) > 1) return value;
+            return store.GetInt(LegacyBestPushKey + levelIndex, -1);
         }
 
         public static float GetBestTime(int levelIndex)
         {
             float value = store.GetFloat(BestTimeKey(levelIndex), -1f);
-            return value >= 0f ? value : store.GetFloat(LegacyBestTimeKey + levelIndex, -1f);
+            if (value >= 0f || LevelCatalog.GetRevision(levelIndex) > 1) return value;
+            return store.GetFloat(LegacyBestTimeKey + levelIndex, -1f);
         }
 
         public static int UnlockedCount(int levelCount)

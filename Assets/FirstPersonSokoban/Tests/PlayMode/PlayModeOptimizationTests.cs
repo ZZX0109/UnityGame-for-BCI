@@ -157,7 +157,7 @@ namespace FirstPersonSokoban.Tests.PlayMode
             }
             game.StartLevel(5);
             yield return new WaitForFixedUpdate();
-            game.Loader.Player.SetLookRotation(180f, 0f);
+            game.Loader.Player.SetLookRotation(0f, 0f);
             yield return null;
             float yaw = game.Loader.Player.LookYaw;
             float pitch = game.Loader.Player.LookPitch;
@@ -181,7 +181,7 @@ namespace FirstPersonSokoban.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator DeadlockHint_AppearsAfterSecondWallPushAndClearsOnUndo()
+        public IEnumerator DeadlockHint_AppearsAfterWrongWayPushAndClearsOnUndo()
         {
             PuzzleGameManager game = Object.FindObjectOfType<PuzzleGameManager>();
             if (game == null)
@@ -190,22 +190,28 @@ namespace FirstPersonSokoban.Tests.PlayMode
                 yield return null;
                 game = Object.FindObjectOfType<PuzzleGameManager>();
             }
-            game.StartLevel(1);
+            game.StartLevel(6);
             yield return new WaitForFixedUpdate();
-            game.Loader.Player.SetLookRotation(180f, 0f);
-            game.Loader.Player.Teleport(new Vector3(6f, 0.04f, 8f)); // 网格 (3,4)，箱子在 (3,3)
+            game.Loader.Player.SetLookRotation(90f, 0f);
+            game.Loader.Player.Teleport(new Vector3(6f, 0.04f, 12f)); // (3,6), align box into the pocket lane
             Physics.SyncTransforms();
             yield return null;
 
             game.TryPush();
             yield return WaitForAnimation(game);
             Assert.AreEqual(1, game.Board.PushCount);
+            Assert.AreEqual(new Vector2Int(5, 6), game.Board.Boxes[0]);
+            // Reachable via the open upper gallery, then push away from the goal.
+            game.Loader.Player.Teleport(new Vector3(10f, 0.04f, 10f)); // (5,5)
+            game.Loader.Player.SetLookRotation(0f, 0f);
+            Physics.SyncTransforms();
+            yield return null;
             game.TryPush();
             yield return WaitForAnimation(game);
             Assert.AreEqual(2, game.Board.PushCount);
-            Assert.AreEqual(new Vector2Int(3, 1), game.Board.Boxes[0]);
+            Assert.AreEqual(new Vector2Int(5, 7), game.Board.Boxes[0]);
 
-            Assert.IsTrue(game.DeadlockActive, "第二关连推两次到 (3,1) 必须提示已无解");
+            Assert.IsTrue(game.DeadlockActive, "A legal wrong-way push onto the lower wall line must report deadlock");
             Assert.IsTrue(game.CurrentDeadlockHint.Contains("Z 撤销"));
             game.Undo();
             Assert.IsFalse(game.DeadlockActive, "撤销后应恢复为可玩状态");
@@ -545,10 +551,10 @@ namespace FirstPersonSokoban.Tests.PlayMode
             }
             Assert.NotNull(game);
 
-            game.StartLevel(5); // Level06 有 (3,4) 与 (4,4) 两个并排箱子
+            game.StartLevel(5); // Level06: adjacent boxes at (3,3) and (4,3)
             yield return new WaitForFixedUpdate();
-            game.Loader.Player.Teleport(new Vector3(6f, 0.04f, 10f)); // 网格 (3,5)
-            game.Loader.Player.SetLookRotation(180f, 0f);
+            game.Loader.Player.Teleport(new Vector3(6f, 0.04f, 4f)); // (3,2)
+            game.Loader.Player.SetLookRotation(0f, 0f);
             Physics.SyncTransforms();
             yield return null;
 
@@ -577,10 +583,11 @@ namespace FirstPersonSokoban.Tests.PlayMode
 
             game.StartLevel(7); // Level08：状态空间最大，静态规则不会立即给结论
             yield return new WaitForFixedUpdate();
-            game.Loader.Player.SetLookRotation(180f, 0f);
+            game.Loader.Player.Teleport(new Vector3(4f, 0.04f, 8f)); // (2,4), west of A
+            game.Loader.Player.SetLookRotation(90f, 0f);
             Physics.SyncTransforms();
             yield return null;
-            Assert.IsTrue(game.Loader.Interactor.TryGetAimedBox(out _), "初始站位应能对准 (3,5) 的箱子");
+            Assert.IsTrue(game.Loader.Interactor.TryGetAimedBox(out _), "The reachable staging position must aim at A at (3,4)");
 
             game.TryPush();
             yield return WaitForAnimation(game);

@@ -38,6 +38,7 @@ namespace ClawMachine.Tests.PlayMode
             Camera owned = OwnedCamera();
             Assert.AreEqual(controller.PipTexture, owned.targetTexture);
             Assert.AreEqual(new Rect(0, 0, 1, 1), owned.rect);
+            Assert.Less(owned.fieldOfView, views[0].fieldOfView, "The inset must frame the work area rather than shrink the full cabinet.");
             foreach (Camera view in views) Assert.IsNull(view.targetTexture);
             controller.Select(2);
             Assert.AreEqual(views[1], controller.CurrentCamera);

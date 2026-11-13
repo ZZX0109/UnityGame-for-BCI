@@ -17,7 +17,7 @@ namespace ClawMachine
         [SerializeField] private Shader bitmapShader;
         [SerializeField] private Shader bitmapCompatibilityShader;
         private GameObject canvasObject, ownedEventSystem;
-        private RectTransform safeRoot, content, pipFrame;
+        private RectTransform safeRoot, content, pipFrame, panel, observer, help;
         private Canvas canvas;
         private TMP_FontAsset font;
         private Material fontMaterial;
@@ -29,7 +29,7 @@ namespace ClawMachine
         private Rect previousSafeArea;
         private Vector2 previousScreen;
         private float previousTextScale = -1;
-        private bool started;
+        private bool started, detailsExpanded;
         private static readonly Color Ink = new Color(0.15f, 0.24f, 0.21f);
         private static readonly Color Muted = new Color(0.34f, 0.42f, 0.37f);
         private static readonly Color Paper = new Color(0.97f, 0.95f, 0.90f, 0.98f);
@@ -40,6 +40,9 @@ namespace ClawMachine
         public TMP_FontAsset OwnedFont => font;
         public bool OwnsEventSystem => ownedEventSystem;
         public string BootstrapError { get; private set; } = "";
+        public bool DetailsExpanded => detailsExpanded;
+        public bool CompactPlay => game && game.Task && !game.InMenu && !game.IsPaused && !game.SettingsOpen && !game.ResetConfirmation &&
+            game.Task.Session.State != GraspState.Error && !detailsExpanded;
 
         private void Start() { started = true; Build(); }
         private void OnEnable() { if (started) Build(); }
@@ -102,20 +105,20 @@ namespace ClawMachine
 
         private void BuildObserverOverlay()
         {
-            var observer = CreateRect("Observation HUD", safeRoot);
-            observer.anchorMin = new Vector2(0.025f, 0.86f); observer.anchorMax = new Vector2(0.715f, 0.975f);
+            observer = CreateRect("Observation HUD", safeRoot);
+            observer.anchorMin = new Vector2(0.025f, 0.85f); observer.anchorMax = new Vector2(0.31f, 0.975f);
             observer.offsetMin = observer.offsetMax = Vector2.zero;
             var group = observer.gameObject.AddComponent<VerticalLayoutGroup>(); group.spacing = 3; group.childForceExpandHeight = false;
-            phaseLabel = Text(observer, "三轴观察 · 从容练习", 25, Ink, 35);
-            viewLabel = Text(observer, "", 18, Muted, 28);
-            var help = CreateRect("Fixed machine axes", safeRoot);
-            help.anchorMin = new Vector2(0.025f, 0.025f); help.anchorMax = new Vector2(0.715f, 0.14f);
+            phaseLabel = Text(observer, "三轴观察 · 从容练习", 22, Ink, 32);
+            viewLabel = Text(observer, "", 16, Muted, 42);
+            help = CreateRect("Fixed machine axes", safeRoot);
+            help.anchorMin = new Vector2(0.29f, 0.025f); help.anchorMax = new Vector2(0.715f, 0.14f);
             help.offsetMin = help.offsetMax = Vector2.zero;
             var helpBackground = help.gameObject.AddComponent<Image>(); helpBackground.color = new Color(0.97f, 0.95f, 0.90f, 0.86f); helpBackground.raycastTarget = false;
             var helpText = Text(help, "A / D 左右 X    W / S 前后 Z\n1 / 2 / 3 视角 · 右键拖动微调 · 滚轮距离 · C 画中画", 16, Muted, 0);
             Stretch(helpText.rectTransform, new Vector2(12, 8), new Vector2(-12, -8));
             pipFrame = CreateRect("Front and side PIP", safeRoot);
-            pipFrame.anchorMin = new Vector2(0.48f, 0.19f); pipFrame.anchorMax = new Vector2(0.72f, 0.49f);
+            pipFrame.anchorMin = new Vector2(0.025f, 0.025f); pipFrame.anchorMax = new Vector2(0.265f, 0.35f);
             pipFrame.offsetMin = pipFrame.offsetMax = Vector2.zero;
             var pipBorder = pipFrame.gameObject.AddComponent<Image>(); pipBorder.color = Paper; pipBorder.raycastTarget = false;
             var picture = CreateRect("PIP picture", pipFrame); Stretch(picture, new Vector2(5, 28), new Vector2(-5, -5));
@@ -127,7 +130,7 @@ namespace ClawMachine
         }
         private void BuildSidePanel()
         {
-            var panel = CreateRect("Ivory control panel", safeRoot);
+            panel = CreateRect("Ivory control panel", safeRoot);
             panel.anchorMin = new Vector2(0.745f, 0); panel.anchorMax = Vector2.one;
             panel.offsetMin = panel.offsetMax = Vector2.zero;
             panel.gameObject.AddComponent<Image>().color = Paper;
@@ -162,7 +165,7 @@ namespace ClawMachine
         {
             return (game.ResetConfirmation ? "reset" : game.SettingsOpen ? "settings" : game.IsPaused ? "pause" : game.InMenu ? "menu" : "play") + ":" +
                 game.SelectedChallengeIndex + ":" + game.Task.Session.State + ":" + game.Task.Session.Remaining + ":" + game.Task.Session.Awarded + ":" +
-                game.Task.Session.Failure + ":" + (game.Task.SelectedPrize ? game.Task.SelectedPrize.GetInstanceID() : 0);
+                game.Task.Session.Failure + ":" + (game.Task.SelectedPrize ? game.Task.SelectedPrize.GetInstanceID() : 0) + ":" + detailsExpanded;
         }
         private void RebuildPanel()
         {
@@ -172,8 +175,11 @@ namespace ClawMachine
                 GameObject child = content.GetChild(i).gameObject; child.SetActive(false); Destroy(child);
             }
             aimButtons.Clear(); textSizes.RemoveAll(item => !item.Text);
-            Text(content, "拾光夹物所", 34, Ink, 48);
+            if (CompactPlay) { CompactPlayPanel(); FinishPanel(); return; }
+            Text(content, "拾光夹物所", 30, Ink, 44);
             Text(content, "CLAW ATELIER / " + (game.Task.Challenge ? game.Task.Challenge.challengeId : ""), 14, Muted, 22);
+            if (!game.InMenu && !game.IsPaused && !game.SettingsOpen && !game.ResetConfirmation)
+                ActionButton(content, "返回观察", () => SetDetailsExpanded(false), false);
             if (game.Task.Session.State == GraspState.Error) ErrorPanel();
             else if (game.ResetConfirmation) ResetPanel();
             else if (game.SettingsOpen) SettingsPanel();
@@ -187,8 +193,50 @@ namespace ClawMachine
             ActionButton(views, "2 左侧", () => game.Cameras.Select(2));
             ActionButton(views, "3 右侧", () => game.Cameras.Select(3));
             ActionButton(content, "画中画 " + (game.Cameras.PipEnabled ? "关闭" : "开启"), () => { game.Cameras.TogglePip(); InvalidatePanel(); }, false);
-            Text(content, "本地物理模拟 · 无真实设备连接\n右侧内容可滚动，所有操作均有文字反馈。", 13, Muted, 46);
-            panelKey = MakePanelKey(); ApplyTextScale();
+            FinishPanel();
+        }
+        private void FinishPanel()
+        {
+            panelKey = MakePanelKey(); ApplyLayout(); ApplyTextScale(); RefreshPip();
+        }
+        public void SetDetailsExpanded(bool value)
+        {
+            detailsExpanded = value;
+            if (IsReady) RebuildPanel();
+        }
+        private void CompactPlayPanel()
+        {
+            ClawSession session = game.Task.Session;
+            Text(content, game.Task.Challenge.title, 20, Ink, 32);
+            Text(content, "任务目标：" + (game.Task.Prize ? game.Task.Prize.DisplayName : game.Task.Challenge.targetId), 17, Muted, 28);
+            Text(content, "剩余尝试 " + session.Remaining + " / " + game.Task.Challenge.attemptLimit, 18, Ink, 28);
+            if (session.State == GraspState.Aiming)
+                aimButtons.Add(ActionButton(content, "开始抓取 · Enter", game.Grab));
+            else if (session.State == GraspState.Result)
+            {
+                Text(content, Hint(session), 16, Ink, 72);
+                ActionButton(content, session.Awarded || session.Remaining == 0 ? "查看本局结果 · Enter" : "还原布局后再试 · Enter", game.Retry);
+            }
+            else if (session.State == GraspState.End)
+            {
+                Text(content, Hint(session), 16, Ink, 72);
+                ActionButton(content, "返回挑战选择", game.ReturnToMenu);
+            }
+            else Text(content, StateName(session.State), 20, Green, 34);
+            ActionButton(content, "抓持提示 / 观察方向", () => SetDetailsExpanded(true), false);
+            ActionButton(content, "暂停 · Esc", () => game.Pause(true), false);
+        }
+        private void ApplyLayout()
+        {
+            if (!panel || !game || !game.Cameras) return;
+            // Keep the central cabinet unobstructed. Only the compact action card
+            // occupies the lower right; complete controls remain one tap away.
+            panel.anchorMin = new Vector2(0.745f, CompactPlay ? 0.025f : 0);
+            panel.anchorMax = new Vector2(CompactPlay ? 0.98f : 1, CompactPlay ? 0.67f : 1);
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+            Rect normalized = NormalizeSafeArea(Screen.safeArea, new Vector2(Screen.width, Screen.height));
+            float right = CompactPlay ? 1 : normalized.xMin + normalized.width * 0.74f;
+            game.Cameras.SetObservationViewport(new Rect(0, 0, right, 1));
         }
         private void MenuPanel()
         {
@@ -355,6 +403,7 @@ namespace ClawMachine
             Rect normalized = NormalizeSafeArea(previousSafeArea, previousScreen);
             safeRoot.anchorMin = normalized.min; safeRoot.anchorMax = normalized.max;
             safeRoot.offsetMin = safeRoot.offsetMax = Vector2.zero;
+            ApplyLayout();
         }
         public static Rect NormalizeSafeArea(Rect area, Vector2 screen)
         {
@@ -378,7 +427,8 @@ namespace ClawMachine
                 Destroy(font);
             }
             canvasObject = ownedEventSystem = null; canvas = null; font = null; fontMaterial = null;
-            safeRoot = content = pipFrame = null; pipImage = null; panelKey = null;
+            if (game && game.Cameras) game.Cameras.SetObservationViewport(new Rect(0, 0, 1, 1));
+            safeRoot = content = pipFrame = panel = observer = help = null; pipImage = null; panelKey = null;
             textSizes.Clear(); aimButtons.Clear(); previousTextScale = -1;
         }
         private static string StateName(GraspState state)

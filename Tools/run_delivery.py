@@ -93,8 +93,8 @@ def main(argv=None):
         for mode in ("EditMode", "PlayMode"):
             xml = evidence / f"{mode}-results.xml"
             log = evidence / f"{mode}.log"
-            run([args.unity, "-batchmode", "-nographics", "-projectPath", ROOT,
-                 "-runTests", "-testPlatform", mode, "-testResults", xml,
+            run([args.unity, "-batchmode", "-projectPath", ROOT,
+                 "-runTests", "-testPlatform", mode, "-testCategory", "!VisualCapture", "-testResults", xml,
                  "-logFile", log], log, args.timeout)
             summary[mode] = read_test_result(xml)
         # Verify the version actually used, not merely the requested path name.
@@ -117,7 +117,7 @@ def main(argv=None):
             return 0
 
         player = output / "Windows"
-        run([args.unity, "-batchmode", "-nographics", "-quit", "-projectPath", ROOT,
+        run([args.unity, "-batchmode", "-quit", "-projectPath", ROOT,
              "-executeMethod", "FirstPersonSokoban.Editor.DeliveryBuild.BuildWindows",
              "-buildOutput", player, "-validationDirectory", evidence,
              "-logFile", output / "build.log"], output / "build.log", args.timeout)

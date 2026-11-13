@@ -90,6 +90,8 @@ def read_scoped_tests(path, namespace, required_categories=()):
     visit(root, set())
     if len(cases) != counts["total"]:
         raise ValueError("Actual scoped test-case count differs from the NUnit summary.")
+    if "VisualCapture" in categories:
+        raise ValueError("Optional VisualCapture cases cannot count as gameplay delivery evidence.")
     missing = set(required_categories) - categories
     if missing:
         raise ValueError("Missing real gameplay acceptance cases: " + ", ".join(sorted(missing)))
@@ -180,6 +182,7 @@ def main(argv=None):
             xml, log = evidence / (mode + "-results.xml"), evidence / (mode + ".log")
             run_command(base + ["-runTests", "-testPlatform", mode,
                         "-testFilter", game["namespace"] + "." + mode,
+                        "-testCategory", "!VisualCapture",
                         "-testResults", xml, "-logFile", log], root, args.timeout)
             summary[mode] = read_scoped_tests(xml, game["namespace"], game["categories"] if mode == "PlayMode" else ())
             verify_editor(xml, log, version)

@@ -1,19 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1180
+--- !u!1 &1319
 GameObject:
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1181}
-  - component: {fileID: 1182}
-  - component: {fileID: 1183}
+  - component: {fileID: 1320}
+  - component: {fileID: 1321}
+  - component: {fileID: 1322}
+  - component: {fileID: 1673}
   m_Layer: 0
   m_Name: "XZ trolley"
   m_TagString: Untagged
   m_IsActive: 1
---- !u!4 &1181
+--- !u!4 &1320
 Transform:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.92, z: 0}
@@ -21,13 +22,13 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
---- !u!33 &1182
+--- !u!33 &1321
 MeshFilter:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1183
+--- !u!23 &1322
 MeshRenderer:
-  m_GameObject: {fileID: 1180}
+  m_GameObject: {fileID: 1319}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -38,3 +39,13 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 5bd2b442dfc13dbe9be24739e04019c6, type: 2}
   m_ScaleInLightmap: 1
+--- !u!114 &1673
+MonoBehaviour:
+  m_GameObject: {fileID: 1319}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407f83863bdc6e873d21b35e8b85dfa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  shape: 0
+  bevel: 0.055
