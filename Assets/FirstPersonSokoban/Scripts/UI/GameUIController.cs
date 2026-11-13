@@ -26,6 +26,7 @@ namespace FirstPersonSokoban.UI
 
         private Text levelNumber;
         private Text levelTitle;
+        private Text levelFocus;
         private Text goalCounter;
         private Text pushCounter;
         private Text interactionText;
@@ -115,13 +116,15 @@ namespace FirstPersonSokoban.UI
         {
             hud = Group(canvasRoot, "HUD");
             PanelImage(hud.transform, "Level Plate", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(320, 94), Hex("FBF7EF", 0.95f));
+                new Vector2(32, -28), new Vector2(320, 126), Hex("FBF7EF", 0.95f));
             LineImage(hud.transform, "Level Accent", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(3, 94), Accent);
+                new Vector2(32, -28), new Vector2(3, 126), Accent);
             levelNumber = Label(hud.transform, "Level Number", "LAB / 01", 14, Muted,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -40), new Vector2(260, 24));
             levelTitle = Label(hud.transform, "Level Title", "初次接触", 25, White,
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -68), new Vector2(270, 42), style: FontStyle.Bold);
+            levelFocus = Label(hud.transform, "Level Focus", "", 15, Muted,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -112), new Vector2(276, 30));
 
             PanelImage(hud.transform, "Stats Plate", new Vector2(1, 1), new Vector2(1, 1),
                 new Vector2(-32, -28), new Vector2(500, 94), Hex("FBF7EF", 0.95f));
@@ -280,8 +283,14 @@ namespace FirstPersonSokoban.UI
                 levelCardImages[i] = card.GetComponent<Image>();
                 PanelImage(card.transform, "Number Tile", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
                     new Vector2(14, 0), new Vector2(56, 62), Hex("E8DAC9"));
-                Label(card.transform, "Number", $"{i + 1:00}", 27, Accent,
-                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(56, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
+                Label(card.transform, "Number", $"{i + 1:00}", 14, Accent,
+                    new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 21), new Vector2(56, 20), TextAnchor.MiddleCenter, FontStyle.Bold);
+                RectTransform layoutRect = Rect(card.transform, "Room Layout", new Vector2(0, 0.5f),
+                    new Vector2(0, 0.5f), new Vector2(18, -10), new Vector2(48, 36));
+                TextAsset map = Resources.Load<TextAsset>($"Levels/{levels[i].Resource}");
+                if (map == null) throw new InvalidOperationException($"找不到关卡 {levels[i].Resource}.txt");
+                layoutRect.gameObject.AddComponent<LevelLayoutGraphic>().Configure(
+                    LevelValidator.ParseAndValidate(map.text, levels[i].Title, levels[i].InitialYaw));
                 Text title = Label(card.transform, "Title", levels[i].Title, 23, White,
                     new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(86, 18), new Vector2(230, 36), style: FontStyle.Bold);
                 title.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -520,6 +529,7 @@ namespace FirstPersonSokoban.UI
         {
             levelNumber.text = $"LAB / {number:00}";
             levelTitle.text = title;
+            levelFocus.text = LevelCatalog.Get(number - 1).Subtitle;
         }
 
         public void SetStats(int completed, int total, int pushes)

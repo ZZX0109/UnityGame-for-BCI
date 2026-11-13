@@ -1,0 +1,45 @@
+Development optimization source checks · 2026-11-13
+Unity compilation, engine tests, screenshots and Windows build: NOT RUN.
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python Tools/validate_project.py
+[OK] Static file, GUID, importer, JSON, catalog and build-scene checks passed.
+Unity compilation, tests, player build and GUI acceptance remain separate checks.
+
+exit=0
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python Tools/build_ui_font.py --check
+[OK] Bundled UI font: 271,036 bytes; 880 covered codepoints; current UI text covered.
+
+exit=0
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python Tools/validate_levels.py --mechanics
+[OK]   Level01.txt: minimum 1 pushes; 11 canonical states
+[OK]   Level02.txt: minimum 7 pushes; 38 canonical states
+[OK]   Level03.txt: minimum 22 pushes; 2447 canonical states
+[OK]   Level04.txt: minimum 12 pushes; 51 canonical states
+[OK]   Level05.txt: minimum 4 pushes; 75 canonical states
+[OK]   Level06.txt: minimum 10 pushes; 238 canonical states
+[OK]   Level07.txt: minimum 5 pushes; 40 canonical states
+[OK]   Level08.txt: minimum 32 pushes; 3603 canonical states
+[OK]   All eight exact minimum-push counts match the design contract.
+[OK]   L2: shortest solution changes pushing direction twice around the L wall.
+[OK]   L3: both boxes must leave the west gallery through its lower connecting hall.
+[OK]   L4: box route descends to the lower corridor, crosses it, then rises to the goal.
+[OK]   L5: only gate box A can move initially; A can be completed while B stays fixed.
+[OK]   L6: forced first push parks A away from both goals; neither box can finish while the other is fixed.
+[OK]   L7: pushing into the lower wall line is a proven deadlock; the narrow goal pocket is solvable.
+[OK]   L8: both boxes cross the lower west link and upper east link; locking the upper goal first blocks the lower goal.
+
+exit=0
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m unittest discover -s Tools/tests -q
+----------------------------------------------------------------------
+Ran 38 tests in 1.900s
+
+OK
+
+exit=0
+
+$ git diff --check
+
+exit=0

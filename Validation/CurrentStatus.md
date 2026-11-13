@@ -13,6 +13,8 @@
 | 差异格式 | 完整差异 `git diff --check` 通过 | `ToolChecks-LevelRedesign-20261113.txt` |
 | Unity EditMode | 已扩充八关最少推动与地图修订存档用例；本环境未运行 | `Tests/EditMode/` |
 | Unity PlayMode | 已修订旧地图相关交互用例，新增独立 VisualCapture；本环境未运行 | `Tests/PlayMode/` |
+| 八关完整行走回归 | 新增 `LevelWalkthroughTests`，通过碰撞、瞄准、推动动画与真实完成路径通关；Unity 未运行 | `Tests/PlayMode/LevelWalkthroughTests.cs` |
+| 菜单布局预览与 HUD 要点 | 从实际关卡绘制墙体/走道轮廓，HUD 复用目录说明；实际渲染待验收 | `Scripts/UI/LevelLayoutGraphic.cs` 与 `GameUIController.cs` |
 | Unity 编译、字体/贴图导入、Windows 构建 | 未运行 | 没有生成虚假 XML/通过声明 |
 | GUI、音色音量、鼠标手感、帧时间/GC | 待本机验收 | `ManualTest-20261112.md` 与视觉说明 |
 
@@ -21,6 +23,7 @@
 实验室房间、模块箱、感应台、材质/照明、菜单预览、HUD/组件、微动效和音效的实现见
 `LabVisualChanges-20261112.md` 与 `GalleryVisualChanges-20261112.md`。推箱状态机与原碰撞体规则保留。
 八关机制与地图版本隔离见 `LevelRedesign-20261113.md`；源地图 SVG 图册不作为 Unity 渲染证据。
+本轮进一步增加关卡布局缩略图、HUD 机制说明及八关完整行走测试，详见 `DevelopmentOptimization-20261113.md`。
 新增回归覆盖音量设置、材质所有权、Player Shader 引用、装饰/物理隔离、重复归位反馈和预览隔离。
 上一轮的暂停/协程事务/静态死格修复及路程统计继续保留。
 
