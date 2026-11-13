@@ -5,15 +5,15 @@ using UnityEngine.Rendering;
 namespace FirstPersonSokoban.Presentation
 {
     /// <summary>
-    /// A self-contained built-in-renderer palette. No downloaded textures and no
+    /// A self-contained warm-gallery built-in-renderer palette. No downloaded textures and no
     /// per-renderer material clones: one palette owns the shared room materials.
     /// The menu preview can create a separate owner and release it independently.
     /// </summary>
     public sealed class LabMaterials : MonoBehaviour
     {
-        public static readonly Color AccentColor = Hex("46D7C4");
-        public static readonly Color SuccessColor = Hex("72E28A");
-        public static readonly Color WarningColor = Hex("FFB357");
+        public static readonly Color AccentColor = Hex("BB6039");
+        public static readonly Color SuccessColor = Hex("75834F");
+        public static readonly Color WarningColor = Hex("CD863E");
 
         private readonly List<Material> materials = new List<Material>();
         private readonly List<Texture2D> textures = new List<Texture2D>();
@@ -50,19 +50,19 @@ namespace FirstPersonSokoban.Presentation
             Texture2D wallRoughness = Grain("Powder coat roughness", 1, true);
             Texture2D metalRoughness = Grain("Metal roughness", 2, true);
 
-            Floor = Surface(shader, "Lab Floor", "718087", 0.08f, 0.28f, floorGrain, floorRoughness);
-            Wall = Surface(shader, "Lab Wall", "DADDD8", 0.03f, 0.22f, wallGrain, wallRoughness);
-            Trim = Surface(shader, "Lab Trim", "64777D", 0.35f, 0.32f, metalGrain, metalRoughness);
-            Dark = Surface(shader, "Lab Graphite", "263841", 0.16f, 0.25f, wallGrain, wallRoughness);
-            Metal = Surface(shader, "Lab Satin Metal", "A0ADB0", 0.48f, 0.38f, metalGrain, metalRoughness);
-            Module = Surface(shader, "Training Module Shell", "D9DEDB", 0.12f, 0.30f, wallGrain, wallRoughness);
-            ModuleComplete = Surface(shader, "Training Module Confirmed", "D5E5DC", 0.12f, 0.30f, wallGrain, wallRoughness);
-            ModuleDenied = Surface(shader, "Training Module Attention", "E6D7C2", 0.12f, 0.30f, wallGrain, wallRoughness);
-            GoalActive = Emissive(shader, "Sensor Standby", AccentColor, 0.65f);
-            GoalComplete = Emissive(shader, "Sensor Confirmed", SuccessColor, 0.85f);
-            Glass = Surface(shader, "Observation Glass", "294451", 0.52f, 0.78f, null, null);
-            Light = Emissive(shader, "Ceiling Diffuser", Hex("EBF3EF"), 1.05f);
-            Warning = Emissive(shader, "Warm Status", WarningColor, 0.35f);
+            Floor = Surface(shader, "Gallery Terrazzo", "E2D4BF", 0f, 0.24f, floorGrain, floorRoughness);
+            Wall = Surface(shader, "Gallery Ivory Plaster", "F1E7D8", 0f, 0.12f, wallGrain, wallRoughness);
+            Trim = Surface(shader, "Gallery Warm Stone", "C2AB91", 0f, 0.20f, wallGrain, wallRoughness);
+            Dark = Surface(shader, "Gallery Warm Brown", "695344", 0f, 0.18f, wallGrain, wallRoughness);
+            Metal = Surface(shader, "Gallery Champagne Edge", "D8C7AE", 0.18f, 0.30f, metalGrain, metalRoughness);
+            Module = Surface(shader, "Gallery Terracotta Module", "C66D45", 0f, 0.20f, wallGrain, wallRoughness);
+            ModuleComplete = Surface(shader, "Gallery Confirmed Module", "C9CFAC", 0f, 0.20f, wallGrain, wallRoughness);
+            ModuleDenied = Surface(shader, "Gallery Attention Module", "D99A66", 0f, 0.20f, wallGrain, wallRoughness);
+            GoalActive = Emissive(shader, "Gallery Target Outline", AccentColor, 0.06f);
+            GoalComplete = Emissive(shader, "Gallery Confirmed Outline", SuccessColor, 0.10f);
+            Glass = Surface(shader, "Gallery Ochre", "D3A04D", 0f, 0.18f, wallGrain, wallRoughness);
+            Light = Emissive(shader, "Gallery Warm White", Hex("FFF3DE"), 0.12f);
+            Warning = Emissive(shader, "Gallery Attention", WarningColor, 0.06f);
         }
 
         private Material Surface(Shader shader, string name, string color, float metallic,
@@ -111,18 +111,33 @@ namespace FirstPersonSokoban.Presentation
             for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
-                // Deterministic fine grain, kept deliberately below the contrast of
-                // the boxes and targets. The map repeats on each existing grid tile.
+                // A deterministic 12 x 12 distribution of small terrazzo chips.
+                // Keep the large-scale floor light; joints preserve the puzzle grid.
                 float noise = Hash(x, y, kind);
-                float striation = kind == 2 ? Mathf.Sin(y * 0.8f) * 0.017f : 0f;
-                float value = 0.94f + (noise - 0.5f) * 0.055f + striation;
-                if (kind == 0 && (x < 2 || y < 2 || x > size - 3 || y > size - 3)) value *= 0.86f;
+                float striation = kind == 2 ? Mathf.Sin(y * 0.8f) * 0.010f : 0f;
+                float value = 0.985f + (noise - 0.5f) * 0.025f + striation;
+                Color tint = new Color(value, value, value, 1f);
+                if (kind == 0)
+                {
+                    int column = x / 11;
+                    int row = y / 11;
+                    float seed = Hash(column, row, 17);
+                    float dx = x % 11 - (2.5f + seed * 5f);
+                    float dy = y % 11 - (2.5f + Hash(column, row, 23) * 5f);
+                    float radius = 0.8f + Hash(column, row, 29) * 1.4f;
+                    bool chip = Mathf.Abs(dx) * 0.9f + Mathf.Abs(dy) * 1.2f < radius;
+                    if (chip)
+                        tint = seed < 0.34f ? new Color(0.75f, 0.61f, 0.46f) :
+                            seed < 0.68f ? new Color(0.90f, 0.81f, 0.66f) : new Color(1f, 0.99f, 0.94f);
+                    if (x == 0 || y == 0 || x == size - 1 || y == size - 1) tint *= 0.89f;
+                    tint.a = 1f;
+                }
                 if (roughness)
                 {
-                    float metal = kind == 2 ? 0.45f : kind == 0 ? 0.08f : 0.06f;
-                    pixels[y * size + x] = new Color(metal, metal, metal, 0.68f + noise * 0.20f);
+                    float metal = kind == 2 ? 0.18f : 0f;
+                    pixels[y * size + x] = new Color(metal, metal, metal, 0.65f + noise * 0.16f);
                 }
-                else pixels[y * size + x] = new Color(value, value, value, 1f);
+                else pixels[y * size + x] = tint;
             }
             texture.SetPixels(pixels);
             texture.Apply(true, true);

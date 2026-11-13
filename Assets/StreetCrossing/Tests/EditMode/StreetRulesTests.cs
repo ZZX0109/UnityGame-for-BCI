@@ -260,22 +260,28 @@ namespace StreetCrossing.Tests.EditMode
             }
         }
 
+        private static RoadObservationEvidence VisibleEvidence(float yaw, bool atKerb = true)
+        {
+            return new RoadObservationEvidence { yaw = yaw, pitch = 0, atKerb = atKerb,
+                beforeEntry = true, leftTargetVisible = true, rightTargetVisible = true };
+        }
+
         [Test]
-        public void ObservationRequiresSustainedHeadingAtKerbAndEmitsEachSideOnce()
+        public void ObservationRequiresSustainedVisibleHeadingAtKerbAndEmitsEachSideOnce()
         {
             ObservationTracker tracker = new ObservationTracker();
             List<bool> events = new List<bool>();
             tracker.Observed += events.Add;
-            tracker.Tick(-90, true, 0.2f);
-            tracker.Tick(-90, false, 1);
-            tracker.Tick(-90, true, 0.2f);
+            tracker.Tick(VisibleEvidence(-90), 0.2f);
+            tracker.Tick(VisibleEvidence(-90, false), 1);
+            tracker.Tick(VisibleEvidence(-90), 0.2f);
             Assert.That(tracker.Left, Is.False, "Leaving the kerb must reset the unfinished dwell.");
-            tracker.Tick(-90, true, 0.16f);
-            tracker.Tick(-90, true, 2);
-            tracker.Tick(0, true, 5);
+            tracker.Tick(VisibleEvidence(-90), 0.16f);
+            tracker.Tick(VisibleEvidence(-90), 2);
+            tracker.Tick(VisibleEvidence(0), 5);
             Assert.That(tracker.Right, Is.False);
-            tracker.Tick(90, true, 0.36f);
-            tracker.Tick(90, true, 2);
+            tracker.Tick(VisibleEvidence(90), 0.36f);
+            tracker.Tick(VisibleEvidence(90), 2);
             CollectionAssert.AreEqual(new[] { true, false }, events);
         }
 
@@ -295,12 +301,12 @@ namespace StreetCrossing.Tests.EditMode
         [Test]
         public void WalkEntryRemainsLegalThroughFlashingAndLaterRedUntilDestination()
         {
-            CrossingEvaluator evaluation = new CrossingEvaluator();
+            CrossingEvaluator evaluation = new CrossingEvaluator(false, false);
             List<string> events = new List<string>();
             evaluation.Event += (name, detail) => events.Add(name);
             Approach(evaluation);
-            evaluation.Tick(CrossingRegion.Entry | CrossingRegion.Conflict, TrafficPhase.Walk, true, false, 0.02f);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.WalkFlashing, true, false, 0.02f);
+            evaluation.Tick(CrossingRegion.Entry | CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.WalkFlashing, true, false, 0.02f);
             Assert.That(evaluation.Finished, Is.False);
             Arrive(evaluation);
             Arrive(evaluation);
@@ -321,8 +327,8 @@ namespace StreetCrossing.Tests.EditMode
         {
             CrossingEvaluator evaluation = new CrossingEvaluator();
             Approach(evaluation);
-            evaluation.Tick(CrossingRegion.Entry | CrossingRegion.Conflict, phase, true, false, 0.02f);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, true, false, 1);
+            evaluation.Tick(CrossingRegion.Entry | CrossingRegion.RoadwayHazard, phase, true, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, false, 1);
             Arrive(evaluation);
             Assert.That(evaluation.SignalAtEntry, Is.EqualTo(phase));
             Assert.That(evaluation.Violations, Is.EqualTo(1));
@@ -334,8 +340,9 @@ namespace StreetCrossing.Tests.EditMode
         {
             CrossingEvaluator evaluation = new CrossingEvaluator();
             Approach(evaluation);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, true, true, 0.02f);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.WalkFlashing, true, false, 0.02f);
+            evaluation.Observe(true); evaluation.Observe(false);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, true, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.WalkFlashing, true, false, 0.02f);
             Arrive(evaluation);
             Assert.That(evaluation.SafetySuccess, Is.False);
         }
@@ -347,11 +354,11 @@ namespace StreetCrossing.Tests.EditMode
             List<string> events = new List<string>();
             evaluation.Event += (name, detail) => events.Add(name);
             Approach(evaluation);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, true, false, 0.02f);
             evaluation.Observe(true);
             evaluation.Observe(true);
             evaluation.Observe(false);
             evaluation.Observe(false);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, false, 0.02f);
             evaluation.NearMiss(11);
             evaluation.NearMiss(11);
             evaluation.NearMiss(12);
@@ -375,7 +382,7 @@ namespace StreetCrossing.Tests.EditMode
             CrossingEvaluator evaluation = new CrossingEvaluator();
             evaluation.Tick(CrossingRegion.Destination, TrafficPhase.Walk, true, false, 0.02f);
             Assert.That(evaluation.Finished, Is.False);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, true, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, false, 0.02f);
             Arrive(evaluation);
             Assert.That(evaluation.Finished, Is.True);
             Assert.That(evaluation.SafetySuccess, Is.False);
@@ -386,9 +393,9 @@ namespace StreetCrossing.Tests.EditMode
         {
             CrossingEvaluator evaluation = new CrossingEvaluator();
             Approach(evaluation);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, true, false, 0.02f);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, false, false, 0.02f);
-            evaluation.Tick(CrossingRegion.Conflict, TrafficPhase.Walk, false, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, true, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, false, false, 0.02f);
+            evaluation.Tick(CrossingRegion.RoadwayHazard, TrafficPhase.Walk, false, false, 0.02f);
             Arrive(evaluation);
             Assert.That(evaluation.Violations, Is.EqualTo(1));
             Assert.That(evaluation.SafetySuccess, Is.False);

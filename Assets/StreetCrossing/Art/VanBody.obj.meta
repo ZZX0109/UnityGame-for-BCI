@@ -1,0 +1,31 @@
+fileFormatVersion: 2
+guid: 953c5d92d7b75e2bb4f19928418024d8
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable:
+  - first:
+      43: 4300000
+    second: VanBody
+  externalObjects: {}
+  materials:
+    materialImportMode: 0
+  meshes:
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importCameras: 0
+    importLights: 0
+    useFileUnits: 1
+    fileIdsGeneration: 2
+    weldVertices: 1
+    generateSecondaryUV: 0
+    indexFormat: 0
+  tangentSpace:
+    normalSmoothAngle: 55
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

@@ -14,7 +14,7 @@ namespace StreetCrossing.Evaluation
         }
         private void OnDrawGizmos()
         {
-            Gizmos.color = region == CrossingRegion.Conflict ? new Color(1, 0.5f, 0, 0.25f) : new Color(0.2f, 0.9f, 0.5f, 0.3f);
+            Gizmos.color = region == CrossingRegion.RoadwayHazard ? new Color(1, 0.5f, 0, 0.25f) : new Color(0.2f, 0.9f, 0.5f, 0.3f);
             Gizmos.matrix = transform.localToWorldMatrix; Gizmos.DrawWireCube(Vector3.zero, size);
         }
     }

@@ -1,3 +1,4 @@
+using FirstPersonSokoban.Presentation;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Interaction
@@ -31,7 +32,7 @@ namespace FirstPersonSokoban.Interaction
             if (previewMaterial != null)
             {
                 previewMaterial.name = "Sokoban Push Preview (Runtime)";
-                previewMaterial.color = new Color(0.35f, 0.88f, 0.76f, 1f);
+                previewMaterial.color = LabMaterials.Hex("D9BC8E");
                 plate.GetComponent<Renderer>().sharedMaterial = previewMaterial;
             }
         }

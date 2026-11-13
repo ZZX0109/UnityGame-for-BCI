@@ -14,14 +14,49 @@ BUILTIN_GUIDS = {
     "0000000000000000e000000000000000",
     "0000000000000000f000000000000000",
 }
+# Verified against Unity-Technologies/NotificationsSamples: its manifest pins
+# TMP 3.0.6 and its TMP Settings.asset uses this package MonoScript GUID.
+# https://github.com/Unity-Technologies/NotificationsSamples/blob/master/Packages/manifest.json
+# https://github.com/Unity-Technologies/NotificationsSamples/blob/master/Assets/TextMesh%20Pro/Resources/TMP%20Settings.asset
+TMP_SETTINGS_GUID = "2705215ac5b84b70bacc50632be6e391"
 IMPORTERS = {
     ".cs": "MonoImporter", ".asmdef": "AssemblyDefinitionImporter",
     ".txt": "TextScriptImporter", ".json": "TextScriptImporter",
     ".prefab": "PrefabImporter", ".mat": "NativeFormatImporter",
     ".unity": "DefaultImporter", ".png": "TextureImporter",
     ".otf": "TrueTypeFontImporter", ".ttf": "TrueTypeFontImporter",
+    ".asset": "NativeFormatImporter", ".shader": "ShaderImporter",
+    ".physicMaterial": "NativeFormatImporter",
 }
-SERIALIZED = {".unity", ".prefab", ".mat", ".asset", ".controller", ".anim"}
+SERIALIZED = {".unity", ".prefab", ".mat", ".asset", ".controller", ".anim", ".physicMaterial"}
+
+
+def package_asset_guids(root, errors):
+    """Recognize one verified package asset only with matching explicit pins.
+
+    A source-only checkout has no Library/PackageCache; that is not a missing
+    project asset. If a cached or embedded package exists, check its real meta.
+    All other unknown GUIDs continue to fail the ordinary project reference check.
+    """
+    try:
+        manifest = json.loads((root / "Packages/manifest.json").read_text(encoding="utf-8-sig"))
+        locked = json.loads((root / "Packages/packages-lock.json").read_text(encoding="utf-8-sig"))
+        requested = manifest.get("dependencies", {}).get("com.unity.textmeshpro")
+        lock = locked.get("dependencies", {}).get("com.unity.textmeshpro", {})
+    except (OSError, ValueError, AttributeError):
+        return set()
+    if requested != "3.0.6" or not isinstance(lock, dict) or lock.get("version") != "3.0.6" or lock.get("source") != "registry":
+        return set()
+    candidates = [root / "Packages/com.unity.textmeshpro"]
+    candidates += list((root / "Library/PackageCache").glob("com.unity.textmeshpro@3.0.6*"))
+    for directory in candidates:
+        if not directory.is_dir():
+            continue
+        meta = directory / "Scripts/Runtime/TMP_Settings.cs.meta"
+        if not meta.is_file() or GUID_PATTERN.findall(meta.read_text(encoding="utf-8-sig")) != [TMP_SETTINGS_GUID]:
+            errors.append("Pinned TMP package metadata does not match the verified TMP_Settings MonoScript: " + str(meta))
+            return set()
+    return {TMP_SETTINGS_GUID}
 
 
 def check_project(root):
@@ -70,12 +105,13 @@ def check_project(root):
         elif not Path(str(path) + ".meta").is_file():
             errors.append(f"Missing meta: {rel}")
 
+    package_guids = package_asset_guids(root, errors)
     sources = list(assets.rglob("*")) + list((root / "ProjectSettings").glob("*"))
     for path in sources:
         if not path.is_file() or path.suffix not in SERIALIZED:
             continue
         for guid in GUID_PATTERN.findall(path.read_text(encoding="utf-8-sig")):
-            if guid.lower() not in BUILTIN_GUIDS and guid.lower() not in guids:
+            if guid.lower() not in BUILTIN_GUIDS and guid.lower() not in guids and guid.lower() not in package_guids:
                 errors.append(f"Unresolved GUID {guid}: {path.relative_to(root).as_posix()}")
 
     documents = {}

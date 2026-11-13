@@ -70,3 +70,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   scenario: {fileID: 11400000, guid: 3be8ae4648675d9a9b5c2c7147d37b3e, type: 2}
   uiFont: {fileID: 12800000, guid: 54078aa743a4580bb00b21a3e23762c3, type: 3}
+  scenarios:
+  - {fileID: 11400000, guid: 3be8ae4648675d9a9b5c2c7147d37b3e, type: 2}
+  - {fileID: 11400000, guid: b042ca427e9251a8aa441360b80c2410, type: 2}
+  - {fileID: 11400000, guid: 1557e5ed092e515297426afaa3be8a73, type: 2}

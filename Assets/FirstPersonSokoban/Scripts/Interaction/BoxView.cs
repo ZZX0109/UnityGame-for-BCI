@@ -69,10 +69,10 @@ namespace FirstPersonSokoban.Interaction
             highlightMaterial = new Material(normalMaterial)
             {
                 name = "Sokoban Aim Highlight (Runtime)",
-                color = new Color(0.35f, 0.88f, 0.76f, 1f)
+                color = LabMaterials.Hex("E1AB63")
             };
             highlightMaterial.EnableKeyword("_EMISSION");
-            highlightMaterial.SetColor("_EmissionColor", new Color(0.12f, 0.35f, 0.30f));
+            highlightMaterial.SetColor("_EmissionColor", LabMaterials.Hex("E1AB63") * 0.08f);
             cap.GetComponent<Renderer>().sharedMaterial = highlightMaterial;
             cap.SetActive(false);
             highlightCap = cap;

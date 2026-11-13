@@ -1,0 +1,405 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100010
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100020}
+  m_Layer: 0
+  m_Name: VanModule
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &100020
+Transform:
+  m_GameObject: {fileID: 100010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 200020}
+  - {fileID: 200120}
+  - {fileID: 200220}
+  - {fileID: 200320}
+  - {fileID: 200420}
+  - {fileID: 200520}
+  - {fileID: 200620}
+  - {fileID: 200720}
+  - {fileID: 200820}
+  - {fileID: 200920}
+  - {fileID: 201020}
+  m_Father: {fileID: 0}
+--- !u!1 &200010
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200020}
+  - component: {fileID: 200030}
+  - component: {fileID: 200040}
+  m_Layer: 0
+  m_Name: Painted body
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200020
+Transform:
+  m_GameObject: {fileID: 200010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200030
+MeshFilter:
+  m_GameObject: {fileID: 200010}
+  m_Mesh: {fileID: 4300000, guid: 953c5d92d7b75e2bb4f19928418024d8, type: 3}
+--- !u!23 &200040
+MeshRenderer:
+  m_GameObject: {fileID: 200010}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: b62fca28d5705bfbbaaab46bbee05699, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200110
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200120}
+  - component: {fileID: 200130}
+  - component: {fileID: 200140}
+  m_Layer: 0
+  m_Name: Cabin
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200120
+Transform:
+  m_GameObject: {fileID: 200110}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200130
+MeshFilter:
+  m_GameObject: {fileID: 200110}
+  m_Mesh: {fileID: 4300000, guid: 1614fd75a90158b684d23c105c81fcdd, type: 3}
+--- !u!23 &200140
+MeshRenderer:
+  m_GameObject: {fileID: 200110}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: b62fca28d5705bfbbaaab46bbee05699, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200210
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200220}
+  - component: {fileID: 200230}
+  - component: {fileID: 200240}
+  m_Layer: 0
+  m_Name: Glazed cabin
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200220
+Transform:
+  m_GameObject: {fileID: 200210}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200230
+MeshFilter:
+  m_GameObject: {fileID: 200210}
+  m_Mesh: {fileID: 4300000, guid: 1f14bf8d3f545624a88463aca676a8be, type: 3}
+--- !u!23 &200240
+MeshRenderer:
+  m_GameObject: {fileID: 200210}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: db79b2de0e145aefa6e592321971190a, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200310
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200320}
+  - component: {fileID: 200330}
+  - component: {fileID: 200340}
+  m_Layer: 0
+  m_Name: Tyre
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200320
+Transform:
+  m_GameObject: {fileID: 200310}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.94, y: 0.35, z: -1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200330
+MeshFilter:
+  m_GameObject: {fileID: 200310}
+  m_Mesh: {fileID: 4300000, guid: b8c4747084135ddeb80058232b61e6e8, type: 3}
+--- !u!23 &200340
+MeshRenderer:
+  m_GameObject: {fileID: 200310}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 6b6df52832885605b0fe2cb2f0009a68, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200410
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200420}
+  - component: {fileID: 200430}
+  - component: {fileID: 200440}
+  m_Layer: 0
+  m_Name: Wheel alloy
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200420
+Transform:
+  m_GameObject: {fileID: 200410}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.06, y: 0.35, z: -1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200430
+MeshFilter:
+  m_GameObject: {fileID: 200410}
+  m_Mesh: {fileID: 4300000, guid: 8113c64dc98f5e91a93391dcd815f093, type: 3}
+--- !u!23 &200440
+MeshRenderer:
+  m_GameObject: {fileID: 200410}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: dea257f369f05df9bb8d40902a0ac7f8, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200510
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200520}
+  - component: {fileID: 200530}
+  - component: {fileID: 200540}
+  m_Layer: 0
+  m_Name: Tyre
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200520
+Transform:
+  m_GameObject: {fileID: 200510}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.94, y: 0.35, z: 1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200530
+MeshFilter:
+  m_GameObject: {fileID: 200510}
+  m_Mesh: {fileID: 4300000, guid: b8c4747084135ddeb80058232b61e6e8, type: 3}
+--- !u!23 &200540
+MeshRenderer:
+  m_GameObject: {fileID: 200510}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 6b6df52832885605b0fe2cb2f0009a68, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200610
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200620}
+  - component: {fileID: 200630}
+  - component: {fileID: 200640}
+  m_Layer: 0
+  m_Name: Wheel alloy
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200620
+Transform:
+  m_GameObject: {fileID: 200610}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.06, y: 0.35, z: 1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200630
+MeshFilter:
+  m_GameObject: {fileID: 200610}
+  m_Mesh: {fileID: 4300000, guid: 8113c64dc98f5e91a93391dcd815f093, type: 3}
+--- !u!23 &200640
+MeshRenderer:
+  m_GameObject: {fileID: 200610}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: dea257f369f05df9bb8d40902a0ac7f8, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200710
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200720}
+  - component: {fileID: 200730}
+  - component: {fileID: 200740}
+  m_Layer: 0
+  m_Name: Tyre
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200720
+Transform:
+  m_GameObject: {fileID: 200710}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.94, y: 0.35, z: -1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200730
+MeshFilter:
+  m_GameObject: {fileID: 200710}
+  m_Mesh: {fileID: 4300000, guid: b8c4747084135ddeb80058232b61e6e8, type: 3}
+--- !u!23 &200740
+MeshRenderer:
+  m_GameObject: {fileID: 200710}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 6b6df52832885605b0fe2cb2f0009a68, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200810
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200820}
+  - component: {fileID: 200830}
+  - component: {fileID: 200840}
+  m_Layer: 0
+  m_Name: Wheel alloy
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200820
+Transform:
+  m_GameObject: {fileID: 200810}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.06, y: 0.35, z: -1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200830
+MeshFilter:
+  m_GameObject: {fileID: 200810}
+  m_Mesh: {fileID: 4300000, guid: 8113c64dc98f5e91a93391dcd815f093, type: 3}
+--- !u!23 &200840
+MeshRenderer:
+  m_GameObject: {fileID: 200810}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: dea257f369f05df9bb8d40902a0ac7f8, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200910
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200920}
+  - component: {fileID: 200930}
+  - component: {fileID: 200940}
+  m_Layer: 0
+  m_Name: Tyre
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200920
+Transform:
+  m_GameObject: {fileID: 200910}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.94, y: 0.35, z: 1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200930
+MeshFilter:
+  m_GameObject: {fileID: 200910}
+  m_Mesh: {fileID: 4300000, guid: b8c4747084135ddeb80058232b61e6e8, type: 3}
+--- !u!23 &200940
+MeshRenderer:
+  m_GameObject: {fileID: 200910}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 6b6df52832885605b0fe2cb2f0009a68, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &201010
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 201020}
+  - component: {fileID: 201030}
+  - component: {fileID: 201040}
+  m_Layer: 0
+  m_Name: Wheel alloy
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &201020
+Transform:
+  m_GameObject: {fileID: 201010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.06, y: 0.35, z: 1.44}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &201030
+MeshFilter:
+  m_GameObject: {fileID: 201010}
+  m_Mesh: {fileID: 4300000, guid: 8113c64dc98f5e91a93391dcd815f093, type: 3}
+--- !u!23 &201040
+MeshRenderer:
+  m_GameObject: {fileID: 201010}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: dea257f369f05df9bb8d40902a0ac7f8, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0

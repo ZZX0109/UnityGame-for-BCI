@@ -1,3 +1,5 @@
+> 更新：用户后续上传审计并明确要求完成全部改进，现阶段以 AUDIT_IMPLEMENTATION_2026-11-13.md 为实施与验收矩阵；下面 M0+M1-only 限制描述的是首轮历史范围。
+
 # Game 03 · Coding Agent 实施任务单
 
 先阅读同目录 DESIGN_AND_DEVELOPMENT.md。本分支只增加 Assets/StreetCrossing，不修改 main、FirstPersonSokoban 或 ClawMachine。必须保持仓库 Unity 2022.3.62f3c1 中国版与旧 Input Manager 可用；需新建独立 asmdef、场景、Prefab、存档命名空间及 .meta。

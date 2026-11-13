@@ -34,7 +34,7 @@ namespace StreetCrossing.Traffic
                 if (p == null || (int)p.phase != i || p.duration <= 0 || float.IsNaN(p.duration) || float.IsInfinity(p.duration))
                     throw new ArgumentException("Phase order and finite positive durations are required.");
                 if (p.vehicleEntry != (i == 0) || p.pedestrianEntry != (i == 3))
-                    throw new ArgumentException("S01 admits vehicles only on VehicleGreen and new pedestrians only on Walk.");
+                    throw new ArgumentException("Prototype phases admit vehicles only on VehicleGreen and new pedestrians only on Walk.");
             }
             if (clearanceWatchdogSeconds < 5 || float.IsNaN(clearanceWatchdogSeconds) || float.IsInfinity(clearanceWatchdogSeconds))
                 throw new ArgumentException("A finite clearance watchdog of at least five seconds is required.");

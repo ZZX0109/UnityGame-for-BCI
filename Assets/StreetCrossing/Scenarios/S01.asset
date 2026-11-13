@@ -13,6 +13,15 @@ MonoBehaviour:
   m_Name: S01
   m_EditorClassIdentifier:
   scenarioId: S01
+  title: S01 普通斑马线
+  description: 等待行人绿灯，在路沿确认左右道路可见后过街。
+  requireLeftObservation: 1
+  requireRightObservation: 1
+  observationDwellSeconds: 0.35
+  turningTraffic: 0
+  kerbOcclusion: 0
+  turningShare: 0
+  initialVehiclesPerStraightLane: 1
   destinationName: 街角便利店
   seed: 3101
   phaseTable: {fileID: 11400000, guid: 5f79caf3d88a5c0b9c7dedeea5e9c6f1, type: 2}

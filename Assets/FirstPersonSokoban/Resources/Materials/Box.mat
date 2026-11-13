@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Metallic: 0.25
-    - _Glossiness: 0.38
+    - _Metallic: 0
+    - _Glossiness: 0.2
     m_Colors:
-    - _Color: {r: 0.741176, g: 0.458824, b: 0.270588, a: 1.000000}
-    - _EmissionColor: {r: 0.000000, g: 0.000000, b: 0.000000, a: 1.000000}
+    - _Color: {r: 0.776471, g: 0.427451, b: 0.270588, a: 1.000000}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

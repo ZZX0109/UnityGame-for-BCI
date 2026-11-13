@@ -1,0 +1,5 @@
+[OK] Static file, GUID, importer, JSON, catalog and build-scene checks passed.
+Unity compilation, tests, player build and GUI acceptance remain separate checks.
+[OK] Bundled UI font: 151,952 bytes; 600 covered codepoints; current UI text covered.
+[OK] S01/S02/S03 data/windows, explicit regions, isolated Canvas/TMP source, reusable art and canonical resources checks passed.
+Unity compilation/import, NUnit execution, actual rendering, playthrough, Windows build and video remain UNVERIFIED.

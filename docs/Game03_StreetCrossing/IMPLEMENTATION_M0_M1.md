@@ -1,3 +1,5 @@
+> Historical first-iteration report. Superseded by [AUDIT_IMPLEMENTATION_2026-11-13.md](AUDIT_IMPLEMENTATION_2026-11-13.md), which implements the expanded S01–S03 audit scope.
+
 # S01 M0+M1 first implementation — 2026-11-12
 
 ## Entry and scope

@@ -25,7 +25,7 @@ namespace StreetCrossing.Tests.PlayMode
         {
             yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
             StreetGameManager game = Object.FindObjectOfType<StreetGameManager>();
-            Assert.That(game, Is.Not.Null); game.SetInputSource(new QuietInput());
+            Assert.That(game, Is.Not.Null); game.AutoPauseOnFocusLoss = false; game.SetInputSource(new QuietInput());
             Assert.That(game.State, Is.EqualTo(StreetGameState.Menu));
             Assert.That(game.Player.View.transform.localPosition.y, Is.EqualTo(1.65f).Within(0.001f));
             game.StartPractice(); yield return null;

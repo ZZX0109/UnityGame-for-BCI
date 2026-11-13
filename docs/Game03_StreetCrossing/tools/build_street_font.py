@@ -28,7 +28,7 @@ LICENSE_PATH = FONT_DIR / "LICENSE.txt"
 
 def source_characters() -> set[int]:
     paths = sorted((ASSETS / "Scripts").rglob("*.cs"))
-    paths.append(ASSETS / "Scenarios" / "S01.asset")
+    paths.extend(sorted((ASSETS / "Scenarios").glob("*.asset")))
     # Includes comments as well as literals: a conservative superset of runtime
     # text that avoids a fragile partial C# parser and catches new UI messages.
     return {ord(char) for path in paths for char in path.read_text(encoding="utf-8")

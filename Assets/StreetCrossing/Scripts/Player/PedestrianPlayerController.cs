@@ -15,6 +15,7 @@ namespace StreetCrossing.Player
         private float yaw, pitch, gravity;
         public Camera View { get; private set; }
         public float Heading => yaw;
+        public float Pitch => pitch;
         public void Initialize(StreetGameManager owner, StreetScenarioDefinition definition, IStreetInput source)
         {
             game = owner; scenario = definition; input = source;
@@ -57,7 +58,7 @@ namespace StreetCrossing.Player
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
             VehicleController vehicle = hit.collider.GetComponentInParent<VehicleController>();
-            if (vehicle != null && game.IsPlaying) game.RegisterCollision(vehicle.EncounterId);
+            if (vehicle != null && game.IsPlaying) game.RegisterContact(vehicle.EncounterId, vehicle.Motion.Speed);
         }
     }
 }

@@ -8,6 +8,7 @@ namespace StreetCrossing.Traffic
         private readonly Random random;
         public TrafficSpawnSequence(int seed) { random = new Random(seed); }
         public float Between(float minimum, float maximum) => minimum + (maximum - minimum) * (float)random.NextDouble();
+        public int NextVariant() => random.Next(0, 3);
         public int NextColor() => random.Next(0, 4);
     }
 }

@@ -1,0 +1,31 @@
+fileFormatVersion: 2
+guid: 8113c64dc98f5e91a93391dcd815f093
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable:
+  - first:
+      43: 4300000
+    second: Hub
+  externalObjects: {}
+  materials:
+    materialImportMode: 0
+  meshes:
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importCameras: 0
+    importLights: 0
+    useFileUnits: 1
+    fileIdsGeneration: 2
+    weldVertices: 1
+    generateSecondaryUV: 0
+    indexFormat: 0
+  tangentSpace:
+    normalSmoothAngle: 55
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

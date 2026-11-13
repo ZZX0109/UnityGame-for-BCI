@@ -12,16 +12,17 @@ namespace StreetCrossing.Traffic
         public float CruiseSpeed { get; private set; }
         public bool Committed { get; private set; }
         public VehicleMotionState State { get; private set; }
-        public float Front => Distance + HalfLength;
-        public float Rear => Distance - HalfLength;
+        public float BodyHalfLength { get; private set; } = HalfLength;
+        public float Front => Distance + BodyHalfLength;
+        public float Rear => Distance - BodyHalfLength;
         public static float StoppingDistance(float speed, float braking, float reactionTime)
             => speed * speed / (2 * Math.Max(0.01f, braking)) + speed * reactionTime;
-        public void Reset(float distance, float speed) { Distance = distance; Speed = CruiseSpeed = speed; Committed = false; State = VehicleMotionState.Cruising; }
+        public void Reset(float distance, float speed, float bodyHalfLength = HalfLength) { BodyHalfLength = bodyHalfLength; Distance = distance; Speed = CruiseSpeed = speed; Committed = false; State = VehicleMotionState.Cruising; }
         public void DecideAmber(float stopLine, float braking, float reactionTime)
         {
             if (Front >= stopLine || stopLine - Front <= StoppingDistance(Speed, braking, reactionTime)) Committed = true;
         }
-        public void Step(float dt, float stopLine, bool mayEnter, float leaderRear, float gap, float acceleration, float braking, float reaction)
+        public void Step(float dt, float stopLine, bool mayEnter, float leaderRear, float gap, float acceleration, float braking, float reaction, float speedLimit = -1)
         {
             if (dt <= 0) return;
             if (Front >= stopLine - 0.001f && mayEnter) Committed = true;
@@ -30,7 +31,7 @@ namespace StreetCrossing.Traffic
             float clearance = frontLimit - Front;
             // Reaction margin is conservative and acts before comfortable braking is needed.
             float available = Math.Max(0, clearance - Speed * reaction);
-            float target = Math.Min(CruiseSpeed, (float)Math.Sqrt(2 * braking * available));
+            float target = Math.Min(speedLimit > 0 ? Math.Min(CruiseSpeed, speedLimit) : CruiseSpeed, (float)Math.Sqrt(2 * braking * available));
             float oldSpeed = Speed;
             float rate = target < Speed ? braking : acceleration;
             Speed = MoveTowards(Speed, target, rate * dt);

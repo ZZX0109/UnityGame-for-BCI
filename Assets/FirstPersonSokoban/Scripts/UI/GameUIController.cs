@@ -115,7 +115,7 @@ namespace FirstPersonSokoban.UI
         {
             hud = Group(canvasRoot, "HUD");
             PanelImage(hud.transform, "Level Plate", new Vector2(0, 1), new Vector2(0, 1),
-                new Vector2(32, -28), new Vector2(320, 94), Hex("10161D", 0.82f));
+                new Vector2(32, -28), new Vector2(320, 94), Hex("FBF7EF", 0.95f));
             LineImage(hud.transform, "Level Accent", new Vector2(0, 1), new Vector2(0, 1),
                 new Vector2(32, -28), new Vector2(3, 94), Accent);
             levelNumber = Label(hud.transform, "Level Number", "LAB / 01", 14, Muted,
@@ -124,7 +124,7 @@ namespace FirstPersonSokoban.UI
                 new Vector2(0, 1), new Vector2(0, 1), new Vector2(54, -68), new Vector2(270, 42), style: FontStyle.Bold);
 
             PanelImage(hud.transform, "Stats Plate", new Vector2(1, 1), new Vector2(1, 1),
-                new Vector2(-32, -28), new Vector2(500, 94), Hex("10161D", 0.82f));
+                new Vector2(-32, -28), new Vector2(500, 94), Hex("FBF7EF", 0.95f));
             sessionTime = Label(hud.transform, "Session Time", "00:00", 24, White,
                 new Vector2(1, 1), new Vector2(0, 1), new Vector2(-512, -38), new Vector2(140, 38), style: FontStyle.Bold);
             Label(hud.transform, "Time Caption", "训练用时", 14, Muted,
@@ -147,7 +147,7 @@ namespace FirstPersonSokoban.UI
             dot.raycastTarget = false;
             interaction = Group(hud.transform, "Interaction");
             PanelImage(interaction.transform, "Prompt Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
-                new Vector2(0, 124), new Vector2(460, 52), Hex("10161D", 0.92f));
+                new Vector2(0, 124), new Vector2(460, 52), Hex("FBF7EF", 0.97f));
             interactionText = Label(interaction.transform, "Prompt", "E  推动模块", 19, Accent,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 125), new Vector2(436, 48), TextAnchor.MiddleCenter, FontStyle.Bold);
             interaction.alpha = 0;
@@ -157,13 +157,13 @@ namespace FirstPersonSokoban.UI
             guidanceText = Label(guidance.transform, "Guidance Text", "", 17, White,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 192), new Vector2(900, 46), TextAnchor.MiddleCenter);
             Shadow guidanceShadow = guidanceText.gameObject.AddComponent<Shadow>();
-            guidanceShadow.effectColor = Hex("000000", 0.80f);
+            guidanceShadow.effectColor = Hex("FFF9F1", 0.90f);
             guidanceShadow.effectDistance = new Vector2(0, -1);
             guidance.gameObject.SetActive(false);
 
             deadlock = Group(hud.transform, "Deadlock");
             PanelImage(deadlock.transform, "Deadlock Plate", new Vector2(0.5f, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -150), new Vector2(760, 48), Hex("35291F", 0.95f));
+                new Vector2(0, -150), new Vector2(760, 48), Hex("F6E4D0", 0.97f));
             deadlockText = Label(deadlock.transform, "Deadlock Text", "", 17, Amber,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -151), new Vector2(730, 44), TextAnchor.MiddleCenter);
             deadlock.gameObject.SetActive(false);
@@ -279,7 +279,7 @@ namespace FirstPersonSokoban.UI
                 levelButtons[i] = card;
                 levelCardImages[i] = card.GetComponent<Image>();
                 PanelImage(card.transform, "Number Tile", new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                    new Vector2(14, 0), new Vector2(56, 62), Hex("151E26"));
+                    new Vector2(14, 0), new Vector2(56, 62), Hex("E8DAC9"));
                 Label(card.transform, "Number", $"{i + 1:00}", 27, Accent,
                     new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(56, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
                 Text title = Label(card.transform, "Title", levels[i].Title, 23, White,
@@ -316,7 +316,7 @@ namespace FirstPersonSokoban.UI
 
         private RectTransform Modal(CanvasGroup overlay, string name, Vector2 size)
         {
-            overlay.gameObject.AddComponent<Image>().color = Hex("030B13", 0.86f);
+            overlay.gameObject.AddComponent<Image>().color = Hex("36271D", 0.72f);
             Image panel = PanelImage(overlay.transform, name, Vector2.one * 0.5f,
                 Vector2.one * 0.5f, Vector2.zero, size, Panel);
             Border(panel, Line);
@@ -441,7 +441,7 @@ namespace FirstPersonSokoban.UI
             Label(card, "Victory Description", "所有训练模块已准确归位", 19, Muted,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 116), new Vector2(570, 36), TextAnchor.MiddleCenter);
             PanelImage(card, "Stats Background", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(0, 32), new Vector2(588, 118), Hex("0B2130"));
+                new Vector2(0, 32), new Vector2(588, 118), Hex("EDE0CF"));
             victoryStats = Label(card, "Stats", "", 20, White,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 32), new Vector2(560, 108), TextAnchor.MiddleCenter);
             victoryBest = Label(card, "Best", "", 17, Accent,
@@ -593,7 +593,7 @@ namespace FirstPersonSokoban.UI
                 levelButtons[i].interactable = available;
                 levelNotes[i].text = best >= 0 ? $"已完成\n最佳 {best} 推" : available ? "可开始  →" : "待解锁";
                 levelNotes[i].color = !available ? Muted : best >= 0 ? Success : Accent;
-                levelCardImages[i].color = available && i == unlocked - 1 ? Hex("24383B") : PanelLight;
+                levelCardImages[i].color = available && i == unlocked - 1 ? Hex("F0D9C7") : PanelLight;
             }
             menuProgress.text = $"{completed:00} / {levelButtons.Length:00} 已完成";
             chapterProgress.anchorMax = new Vector2((float)completed / Mathf.Max(1, levelButtons.Length), 1f);

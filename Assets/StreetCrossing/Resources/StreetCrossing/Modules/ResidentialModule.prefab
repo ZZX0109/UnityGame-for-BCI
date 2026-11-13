@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100010
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100020}
+  m_Layer: 0
+  m_Name: ResidentialModule
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &100020
+Transform:
+  m_GameObject: {fileID: 100010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 200020}
+  - {fileID: 200120}
+  - {fileID: 200220}
+  m_Father: {fileID: 0}
+--- !u!1 &200010
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200020}
+  - component: {fileID: 200030}
+  - component: {fileID: 200040}
+  m_Layer: 0
+  m_Name: Plaster masonry
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200020
+Transform:
+  m_GameObject: {fileID: 200010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200030
+MeshFilter:
+  m_GameObject: {fileID: 200010}
+  m_Mesh: {fileID: 4300000, guid: 24db409566325d098e126892d5473cbc, type: 3}
+--- !u!23 &200040
+MeshRenderer:
+  m_GameObject: {fileID: 200010}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 8032ae7dd15256a29e24f08a77b69bfb, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200110
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200120}
+  - component: {fileID: 200130}
+  - component: {fileID: 200140}
+  m_Layer: 0
+  m_Name: Facade sills balconies and frames
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200120
+Transform:
+  m_GameObject: {fileID: 200110}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200130
+MeshFilter:
+  m_GameObject: {fileID: 200110}
+  m_Mesh: {fileID: 4300000, guid: a0fe50cf54745d11a47ef3bb1219334e, type: 3}
+--- !u!23 &200140
+MeshRenderer:
+  m_GameObject: {fileID: 200110}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 9a1b2c9d7c7459ec845706edf7d56cac, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!1 &200210
+GameObject:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 200220}
+  - component: {fileID: 200230}
+  - component: {fileID: 200240}
+  m_Layer: 0
+  m_Name: Recessed glazing
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &200220
+Transform:
+  m_GameObject: {fileID: 200210}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 100020}
+--- !u!33 &200230
+MeshFilter:
+  m_GameObject: {fileID: 200210}
+  m_Mesh: {fileID: 4300000, guid: 410f7d37738a5cf8bdb2fa4fbaa60f37, type: 3}
+--- !u!23 &200240
+MeshRenderer:
+  m_GameObject: {fileID: 200210}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: db79b2de0e145aefa6e592321971190a, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0

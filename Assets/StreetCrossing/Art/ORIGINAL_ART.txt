@@ -1,0 +1,12 @@
+Original Street Crossing modular art
+
+The accompanying sedan, hatchback, van, wheel and residential module OBJ meshes,
+prefabs and asphalt/paving/plaster albedo and normal textures were authored for
+this project with the included deterministic build_original_art.py source.
+They contain no downloaded vehicle/building models or stock image textures.
+Mesh coordinates are metres; the three vehicle bodies measure 4.2, 3.7 and 4.8 m.
+Standard shader material parameters are artistic prototype choices.
+
+The original procedural sound generation is in StreetAudioController.cs.
+The separate Street UI Sans font is derived from Noto Sans CJK under SIL OFL 1.1;
+see Resources/StreetCrossing/Fonts/LICENSE.txt for that font's full attribution.

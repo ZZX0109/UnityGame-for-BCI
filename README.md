@@ -1,3 +1,22 @@
+# 第一人称过马路开发分支
+
+当前分支：`game03/street-crossing-fps`。本轮按代码审查要求补齐三个任务配置、核心交互和 Canvas/TextMeshPro UI；推箱子主线资源同步保留。
+
+使用 **Unity 2022.3.62f3c1 中国版** 打开项目，打开 `Assets/StreetCrossing/Scenes/StreetCrossingScene.unity` 并按 Play。各任务从本游戏菜单选择；运行细节以该游戏 docs 目录的最新交付说明为准。
+
+真实测试与 Windows 打包入口：
+
+```powershell
+$env:UNITY_EDITOR_PATH = 'D:/Unity/2022.3.62f3c1/Editor/Unity.exe'
+python Tools/run_game_delivery.py --game street
+```
+
+该流程要求可用图形设备、有效 Editor 授权和对应 Windows Build Support；未实际运行的编译、Unity 测试、Windows 游玩与录屏不能视为通过。详见 [统一验证流程](Validation/GameDelivery.md)。
+
+---
+
+以下为保留的推箱子工程说明；测试本分支新增游戏请使用上方场景。
+
 # FirstPersonSokoban · 第一人称三维推箱子
 
 **2026-11-12 · 认知训练实验室视觉候选版 · 8 关 · v2 存档兼容**
