@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python Tools/validate_project.py
-      - run: python Tools/validate_levels.py
+      - run: python Tools/validate_levels.py --mechanics
       - run: python Tools/build_ui_font.py --check
       - run: python -m unittest discover -s Tools/tests -v
       - name: State the verification boundary

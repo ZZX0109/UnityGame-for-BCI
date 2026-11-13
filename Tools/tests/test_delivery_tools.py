@@ -88,6 +88,15 @@ class ProjectChecks(unittest.TestCase):
         path.write_text(path.read_text(encoding="utf-8").replace("Level01", "Level02"), encoding="utf-8")
         self.assertTrue(any("Missing catalog level" in e for e in check_project(self.root)))
 
+    def test_invalid_map_revisions_fail(self):
+        path = self.root / "Assets/FirstPersonSokoban/Resources/LevelCatalog.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        for revision in (0, -1, 1.5, True, "2"):
+            with self.subTest(revision=revision):
+                document["levels"][0]["revision"] = revision
+                path.write_text(json.dumps(document), encoding="utf-8")
+                self.assertTrue(any("Invalid map revision" in e for e in check_project(self.root)))
+
     def test_build_scene_path_guid_mismatch_fails(self):
         path = self.root / "ProjectSettings/EditorBuildSettings.asset"
         text = path.read_text(encoding="utf-8")

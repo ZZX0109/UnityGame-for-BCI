@@ -1,0 +1,1405 @@
+{
+  "schemaVersion": 1,
+  "coordinates": "source map x/y, origin top left, U decreases y",
+  "evidence": "Exact Python push-BFS; diagrams are not Unity screenshots.",
+  "mechanicsChecks": [
+    "All eight exact minimum-push counts match the design contract.",
+    "L2: shortest solution changes pushing direction twice around the L wall.",
+    "L3: both boxes must leave the west gallery through its lower connecting hall.",
+    "L4: box route descends to the lower corridor, crosses it, then rises to the goal.",
+    "L5: only gate box A can move initially; A can be completed while B stays fixed.",
+    "L6: forced first push parks A away from both goals; neither box can finish while the other is fixed.",
+    "L7: pushing into the lower wall line is a proven deadlock; the narrow goal pocket is solvable.",
+    "L8: both boxes cross the lower west link and upper east link; locking the upper goal first blocks the lower goal."
+  ],
+  "levels": [
+    {
+      "resource": "Level01",
+      "id": "tutorial-first-push",
+      "revision": 1,
+      "title": "初次接触",
+      "sourceSHA256": "140040fe8c41c99edc90660926ef06a0bde334a1f472eef92a54b1a095648c21",
+      "map": [
+        "#######",
+        "#.....#",
+        "#..G..#",
+        "#..B..#",
+        "#..P..#",
+        "#.....#",
+        "#######"
+      ],
+      "diagram": "Level01.svg",
+      "minimumPushes": 1,
+      "exploredStates": 11,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            3,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        }
+      ]
+    },
+    {
+      "resource": "Level02",
+      "id": "tutorial-around",
+      "revision": 2,
+      "title": "绕过折角",
+      "sourceSHA256": "407f35e66a5f8ac6856f3709b58cf6d5b62a1fb7ba2638d1d59af478767061e3",
+      "map": [
+        "#########",
+        "#....G..#",
+        "#..###..#",
+        "#..#....#",
+        "#..B....#",
+        "#..P....#",
+        "#.......#",
+        "#########"
+      ],
+      "diagram": "Level02.svg",
+      "minimumPushes": 7,
+      "exploredStates": 38,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            4
+          ],
+          "to": [
+            2,
+            4
+          ],
+          "direction": "L",
+          "walkBeforePush": "RU"
+        },
+        {
+          "box": "A",
+          "from": [
+            2,
+            4
+          ],
+          "to": [
+            2,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": "DL"
+        },
+        {
+          "box": "A",
+          "from": [
+            2,
+            3
+          ],
+          "to": [
+            2,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            2,
+            2
+          ],
+          "to": [
+            2,
+            1
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            2,
+            1
+          ],
+          "to": [
+            3,
+            1
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            1
+          ],
+          "to": [
+            4,
+            1
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            1
+          ],
+          "to": [
+            5,
+            1
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        }
+      ]
+    },
+    {
+      "resource": "Level03",
+      "id": "two-boxes",
+      "revision": 2,
+      "title": "双厅转运",
+      "sourceSHA256": "0dab96aee9d3d9854e65013c2baa9702063f9fb72d01b6522509429ba06e6066",
+      "map": [
+        "#############",
+        "#.....#.....#",
+        "#.....#..G..#",
+        "#..B..#.....#",
+        "#.....#..G..#",
+        "#..B..#.....#",
+        "#...........#",
+        "#.....P.....#",
+        "#############"
+      ],
+      "diagram": "Level03.svg",
+      "minimumPushes": 22,
+      "exploredStates": 2447,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            4,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LLLLUUUU"
+        },
+        {
+          "box": "B",
+          "from": [
+            3,
+            5
+          ],
+          "to": [
+            4,
+            5
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDD"
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            3
+          ],
+          "to": [
+            5,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "UU"
+        },
+        {
+          "box": "B",
+          "from": [
+            4,
+            5
+          ],
+          "to": [
+            5,
+            5
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDD"
+        },
+        {
+          "box": "B",
+          "from": [
+            5,
+            5
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "D",
+          "walkBeforePush": "UR"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            3
+          ],
+          "to": [
+            5,
+            4
+          ],
+          "direction": "D",
+          "walkBeforePush": "LUUUR"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            4
+          ],
+          "to": [
+            5,
+            5
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            6,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDD"
+        },
+        {
+          "box": "B",
+          "from": [
+            6,
+            6
+          ],
+          "to": [
+            7,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            5
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "D",
+          "walkBeforePush": "LLUUR"
+        },
+        {
+          "box": "B",
+          "from": [
+            7,
+            6
+          ],
+          "to": [
+            8,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDDRRU"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            6,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDLLU"
+        },
+        {
+          "box": "A",
+          "from": [
+            6,
+            6
+          ],
+          "to": [
+            7,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            8,
+            6
+          ],
+          "to": [
+            8,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "DRR"
+        },
+        {
+          "box": "A",
+          "from": [
+            7,
+            6
+          ],
+          "to": [
+            8,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "DLLU"
+        },
+        {
+          "box": "B",
+          "from": [
+            8,
+            5
+          ],
+          "to": [
+            9,
+            5
+          ],
+          "direction": "R",
+          "walkBeforePush": "U"
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            6
+          ],
+          "to": [
+            8,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "LDDR"
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            5
+          ],
+          "to": [
+            8,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            4
+          ],
+          "to": [
+            8,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            3
+          ],
+          "to": [
+            9,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "A",
+          "from": [
+            9,
+            3
+          ],
+          "to": [
+            9,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": "DR"
+        },
+        {
+          "box": "B",
+          "from": [
+            9,
+            5
+          ],
+          "to": [
+            9,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": "LDDDR"
+        }
+      ]
+    },
+    {
+      "resource": "Level04",
+      "id": "corner-turn",
+      "revision": 2,
+      "title": "回廊路线",
+      "sourceSHA256": "66f26b942afa2e6369ed6f6f1bdc9d2296201b796e87448fde043968b4a03854",
+      "map": [
+        "###########",
+        "#.........#",
+        "#...###.G.#",
+        "#..B###...#",
+        "#..P###...#",
+        "#...###...#",
+        "#.........#",
+        "#.........#",
+        "###########"
+      ],
+      "diagram": "Level04.svg",
+      "minimumPushes": 12,
+      "exploredStates": 51,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            3,
+            4
+          ],
+          "direction": "D",
+          "walkBeforePush": "LUUR"
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            4
+          ],
+          "to": [
+            3,
+            5
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            5
+          ],
+          "to": [
+            3,
+            6
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            6
+          ],
+          "to": [
+            4,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LD"
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            6
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            6,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            6,
+            6
+          ],
+          "to": [
+            7,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            7,
+            6
+          ],
+          "to": [
+            8,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            6
+          ],
+          "to": [
+            8,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "DR"
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            5
+          ],
+          "to": [
+            8,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            4
+          ],
+          "to": [
+            8,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            3
+          ],
+          "to": [
+            8,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        }
+      ]
+    },
+    {
+      "resource": "Level05",
+      "id": "paired-columns",
+      "revision": 2,
+      "title": "先开通路",
+      "sourceSHA256": "a435a8c371baa00c55eb8c7fa568e5c8566dd2c319f8d4a25bdfb1d0a6c34e12",
+      "map": [
+        "#########",
+        "#..G.G..#",
+        "#....B..#",
+        "#.......#",
+        "###B#####",
+        "#..P....#",
+        "#.......#",
+        "#########"
+      ],
+      "diagram": "Level05.svg",
+      "minimumPushes": 4,
+      "exploredStates": 75,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            4
+          ],
+          "to": [
+            3,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            3,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            2
+          ],
+          "to": [
+            3,
+            1
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            5,
+            2
+          ],
+          "to": [
+            5,
+            1
+          ],
+          "direction": "U",
+          "walkBeforePush": "RDR"
+        }
+      ]
+    },
+    {
+      "resource": "Level06",
+      "id": "adjacent-boxes",
+      "revision": 2,
+      "title": "临时停靠",
+      "sourceSHA256": "f11d51febc0a16cf67dc09fac83f563c0b3b61b74d24f33b483829cd18141724",
+      "map": [
+        "#########",
+        "######G.#",
+        "###P##G.#",
+        "#..BB...#",
+        "#...##..#",
+        "#.......#",
+        "#########"
+      ],
+      "diagram": "Level06.svg",
+      "minimumPushes": 10,
+      "exploredStates": 238,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            3,
+            4
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            4,
+            3
+          ],
+          "to": [
+            5,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            5,
+            3
+          ],
+          "to": [
+            6,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            4
+          ],
+          "to": [
+            3,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": "LLLDDR"
+        },
+        {
+          "box": "A",
+          "from": [
+            3,
+            3
+          ],
+          "to": [
+            4,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            3
+          ],
+          "to": [
+            5,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            6,
+            3
+          ],
+          "to": [
+            6,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": "LDDRRRU"
+        },
+        {
+          "box": "B",
+          "from": [
+            6,
+            2
+          ],
+          "to": [
+            6,
+            1
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            3
+          ],
+          "to": [
+            6,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "DDDLLLUUR"
+        },
+        {
+          "box": "A",
+          "from": [
+            6,
+            3
+          ],
+          "to": [
+            6,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": "LLDDRRRU"
+        }
+      ]
+    },
+    {
+      "resource": "Level07",
+      "id": "narrow-pocket",
+      "revision": 2,
+      "title": "狭口对齐",
+      "sourceSHA256": "553925e52b5219e9527a25591e917f97173277fe8cd82dbbf96d54babbae5552",
+      "map": [
+        "###########",
+        "#.........#",
+        "#...#G#...#",
+        "#...#.#...#",
+        "#...#.#...#",
+        "#...#.#...#",
+        "#...B.....#",
+        "#...P.....#",
+        "###########"
+      ],
+      "diagram": "Level07.svg",
+      "minimumPushes": 5,
+      "exploredStates": 40,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            4,
+            6
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            5,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "DR"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            5
+          ],
+          "to": [
+            5,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            4
+          ],
+          "to": [
+            5,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            3
+          ],
+          "to": [
+            5,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        }
+      ]
+    },
+    {
+      "resource": "Level08",
+      "id": "long-detour",
+      "revision": 2,
+      "title": "连厅次序",
+      "sourceSHA256": "cec780be06829c7a006a4f1dfbd4e3fecf152e24666627606da9a016e2403e55",
+      "map": [
+        "################",
+        "#....#....#....#",
+        "#....#....#..G.#",
+        "#....#.........#",
+        "#..B.#....###..#",
+        "#..B.#....###G##",
+        "#.........###.##",
+        "#.........######",
+        "#..P.#....######",
+        "################"
+      ],
+      "diagram": "Level08.svg",
+      "minimumPushes": 32,
+      "exploredStates": 3603,
+      "pushes": [
+        {
+          "box": "A",
+          "from": [
+            3,
+            4
+          ],
+          "to": [
+            4,
+            4
+          ],
+          "direction": "R",
+          "walkBeforePush": "LUUUU"
+        },
+        {
+          "box": "B",
+          "from": [
+            3,
+            5
+          ],
+          "to": [
+            3,
+            6
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            3,
+            6
+          ],
+          "to": [
+            4,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LD"
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            4
+          ],
+          "to": [
+            4,
+            5
+          ],
+          "direction": "D",
+          "walkBeforePush": "UUUR"
+        },
+        {
+          "box": "B",
+          "from": [
+            4,
+            6
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDD"
+        },
+        {
+          "box": "B",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            6,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            5
+          ],
+          "to": [
+            4,
+            6
+          ],
+          "direction": "D",
+          "walkBeforePush": "LLUUR"
+        },
+        {
+          "box": "B",
+          "from": [
+            6,
+            6
+          ],
+          "to": [
+            7,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDDRRU"
+        },
+        {
+          "box": "A",
+          "from": [
+            4,
+            6
+          ],
+          "to": [
+            5,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LDLLU"
+        },
+        {
+          "box": "A",
+          "from": [
+            5,
+            6
+          ],
+          "to": [
+            6,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            7,
+            6
+          ],
+          "to": [
+            7,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "DRR"
+        },
+        {
+          "box": "A",
+          "from": [
+            6,
+            6
+          ],
+          "to": [
+            7,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "DLLU"
+        },
+        {
+          "box": "B",
+          "from": [
+            7,
+            5
+          ],
+          "to": [
+            8,
+            5
+          ],
+          "direction": "R",
+          "walkBeforePush": "U"
+        },
+        {
+          "box": "A",
+          "from": [
+            7,
+            6
+          ],
+          "to": [
+            8,
+            6
+          ],
+          "direction": "R",
+          "walkBeforePush": "LD"
+        },
+        {
+          "box": "B",
+          "from": [
+            8,
+            5
+          ],
+          "to": [
+            9,
+            5
+          ],
+          "direction": "R",
+          "walkBeforePush": "U"
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            6
+          ],
+          "to": [
+            8,
+            5
+          ],
+          "direction": "U",
+          "walkBeforePush": "LDDR"
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            5
+          ],
+          "to": [
+            8,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            4
+          ],
+          "to": [
+            8,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            8,
+            3
+          ],
+          "to": [
+            9,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "A",
+          "from": [
+            9,
+            3
+          ],
+          "to": [
+            10,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            9,
+            5
+          ],
+          "to": [
+            9,
+            4
+          ],
+          "direction": "U",
+          "walkBeforePush": "LDDDR"
+        },
+        {
+          "box": "A",
+          "from": [
+            10,
+            3
+          ],
+          "to": [
+            11,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LUUR"
+        },
+        {
+          "box": "A",
+          "from": [
+            11,
+            3
+          ],
+          "to": [
+            12,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            12,
+            3
+          ],
+          "to": [
+            13,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            9,
+            4
+          ],
+          "to": [
+            9,
+            3
+          ],
+          "direction": "U",
+          "walkBeforePush": "LLLLDDR"
+        },
+        {
+          "box": "B",
+          "from": [
+            9,
+            3
+          ],
+          "to": [
+            10,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "LU"
+        },
+        {
+          "box": "B",
+          "from": [
+            10,
+            3
+          ],
+          "to": [
+            11,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            11,
+            3
+          ],
+          "to": [
+            12,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "A",
+          "from": [
+            13,
+            3
+          ],
+          "to": [
+            13,
+            4
+          ],
+          "direction": "D",
+          "walkBeforePush": "URR"
+        },
+        {
+          "box": "A",
+          "from": [
+            13,
+            4
+          ],
+          "to": [
+            13,
+            5
+          ],
+          "direction": "D",
+          "walkBeforePush": ""
+        },
+        {
+          "box": "B",
+          "from": [
+            12,
+            3
+          ],
+          "to": [
+            13,
+            3
+          ],
+          "direction": "R",
+          "walkBeforePush": "UULLD"
+        },
+        {
+          "box": "B",
+          "from": [
+            13,
+            3
+          ],
+          "to": [
+            13,
+            2
+          ],
+          "direction": "U",
+          "walkBeforePush": "URRDDL"
+        }
+      ]
+    }
+  ]
+}

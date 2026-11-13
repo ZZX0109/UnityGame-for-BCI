@@ -27,6 +27,8 @@ namespace FirstPersonSokoban.Presentation
             public Vector3 Position;
             public Vector3 Normal;
             public Transform Frame;
+            public Vector2Int Tile;
+            public Vector2Int Direction;
         }
 
         public static void StyleFloor(GameObject instance, LabMaterials palette)
@@ -73,7 +75,8 @@ namespace FirstPersonSokoban.Presentation
                     surface.SetParent(architecture, false);
                     surface.position = world + normal * cell * 0.5f;
                     surface.rotation = Quaternion.LookRotation(normal, Vector3.up);
-                    faces.Add(new WallFace { Position = surface.position, Normal = normal, Frame = surface });
+                    faces.Add(new WallFace { Position = surface.position, Normal = normal, Frame = surface,
+                        Tile = tile, Direction = direction });
                     WallPanel(surface, cell, palette);
                 }
             }
@@ -84,6 +87,7 @@ namespace FirstPersonSokoban.Presentation
             Vector3 span = new Vector3(definition.Width * cell, LightingHeight,
                 definition.Height * cell);
             AddFeatureWalls(faces, definition, grid, palette);
+            AddPassageWayfinding(faces, definition, palette);
             ConfigureLighting(architecture, center, span, definition, grid, reachable);
             var probeCells = new HashSet<Vector2Int>(reachable);
             probeCells.ExceptWith(definition.Boxes);
@@ -117,11 +121,10 @@ namespace FirstPersonSokoban.Presentation
                 artworkIndex = i;
             }
             Artwork(faces[artworkIndex].Frame, 0, palette);
-            int doorIndex = faces.Count > 4 ? (artworkIndex + faces.Count / 2) % faces.Count : -1;
-            if (doorIndex >= 0) DoorFrame(faces[doorIndex].Frame, palette);
+
             for (int i = 0; i < faces.Count; i++)
             {
-                if (i == artworkIndex || i == doorIndex) continue;
+                if (i == artworkIndex) continue;
                 if (i % 7 == 3) Artwork(faces[i].Frame, 1 + i % 2, palette);
             }
         }
@@ -171,16 +174,54 @@ namespace FirstPersonSokoban.Presentation
             renderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
-        private static void DoorFrame(Transform wall, LabMaterials palette)
+        private static void AddPassageWayfinding(List<WallFace> faces,
+            LevelDefinition definition, LabMaterials palette)
         {
-            LocalPart(wall, "Gallery Door Frame", new Vector3(0, 1.16f, 0.003f),
-                new Vector3(1.36f, 2.32f, 0.004f), palette.Trim);
-            LocalPart(wall, "Closed Gallery Door", new Vector3(0, 1.14f, 0.007f),
-                new Vector3(1.23f, 2.22f, 0.004f), palette.Wall);
-            LocalPart(wall, "Champagne Door Handle", new Vector3(0.43f, 1.06f, 0.014f),
-                new Vector3(0.045f, 0.28f, 0.006f), palette.Dark);
-            Label(wall, "Room Number", "SPATIAL / 01", new Vector3(0, 2.47f, 0.014f),
-                0.025f, LabMaterials.Hex("695344"));
+            // Read openings from the actual wall grid. A sign marks a one- or
+            // two-cell link through an internal wall band, never a pretend door
+            // on an arbitrary solid wall. Nothing projects into the floor lane.
+            int number = 0;
+            var used = new HashSet<Transform>();
+            foreach (Vector2Int along in new[] { Vector2Int.up, Vector2Int.right })
+            {
+                Vector2Int across = new Vector2Int(along.y, along.x);
+                int lineCount = along.y != 0 ? definition.Width : definition.Height;
+                int lineLength = along.y != 0 ? definition.Height : definition.Width;
+                for (int line = 1; line < lineCount - 1; line++)
+                {
+                    int walls = 0;
+                    for (int offset = 0; offset < lineLength; offset++)
+                        if (definition.TileAt(across * line + along * offset) == TileType.Wall) walls++;
+                    if (walls < 4) continue;
+                    for (int offset = 1; offset < lineLength - 1; offset++)
+                    {
+                        Vector2Int first = across * line + along * offset;
+                        if (definition.TileAt(first) == TileType.Wall ||
+                            definition.TileAt(first - along) != TileType.Wall) continue;
+                        int length = 0;
+                        bool crossing = true;
+                        while (offset + length < lineLength &&
+                               definition.TileAt(first + along * length) != TileType.Wall)
+                        {
+                            Vector2Int cell = first + along * length;
+                            crossing &= definition.TileAt(cell - across) != TileType.Wall &&
+                                        definition.TileAt(cell + across) != TileType.Wall;
+                            length++;
+                        }
+                        if (length > 2 || !crossing) continue;
+                        foreach (WallFace face in faces)
+                        {
+                            if (face.Tile != first - along || face.Direction != along || !used.Add(face.Frame)) continue;
+                            number++;
+                            LocalPart(face.Frame, "Passage Wayfinding Plaque", new Vector3(0, 0.92f, 0.012f),
+                                new Vector3(1.62f, 0.26f, 0.012f), palette.Wall);
+                            Label(face.Frame, "Passage Wayfinding Label", $"LINK / {number:00}",
+                                new Vector3(0, 0.92f, 0.022f), 0.018f, LabMaterials.Hex("695344"));
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         private static void ConfigureLighting(Transform parent, Vector3 center, Vector3 span,

@@ -13,6 +13,12 @@ def main():
   times=[float(v) for v in re.findall(r'^    duration: ([0-9.]+)$',table,re.M)]
   if len(times)!=6 or min(times)<=0 or times[3]<number('roadHalfWidth')*2/number('comfortableSpeed')+2:errors.append(sid+' has no configured comfortable-speed Walk window.')
   if f'  scenarioId: {sid}' not in text:errors.append('Stable id mismatch: '+sid)
+  profile=GAME/'Scenarios'/f'{sid}Visual.asset'
+  if not profile.is_file():errors.append('Missing explicit visual profile: '+sid)
+  else:
+   profile_text=profile.read_text();guid=re.search(r'^guid: ([0-9a-f]+)$',Path(str(profile)+'.meta').read_text(),re.M).group(1)
+   if f'  profileId: {sid}' not in profile_text or f'  identity: {int(sid[1:])-1}' not in profile_text:errors.append('Visual identity mismatch: '+sid)
+   if f'visualProfile: {{fileID: 11400000, guid: {guid}, type: 2}}' not in text:errors.append('Scenario visual profile is not explicitly referenced: '+sid)
   if number('requireLeftObservation')!=1 or number('requireRightObservation')!=1:errors.append(sid+' acceptance baseline requires both observations.')
   scenarios[sid]={'maximum':number('maximumVehicles'),'interval':number('maximumSpawnInterval'),'turning':number('turningTraffic'),'occlusion':number('kerbOcclusion')}
  if not scenarios['S02']['maximum']>scenarios['S01']['maximum'] or not scenarios['S02']['interval']<scenarios['S01']['interval']:errors.append('S02 must have meaningfully denser traffic.')

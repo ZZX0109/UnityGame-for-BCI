@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: S01
   m_EditorClassIdentifier:
   scenarioId: S01
+  visualProfile: {fileID: 11400000, guid: 6b8bc4c236f150979fe2488888620f66, type: 2}
   title: S01 普通斑马线
   description: 等待行人绿灯，在路沿确认左右道路可见后过街。
   requireLeftObservation: 1

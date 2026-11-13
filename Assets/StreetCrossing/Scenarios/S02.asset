@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: S02
   m_EditorClassIdentifier:
   scenarioId: S02
+  visualProfile: {fileID: 11400000, guid: 14e15d9e1a4c53da974ec1ff2a50ab8f, type: 2}
   title: S02 复杂车流
   description: 不同车型与车速形成排队，观察实际停稳与安全时间。
   requireLeftObservation: 1

@@ -10,3 +10,15 @@ Standard shader material parameters are artistic prototype choices.
 The original procedural sound generation is in StreetAudioController.cs.
 The separate Street UI Sans font is derived from Noto Sans CJK under SIL OFL 1.1;
 see Resources/StreetCrossing/Fonts/LICENSE.txt for that font's full attribution.
+
+Visual refinement authored 2026-11-13:
+StreetDetailMesh.cs generates the rounded signal/furniture silhouettes at runtime;
+StreetVisualDetails.cs authors the recessed market displays, shelter timetable,
+slatted bench, drain details and three district landmarks. StreetVisualProfile
+assets select original colours and layouts. TrafficSignalView.cs authors the
+standing/walking pedestrian icons and circular lenses. These original runtime
+meshes are not outputs of build_original_art.py and require no downloaded assets.
+The original art generator remains the source of existing OBJ/texture/prefab files.
+All new street decoration has no physics/visibility colliders. Existing shop
+window collider envelopes remain physical opaque boundaries despite recessed
+window-display rendering; no see-through glass is introduced.

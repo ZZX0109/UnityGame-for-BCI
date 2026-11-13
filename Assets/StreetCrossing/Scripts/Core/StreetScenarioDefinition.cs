@@ -1,5 +1,6 @@
 using System;
 using StreetCrossing.Traffic;
+using StreetCrossing.Presentation;
 using UnityEngine;
 
 namespace StreetCrossing.Core
@@ -8,6 +9,7 @@ namespace StreetCrossing.Core
     public sealed class StreetScenarioDefinition : ScriptableObject
     {
         public string scenarioId = "S01";
+        public StreetVisualProfile visualProfile;
         public string title = "S01 普通斑马线";
         [TextArea] public string description = "等待行人绿灯，观察双向车流后安全过街。";
         public bool requireLeftObservation = true;
@@ -53,6 +55,8 @@ namespace StreetCrossing.Core
         {
             if ((scenarioId != "S01" && scenarioId != "S02" && scenarioId != "S03") || phaseTable == null || surfaceMaterial == null || vehiclePrefab == null)
                 throw new ArgumentException("Scenario requires its phase table, referenced surface material and vehicle prefab.");
+            if (visualProfile == null) throw new ArgumentException("Scenario requires its explicit visual profile.");
+            visualProfile.Validate(scenarioId);
             phaseTable.Validate();
             float[] values = { observationDwellSeconds, turningShare, roadHalfWidth, laneOffset, roadHalfLength, crosswalkHalfWidth, conflictHalfWidth, stopLineOffset, minimumSpeed, maximumSpeed, minimumSpawnInterval, maximumSpawnInterval, acceleration, comfortableBraking, reactionTime, queueGap, walkingSpeed, comfortableSpeed, fastWalkingSpeed, nearMissDistance, timeoutSeconds, playerSpawn.x, playerSpawn.y, playerSpawn.z, destination.x, destination.y, destination.z };
             foreach (float value in values) if (float.IsNaN(value) || float.IsInfinity(value)) throw new ArgumentException("Scenario numeric values must be finite.");

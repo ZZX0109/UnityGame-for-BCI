@@ -13,6 +13,9 @@ namespace StreetCrossing.Presentation
         private readonly Material source;
         private readonly Font font;
         private readonly StreetAssetLibrary modules = new StreetAssetLibrary();
+        private readonly Dictionary<string, Mesh> detailMeshes = new Dictionary<string, Mesh>();
+        private StreetVisualProfile profile;
+        public Transform VisualDetailsRoot { get; private set; }
         private readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
         private readonly List<CrossingZone> zones = new List<CrossingZone>();
         public IReadOnlyList<CrossingZone> Zones => zones;
@@ -22,12 +25,25 @@ namespace StreetCrossing.Presentation
         public StreetWorld(Transform parent, Material referencedSurface, Font uiFont) { root = parent; source = referencedSurface; font = uiFont; }
         public Material Material(string hex, float smoothness = 0.18f)
         {
-            if (materials.TryGetValue(hex, out Material existing)) return existing;
+            string key = hex + ":" + smoothness.ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
+            if (materials.TryGetValue(key, out Material existing)) return existing;
             ColorUtility.TryParseHtmlString("#" + hex, out Color color);
             Material material = new Material(source) { name = "Street " + hex, color = color };
-            material.SetFloat("_Glossiness", smoothness); material.SetFloat("_Metallic", smoothness > .4f ? .35f : .03f); materials.Add(hex, material); return material;
+            material.SetFloat("_Glossiness", smoothness); material.SetFloat("_Metallic", smoothness > .4f ? .35f : .03f); materials.Add(key, material); return material;
         }
-        public void Dispose() { foreach (Material material in materials.Values) Object.Destroy(material); materials.Clear(); }
+        public void Dispose()
+        {
+            foreach (Material material in materials.Values) Object.Destroy(material); materials.Clear();
+            foreach (Mesh mesh in detailMeshes.Values) Object.Destroy(mesh); detailMeshes.Clear();
+        }
+        public Renderer VisualRounded(Transform parent, string name, Vector3 position, Vector3 size, string color, float radius = .07f, float smoothness = .18f)
+        {
+            string key = size.ToString("F4") + ":" + radius.ToString("F4", System.Globalization.CultureInfo.InvariantCulture);
+            if (!detailMeshes.TryGetValue(key, out Mesh mesh))
+            { mesh = StreetDetailMesh.RoundedBox(size, radius); detailMeshes.Add(key, mesh); }
+            GameObject go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(parent, false); go.transform.localPosition = position;
+            go.GetComponent<MeshFilter>().sharedMesh = mesh; Renderer renderer = go.GetComponent<Renderer>(); renderer.sharedMaterial = Material(color, smoothness); return renderer;
+        }
         private GameObject Shape(PrimitiveType type, string name, Transform parent, Vector3 p, Vector3 scale, string color, bool collider = true)
         {
             GameObject go = GameObject.CreatePrimitive(type); go.name = name; go.transform.SetParent(parent, false);
@@ -49,6 +65,7 @@ namespace StreetCrossing.Presentation
         }
         public void Build(StreetScenarioDefinition s)
         {
+            profile = s.visualProfile; profile.Validate(s.scenarioId);
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.78f, 0.82f, 0.83f);
             RenderSettings.ambientEquatorColor = new Color(0.64f, 0.61f, 0.53f);
@@ -87,7 +104,7 @@ namespace StreetCrossing.Presentation
                 Box("Street end pedestrian barrier", new Vector3(39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D");
                 Box("Street end pedestrian barrier", new Vector3(-39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D");
             }
-            for (int n = -4; n <= 4; n++) Box("Crosswalk stripe", new Vector3(0, 0.002f, n * 0.7f), new Vector3(s.crosswalkHalfWidth * 2, 0.016f, 0.35f), "ECE9DA", false);
+            for (int n = -4; n <= 4; n++) Box("Crosswalk stripe", new Vector3(0, 0.002f, n * 0.7f), new Vector3(s.crosswalkHalfWidth * 2, 0.003f, 0.35f), "ECE9DA", false);
             for (int n = -13; n <= 13; n++) if (Mathf.Abs(n) > 1) Box("Centre line dash", new Vector3(n * 3, 0.004f, 0), new Vector3(1.6f, 0.018f, 0.1f), "E6C16C", false);
             for (int lane = 0; lane < 2; lane++)
             {
@@ -113,6 +130,8 @@ namespace StreetCrossing.Presentation
                 Label("视线受阻时\n先调整站位", new Vector3(-2.7f, 1.35f, -4.83f), 0.04f, "FAF1D9", null, 0, 0.75f, 0.8f);
             }
             Shop(); BusStop(new Vector3(7, 0, width + 2));
+            VisualDetailsRoot = new GameObject("Visual details - " + profile.identity).transform; VisualDetailsRoot.SetParent(root, false);
+            StreetVisualDetails.Build(VisualDetailsRoot, this, s);
             Box("Start notice", new Vector3(-2.8f, 1.2f, -7.7f), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA");
             Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, -7.79f), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
             Label("目的地", new Vector3(0, 2.7f, 9.48f), 0.07f, "2A6D50");
@@ -153,17 +172,17 @@ namespace StreetCrossing.Presentation
         }
         private void Shop()
         {
-            Box("Convenience shop", new Vector3(0, 2.1f, 12), new Vector3(10.5f, 4.2f, 4.3f), "E8D9B8");
-            Box("Shop sign backing", new Vector3(0, 3.25f, 9.79f), new Vector3(10.7f, 1, 0.2f), "3E6A50");
+            Box("Convenience shop", new Vector3(0, 2.1f, 12), new Vector3(10.5f, 4.2f, 4.3f), profile.facade);
+            Box("Shop sign backing", new Vector3(0, 3.25f, 9.79f), new Vector3(10.7f, 1, 0.2f), profile.accent);
             Label("街 角 便 利 店", new Vector3(0, 3.25f, 9.65f), 0.16f, "FAF1D9", null, 0, 9.5f, 0.68f);
             for (int n = -1; n <= 1; n++)
             {
-                Box("Shopfront frame", new Vector3(n * 3, 1.45f, 9.78f), new Vector3(2.8f, 2.45f, 0.14f), "D0B995");
-                Box("Shop glazing", new Vector3(n * 3, 1.45f, 9.68f), new Vector3(2.55f, 2.2f, 0.06f), "85988A");
+                Box("Shopfront frame", new Vector3(n * 3, 1.45f, 9.78f), new Vector3(2.8f, 2.45f, 0.14f), "D0B995").GetComponent<Renderer>().enabled = false;
+                Box("Shop glazing", new Vector3(n * 3, 1.45f, 9.68f), new Vector3(2.55f, 2.2f, 0.06f), "85988A").GetComponent<Renderer>().enabled = false;
                 Box("Shop transom", new Vector3(n * 3, 1.65f, 9.6f), new Vector3(2.6f, 0.06f, 0.08f), "E5DBC6", false);
             }
-            Box("Striped awning", new Vector3(0, 2.6f, 9.25f), new Vector3(10.5f, 0.16f, 1.3f), "D6BE80");
-            for (int n = -5; n <= 5; n++) Box("Awning stripe", new Vector3(n * 0.9f, 2.69f, 9.25f), new Vector3(0.4f, 0.015f, 1.3f), "7A8B61", false);
+            Box("Striped awning", new Vector3(0, 2.6f, 9.25f), new Vector3(10.5f, 0.16f, 1.3f), profile.secondary);
+            for (int n = -5; n <= 5; n++) Box("Awning stripe", new Vector3(n * 0.9f, 2.69f, 9.25f), new Vector3(0.4f, 0.015f, 1.3f), profile.accent, false);
             Box("Planter", new Vector3(4.25f, 0.35f, 8.8f), new Vector3(1.2f, 0.7f, 0.8f), "A87857");
             Shape(PrimitiveType.Sphere, "Planter greenery", root, new Vector3(4.25f, 0.9f, 8.8f), new Vector3(1.1f, 0.65f, 0.8f), "667C49", false);
         }
@@ -181,7 +200,11 @@ namespace StreetCrossing.Presentation
         {
             Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 1.4f), "9D967C");
             Shape(PrimitiveType.Cylinder, "Tree trunk", root, p + Vector3.up * 1.35f, new Vector3(0.25f, 1.35f, 0.25f), "8C7150");
-            Shape(PrimitiveType.Sphere, "Tree crown", root, p + Vector3.up * 3.25f, new Vector3(2.8f, 2.8f, 2.5f), "7D925B", false);
+            for (int cluster = 0; cluster < 4; cluster++)
+            {
+                float angle = cluster * Mathf.PI * .5f;
+                Shape(PrimitiveType.Sphere, "Layered tree crown", root, p + new Vector3(Mathf.Cos(angle) * .55f, 3.0f + (cluster % 2) * .45f, Mathf.Sin(angle) * .4f), new Vector3(1.9f, 2.15f, 1.8f), cluster % 2 == 0 ? profile.foliage : "839A6A", false);
+            }
         }
         private void Lamp(Vector3 p)
         {

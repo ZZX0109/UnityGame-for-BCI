@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: S03
   m_EditorClassIdentifier:
   scenarioId: S03
+  visualProfile: {fileID: 11400000, guid: 03b99d8914d35a679c95cc9fd9c26e29, type: 2}
   title: S03 转弯与遮挡
   description: 左右转车辆在真实弯线路径上让行；先调整被遮挡的路沿视线。
   requireLeftObservation: 1

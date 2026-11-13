@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbe6e8877095595a0ed31c3ddb7681d, type: 3}
+  m_Name: S01Visual
+  m_EditorClassIdentifier:
+  profileId: S01
+  identity: 0
+  facade: E3D6BF
+  accent: 537A67
+  secondary: CBA06D
+  metal: 364B4C
+  foliage: 708C60
+  shopCaption: CORNER MARKET
+  districtCaption: GARDEN WALK
