@@ -113,6 +113,9 @@ def check_project(root):
             errors.append(f"Missing/duplicate stable level id: {identifier!r}")
         if resource in resources:
             errors.append(f"Duplicate catalog resource: {resource}")
+        revision = entry.get("revision", 1)
+        if isinstance(revision, bool) or not isinstance(revision, int) or revision < 1:
+            errors.append(f"Invalid map revision: {resource}: {revision!r}")
         if not entry.get("title"):
             errors.append(f"Missing level title: {resource}")
         ids.add(identifier if isinstance(identifier, str) else "")

@@ -1,9 +1,9 @@
 # FirstPersonSokoban · 第一人称三维推箱子
 
-**2026-11-12 · 认知训练实验室视觉候选版 · 8 关 · v2 存档兼容**
+**2026-11-13 · 暖色艺术馆与八关机制重构候选版 · 保留旧解锁进度**
 
 Unity **2022.3.62f3c1**（中国版 2022.3 LTS），目标 Windows x64，使用旧 Input Manager。
-本轮统一了实验室场景、训练模块、感应台、UI 和声音反馈；尚未在当前环境运行 Unity 编译、Test Runner、Windows 构建或 GUI 游玩。
+本轮保留暖色艺术馆风格，并重构第二至第八关的实际墙体与箱子路线；尚未在当前环境运行 Unity 编译、Test Runner、Windows 构建或 GUI 游玩。
 实际验证边界见 [当前状态](Validation/CurrentStatus.md)。
 
 ## 开始测试
@@ -45,7 +45,13 @@ Unity **2022.3.62f3c1**（中国版 2022.3 LTS），目标 Windows x64，使用�
 保留 Built-in Standard 渲染管线，未迁移 URP，未声称已烘焙 GI 或完成实机性能优化。
 材质纹理和声音由代码确定性生成，无需下载额外资源包。
 `Resources/Materials/Lab*Template.mat` 和小型粗糙度贴图用于保留 Player 构建中的运行时 Shader 组合，不能按“未引用资源”删除。
-八关、v2 成绩和推箱规则保留。最少推动数仍为 **1 / 1 / 3 / 3 / 4 / 6 / 3 / 9**。
+基础推动、撤销与碰撞规则保留。当前最少推动数为 **1 / 7 / 22 / 12 / 4 / 10 / 5 / 32**。
+逐关机制、准确俯视图与可回放自动解法见 [八关重构说明](Validation/LevelRedesign-20261113.md) 和
+[源地图图册](Validation/LevelDesign/index.html)。图册由地图文本生成，**不是 Unity 实机截图**。
+
+存档格式版本为 3：稳定关卡 ID 保持不变，第一关继续兼容旧成绩；第二至第八关地图 revision 升为 2，
+旧图的最佳推数、最佳时间和完成标记不再套用到新图。旧解锁数保留，已解锁玩家可直接复测新地图。
+历史 `FPSokoban.v2.*` 命名空间继续保存解锁数，新图成绩写入带 `.r2` 的独立键。
 当前范围是键鼠空间规划训练游戏；EEG、UDP 和康复实验数据模块未包含在本轮中。
 
 ## 验证与打包
@@ -54,7 +60,7 @@ Python 工具要求 Python 3.10+，常规验证只使用标准库：
 
 ```bash
 python Tools/validate_project.py
-python Tools/validate_levels.py
+python Tools/validate_levels.py --mechanics --report Validation/LevelDesign
 python Tools/build_ui_font.py --check
 python -m unittest discover -s Tools/tests -v
 ```
@@ -67,6 +73,7 @@ python Tools/run_delivery.py --unity "D:/SoftwareManagement/Unity/2022.3.62f3c1/
 ```
 
 该命令串行执行 EditMode、PlayMode、C# 关卡验证和 Windows 构建，测试失败或没有有效 XML 时停止。
+截图捕获是独立流程，见 [真实画面捕获说明](Validation/VisualCapture.md)。未执行捕获时不得把地图图册当作实机画面。
 结果位于新建的 `BuildOutput/Delivery-*`：完整 ZIP、SHA-256、XML/日志和源文件指纹。
 `--tests-only` 只运行测试。Editor 菜单 `First Person Sokoban → Delivery → Validate Levels and Build Windows`
 可直接构建，但没有运行 Test Runner，因此清单明确记录 `unityTests=not_run`。

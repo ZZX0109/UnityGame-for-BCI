@@ -7,8 +7,13 @@ namespace FirstPersonSokoban.Tests.EditMode
     public sealed class LevelSolvabilityTests
     {
         [TestCase(0, 1)]
-        [TestCase(1, 1)]
-        [TestCase(2, 3)]
+        [TestCase(1, 7)]
+        [TestCase(2, 22)]
+        [TestCase(3, 12)]
+        [TestCase(4, 4)]
+        [TestCase(5, 10)]
+        [TestCase(6, 5)]
+        [TestCase(7, 32)]
         public void ShippedLevels_AreSolvableWithExpectedMinimumPushes(int levelIndex, int expectedPushes)
         {
             TextAsset asset = Resources.Load<TextAsset>($"Levels/Level{levelIndex + 1:00}");
