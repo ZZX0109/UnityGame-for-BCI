@@ -19,11 +19,11 @@ def check():
     errors=[]
     metas={}
     for path in (ROOT/'Assets').rglob('*.meta'):
-        found=GUID.findall(path.read_text())
+        found=GUID.findall(path.read_text(encoding="utf-8"))
         if len(found)==1:metas[found[0]]=Path(str(path)[:-5])
     serialized=list(BASE.rglob('*.unity'))+list(BASE.rglob('*.prefab'))+list(BASE.rglob('*.asset'))+list(BASE.rglob('*.physicMaterial'))
     for path in serialized:
-        text=path.read_text()
+        text=path.read_text(encoding="utf-8")
         ids=re.findall(r'^--- !u!\d+ &(\d+)',text,re.M)
         if len(ids)!=len(set(ids)):errors.append(f'{path.name}: duplicate object ID')
         for target in re.findall(r'\{fileID: (\d+)\}',text):
@@ -32,7 +32,7 @@ def check():
             if target.startswith('0000000000000000'):continue
             if target not in metas:errors.append(f'{path.name}: unresolved asset GUID {target}')
     # Confirm the physics floor's authored solids leave an actual falling path.
-    scene=(BASE/'Scenes/ClawMachineScene.unity').read_text()
+    scene=(BASE/'Scenes/ClawMachineScene.unity').read_text(encoding="utf-8")
     blocks={int(i):body for i,body in re.findall(r'^--- !u!\d+ &(\d+)\n(.*?)(?=^--- !u!|\Z)',scene,re.M|re.S)}
     def v(body,key):
         m=re.search(re.escape(key)+r': \{x: ([^,]+), y: ([^,]+), z: ([^}]+)\}',body)
@@ -62,42 +62,42 @@ def check():
         if all(low[i]<fallingMax[i]-1e-6 and high[i]>fallingMin[i]+1e-6 for i in range(3)):
             errors.append('Solid collider blocks central chute falling path: '+names.get(go,str(go)))
     for source in (BASE/'Scripts').rglob('*.cs'):
-        text=source.read_text()
+        text=source.read_text(encoding="utf-8")
         for forbidden in ('FirstPersonSokoban.', 'UnityEditor', 'System.Net', 'DllImport', 'UnityEngine.Random', 'FindObjectOfType', 'GameObject.Find'):
             if forbidden in text:errors.append(f'{source.name}: unexpected runtime dependency {forbidden}')
     # Audit source requirements: configuration assets and dependencies, not gameplay proof.
-    manifests=json.loads((ROOT/'Packages/manifest.json').read_text())
+    manifests=json.loads((ROOT/'Packages/manifest.json').read_text(encoding="utf-8"))
     if manifests['dependencies'].get('com.unity.textmeshpro')!='3.0.6':errors.append('TMP must remain pinned3.0.6')
     targets=[];seeds=[]
     for name in ('C01','C02','C03'):
         path=BASE/'Challenges'/f'{name}.asset'
         if not path.exists():errors.append('Missing challenge '+name);continue
-        data=path.read_text();target=re.search(r'^  targetId: (.+)$',data,re.M).group(1).strip('"')
+        data=path.read_text(encoding="utf-8");target=re.search(r'^  targetId: (.+)$',data,re.M).group(1).strip('"')
         spawns=re.findall(r'^  - prizeId: (.+)$',data,re.M)
         if target not in spawns:errors.append(name+': target is not among configured spawns')
         if name!='C01' and len(spawns)<3:errors.append(name+': needs three configured prize choices')
         targets.append(target);seeds.append(re.search(r'^  seed: (.+)$',data,re.M).group(1))
         if 'failedAttemptResetPolicy: 0' not in data:errors.append(name+': failed attempt policy not declared')
     if len(set(targets))!=3 or len(set(seeds))!=3:errors.append('Challenge targets/seeds must differ across C01-C03')
-    task=(BASE/'Scripts/Core/GraspTaskController.cs').read_text()
+    task=(BASE/'Scripts/Core/GraspTaskController.cs').read_text(encoding="utf-8")
     task=re.sub(r'//[^\n]*','',task)
     if re.search(r'\bGantryDriver\b',task):errors.append('Task planning still depends on Gantry implementation')
-    ui=(BASE/'Scripts/UI/ClawGameUI.cs').read_text()
+    ui=(BASE/'Scripts/UI/ClawGameUI.cs').read_text(encoding="utf-8")
     if re.search(r'\bOnGUI\s*\(',ui):errors.append('UI still uses IMGUI')
     for requirement in ('CanvasScaler','TextMeshProUGUI','TMP_FontAsset','RawImage','NormalizeSafeArea'):
         if requirement not in ui:errors.append('Missing UI source capability '+requirement)
     for path in ('Scripts/Drivers/SimulatedRobotArmDriver.cs','Scripts/Drivers/ClawTaskSpace.cs','Scripts/Audio/ClawAudioController.cs','Scripts/Presentation/ClawMeshModule.cs'):
         if not (BASE/path).exists():errors.append('Missing audit source '+path)
     for assembly in ('Scripts/ClawMachine.Runtime.asmdef','Tests/EditMode/ClawMachine.EditModeTests.asmdef','Tests/PlayMode/ClawMachine.PlayModeTests.asmdef'):
-        refs=json.loads((BASE/assembly).read_text()).get('references',[])
+        refs=json.loads((BASE/assembly).read_text(encoding="utf-8")).get('references',[])
         if not {'Unity.TextMeshPro','Unity.ugui'}<=set(refs):errors.append('TMP/UI assembly refs missing: '+assembly)
     # The exact Editor and baseline renderer remain unchanged.
-    if '2022.3.62f3c1' not in (ROOT/'ProjectSettings/ProjectVersion.txt').read_text():errors.append('Editor version changed')
-    build=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text()
+    if '2022.3.62f3c1' not in (ROOT/'ProjectSettings/ProjectVersion.txt').read_text(encoding="utf-8"):errors.append('Editor version changed')
+    build=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text(encoding="utf-8")
     for path in ('Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity','Assets/ClawMachine/Scenes/ClawMachineScene.unity'):
         if path not in build:errors.append('Build Settings missing '+path)
     for command in ([sys.executable,str(Path(__file__).with_name('generate_prototype.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_ui_font.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_visual_assets.py')),'--check']):
-        result=subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
+        result=subprocess.run(command,cwd=ROOT,capture_output=True,text=True, encoding="utf-8")
         print(result.stdout,end='')
         if result.returncode:errors.append(result.stderr.strip() or result.stdout.strip())
     if errors:

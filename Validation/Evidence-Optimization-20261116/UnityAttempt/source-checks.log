@@ -1,0 +1,5 @@
+C01-C03 generated assets match; referenced GUIDs verified and hand-authored meta preserved.
+[OK] Bundled UI font: 172,708 bytes; 634 covered codepoints; current UI text covered.
+[OK] Four original 64x64 texturemaps reproducible; no third-party image assets.
+[OK] C01-C03 local references, open chute path, configs/profiles, executor separation, Canvas/TMP, owned visual assets and font.
+NOT VERIFIED: C# compilation, Unity tests, PhysX grip/drop, camera/UI rendering, Windows build.

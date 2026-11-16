@@ -22,13 +22,32 @@ namespace ClawMachine
         private TMP_FontAsset font;
         private Material fontMaterial;
         private RawImage pipImage;
-        private TextMeshProUGUI viewLabel, phaseLabel, pipLabel;
+        private TextMeshProUGUI viewLabel, phaseLabel, pipLabel, feedbackLabel, progressLabel, assistLabel;
+        private RectTransform toolMarker, targetMarker, massMarker;
+        private ScrollRect panelScroll;
+        private readonly Dictionary<string, RectTransform> panelNodes = new Dictionary<string, RectTransform>();
+        private readonly Dictionary<string, int> poolUses = new Dictionary<string, int>();
+        private readonly Dictionary<string, float> scrollPositions = new Dictionary<string, float>();
+        private struct FocusRecord { public GameObject Control; public string ActionKey; }
+        private readonly Dictionary<string, FocusRecord> focusPositions = new Dictionary<string, FocusRecord>();
+        private readonly Dictionary<GameObject, string> controlActions = new Dictionary<GameObject, string>();
+        private bool poolingPanel;
+        private string panelFamily;
         private readonly List<TextScaleRecord> textSizes = new List<TextScaleRecord>();
         private readonly List<Button> aimButtons = new List<Button>();
-        private string panelKey;
+        private PanelStamp panelKey;
+        private bool panelInvalid = true;
+        private struct PanelStamp : IEquatable<PanelStamp>
+        {
+            public int Mode, Challenge, State, Remaining, Failure, Prize, Distance, Flags;
+            public bool Equals(PanelStamp other) => Mode == other.Mode && Challenge == other.Challenge && State == other.State && Remaining == other.Remaining &&
+                Failure == other.Failure && Prize == other.Prize && Distance == other.Distance && Flags == other.Flags;
+        }
         private Rect previousSafeArea;
         private Vector2 previousScreen;
         private float previousTextScale = -1;
+        private int previousView = -1, previousDistance = -1, previousProgress = int.MinValue, previousAssistX = int.MinValue, previousAssistZ = int.MinValue;
+        private int previousAssistMode = -1;
         private bool started, detailsExpanded;
         private static readonly Color Ink = new Color(0.15f, 0.24f, 0.21f);
         private static readonly Color Muted = new Color(0.34f, 0.42f, 0.37f);
@@ -41,6 +60,10 @@ namespace ClawMachine
         public bool OwnsEventSystem => ownedEventSystem;
         public string BootstrapError { get; private set; } = "";
         public bool DetailsExpanded => detailsExpanded;
+        public int PooledNodeCount => panelNodes.Count;
+        public string FeedbackText => feedbackLabel ? feedbackLabel.text : "";
+        public bool PositionMarkersVisible => toolMarker && toolMarker.gameObject.activeSelf;
+        public bool MassMarkerVisible => massMarker && massMarker.gameObject.activeSelf;
         public bool CompactPlay => game && game.Task && !game.InMenu && !game.IsPaused && !game.SettingsOpen && !game.ResetConfirmation &&
             game.Task.Session.State != GraspState.Error && !detailsExpanded;
 
@@ -106,11 +129,17 @@ namespace ClawMachine
         private void BuildObserverOverlay()
         {
             observer = CreateRect("Observation HUD", safeRoot);
-            observer.anchorMin = new Vector2(0.025f, 0.85f); observer.anchorMax = new Vector2(0.31f, 0.975f);
+            observer.anchorMin = new Vector2(0.025f, 0.62f); observer.anchorMax = new Vector2(0.31f, 0.975f);
             observer.offsetMin = observer.offsetMax = Vector2.zero;
             var group = observer.gameObject.AddComponent<VerticalLayoutGroup>(); group.spacing = 3; group.childForceExpandHeight = false;
             phaseLabel = Text(observer, "三轴观察 · 从容练习", 22, Ink, 32);
             viewLabel = Text(observer, "", 16, Muted, 42);
+            feedbackLabel = Text(observer, "", 17, Ink, 66);
+            progressLabel = Text(observer, "", 16, Muted, 26);
+            assistLabel = Text(observer, "", 16, Green, 46);
+            toolMarker = Marker("Claw floor projection", new Color(0.15f, 0.65f, 0.62f, 0.9f), 12);
+            targetMarker = Marker("Target floor reference", new Color(0.9f, 0.65f, 0.20f, 0.85f), 8);
+            massMarker = Marker("Read-only center of mass", new Color(1, 0.65f, 0.12f, 0.95f), 14);
             help = CreateRect("Fixed machine axes", safeRoot);
             help.anchorMin = new Vector2(0.29f, 0.025f); help.anchorMax = new Vector2(0.715f, 0.14f);
             help.offsetMin = help.offsetMax = Vector2.zero;
@@ -148,33 +177,44 @@ namespace ClawMachine
             layout.childForceExpandWidth = true; layout.childForceExpandHeight = false;
             content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.content = content;
+            panelScroll = scroll;
         }
         private void LateUpdate()
         {
             if (!IsReady || !game || !game.Task) return;
             if (previousSafeArea != Screen.safeArea || previousScreen != new Vector2(Screen.width, Screen.height)) UpdateSafeArea();
-            string wantedKey = MakePanelKey();
-            if (wantedKey != panelKey) RebuildPanel();
+            PanelStamp wantedKey = MakePanelKey();
+            if (panelInvalid || !wantedKey.Equals(panelKey)) RebuildPanel();
             if (!Mathf.Approximately(previousTextScale, game.TextScale)) ApplyTextScale();
-            phaseLabel.text = game.InMenu ? "三轴观察 · 从容练习" : StateName(game.Task.Session.State);
-            if (game.Cameras) viewLabel.text = game.Cameras.ViewName + " / " + game.Cameras.DistanceName + "距离 · W 始终朝机柜内 +Z";
+            SetText(phaseLabel, game.InMenu ? "三轴观察 · 从容练习" : StateName(game.Task.Session.State));
+            if (game.Cameras && (previousView != game.Cameras.SelectedView || previousDistance != game.Cameras.ObservationDistance))
+            {
+                previousView = game.Cameras.SelectedView; previousDistance = game.Cameras.ObservationDistance;
+                SetText(viewLabel, game.Cameras.ViewName + " / " + game.Cameras.DistanceName + "距离 · W 始终朝机柜内 +Z");
+            }
+            UpdateReadOnlyFeedback();
             bool canAim = !game.InMenu && !game.IsPaused && !game.SettingsOpen && !game.ResetConfirmation && game.Task.Session.State == GraspState.Aiming;
             foreach (Button item in aimButtons) if (item) item.interactable = canAim;
         }
-        private string MakePanelKey()
+        private PanelStamp MakePanelKey()
         {
-            return (game.ResetConfirmation ? "reset" : game.SettingsOpen ? "settings" : game.IsPaused ? "pause" : game.InMenu ? "menu" : "play") + ":" +
-                game.SelectedChallengeIndex + ":" + game.Task.Session.State + ":" + game.Task.Session.Remaining + ":" + game.Task.Session.Awarded + ":" +
-                game.Task.Session.Failure + ":" + (game.Task.SelectedPrize ? game.Task.SelectedPrize.GetInstanceID() : 0) + ":" + detailsExpanded;
+            return new PanelStamp {
+                Mode = game.ResetConfirmation ? 0 : game.SettingsOpen ? 1 : game.IsPaused ? 2 : game.InMenu ? 3 : 4,
+                Challenge = game.SelectedChallengeIndex, State = (int)game.Task.Session.State, Remaining = game.Task.Session.Remaining,
+                Failure = (int)game.Task.Session.Failure, Prize = game.Task.SelectedPrize ? game.Task.SelectedPrize.GetInstanceID() : 0,
+                Distance = game.Cameras.ObservationDistance,
+                Flags = (game.Task.Session.Awarded ? 1 : 0) | (detailsExpanded ? 2 : 0) | (game.Cameras.PipEnabled ? 4 : 0) |
+                    (game.Cameras.PipLowQuality ? 8 : 0) | (game.Cameras.Smooth ? 16 : 0) | (game.PositionAssist ? 32 : 0) | (game.CenterOfMassAssist ? 64 : 0)
+            };
         }
         private void RebuildPanel()
         {
             if (!content) return;
-            for (int i = content.childCount - 1; i >= 0; i--)
-            {
-                GameObject child = content.GetChild(i).gameObject; child.SetActive(false); Destroy(child);
-            }
-            aimButtons.Clear(); textSizes.RemoveAll(item => !item.Text);
+            SavePanelPosition();
+            panelFamily = game.ResetConfirmation ? "reset" : game.SettingsOpen ? "settings" : game.IsPaused ? "pause" : game.InMenu ? "menu" : detailsExpanded ? "details" : "compact";
+            foreach (RectTransform node in panelNodes.Values) if (node) node.gameObject.SetActive(false);
+            poolUses.Clear(); poolingPanel = true;
+            aimButtons.Clear();
             if (CompactPlay) { CompactPlayPanel(); FinishPanel(); return; }
             Text(content, "拾光夹物所", 30, Ink, 44);
             Text(content, "CLAW ATELIER / " + (game.Task.Challenge ? game.Task.Challenge.challengeId : ""), 14, Muted, 22);
@@ -192,12 +232,35 @@ namespace ClawMachine
             ActionButton(views, "1 正面", () => game.Cameras.Select(1));
             ActionButton(views, "2 左侧", () => game.Cameras.Select(2));
             ActionButton(views, "3 右侧", () => game.Cameras.Select(3));
-            ActionButton(content, "画中画 " + (game.Cameras.PipEnabled ? "关闭" : "开启"), () => { game.Cameras.TogglePip(); InvalidatePanel(); }, false);
+            ActionButton(content, "画中画 " + (game.Cameras.PipEnabled ? "关闭" : "开启"), () => { game.Cameras.TogglePip(); InvalidatePanel(); }, false, "camera.pip");
             FinishPanel();
         }
         private void FinishPanel()
         {
-            panelKey = MakePanelKey(); ApplyLayout(); ApplyTextScale(); RefreshPip();
+            poolingPanel = false;
+            panelKey = MakePanelKey(); panelInvalid = false; ApplyLayout(); ApplyTextScale(); RefreshPip();
+            Canvas.ForceUpdateCanvases();
+            if (panelScroll) { panelScroll.StopMovement(); panelScroll.verticalNormalizedPosition = scrollPositions.TryGetValue(panelFamily, out float position) ? position : 1; }
+            if (EventSystem.current)
+            {
+                FocusRecord saved = focusPositions.TryGetValue(panelFamily, out FocusRecord record) ? record : default(FocusRecord);
+                GameObject selected = saved.Control;
+                Selectable control = selected ? selected.GetComponent<Selectable>() : null;
+                // Pool identity is not action identity: the same button can mean
+                // Grab, Help or Retry in consecutive phases. Only the same action
+                // may inherit keyboard focus after rebinding its node.
+                bool sameAction = selected && controlActions.TryGetValue(selected, out string actionKey) && actionKey == saved.ActionKey;
+                EventSystem.current.SetSelectedGameObject(sameAction && selected.activeInHierarchy && control && control.IsInteractable() ? selected : null);
+            }
+        }
+        private void SavePanelPosition()
+        {
+            if (string.IsNullOrEmpty(panelFamily)) return;
+            if (panelScroll) scrollPositions[panelFamily] = panelScroll.verticalNormalizedPosition;
+            GameObject selected = EventSystem.current ? EventSystem.current.currentSelectedGameObject : null;
+            if (selected && selected.transform.IsChildOf(content) && controlActions.TryGetValue(selected, out string actionKey))
+                focusPositions[panelFamily] = new FocusRecord { Control = selected, ActionKey = actionKey };
+            else focusPositions.Remove(panelFamily);
         }
         public void SetDetailsExpanded(bool value)
         {
@@ -246,7 +309,7 @@ namespace ClawMachine
                 int index = i; ClawChallengeDefinition challenge = game.Challenges[i];
                 if (!challenge) continue;
                 ActionButton(content, (i == game.SelectedChallengeIndex ? "● " : "○ ") + challenge.title,
-                    () => { game.SelectChallenge(index); InvalidatePanel(); }, i == game.SelectedChallengeIndex);
+                    () => { game.SelectChallenge(index); InvalidatePanel(); }, i == game.SelectedChallengeIndex, "challenge:" + challenge.challengeId);
             }
             if (game.Task.Challenge)
             {
@@ -277,7 +340,7 @@ namespace ClawMachine
                     int index = i; PrizePhysics prize = game.Task.Prizes[i];
                     if (!prize || !prize.gameObject.activeInHierarchy) continue;
                     ActionButton(content, (prize == game.Task.SelectedPrize ? "● " : "○ ") + prize.DisplayName,
-                        () => { game.Task.SelectPrize(index); InvalidatePanel(); }, false);
+                        () => { game.Task.SelectPrize(index); InvalidatePanel(); }, false, "prize:" + prize.SlotId);
                 }
                 aimButtons.Add(ActionButton(content, "开始抓取 · Enter", game.Grab));
             }
@@ -314,11 +377,13 @@ namespace ClawMachine
             Text(content, "设置与无障碍", 25, Ink, 40);
             AddSlider("机械提示音", 0, 1, game.Volume, game.SetVolume, "%", 100);
             AddSlider("文字大小", 0.9f, 1.2f, game.TextScale, game.SetTextScale, "%", 100);
-            ActionButton(content, "镜头距离：" + game.Cameras.DistanceName, () => { game.Cameras.CycleDistance(); InvalidatePanel(); }, false);
-            ActionButton(content, "镜头平滑：" + (game.Cameras.Smooth ? "开" : "关"), () => { game.Cameras.Smooth = !game.Cameras.Smooth; InvalidatePanel(); }, false);
+            ActionButton(content, "镜头距离：" + game.Cameras.DistanceName, () => { game.Cameras.CycleDistance(); InvalidatePanel(); }, false, "camera.distance");
+            ActionButton(content, "镜头平滑：" + (game.Cameras.Smooth ? "开" : "关"), () => { game.SetCameraSmooth(!game.Cameras.Smooth); InvalidatePanel(); }, false, "camera.smooth");
             ActionButton(content, "还原观察角度", () => game.Cameras.ResetOrbit(), false);
             ActionButton(content, "画中画质量：" + (game.Cameras.PipLowQuality ? "省电 320×240" : "清晰 480×360"),
-                () => { game.Cameras.SetPipQuality(!game.Cameras.PipLowQuality); InvalidatePanel(); }, false);
+                () => { game.SetPipQuality(!game.Cameras.PipLowQuality); InvalidatePanel(); }, false, "camera.pipQuality");
+            ActionButton(content, "C01 定位辅助：" + (game.PositionAssist ? "开" : "关"), () => { game.SetPositionAssist(!game.PositionAssist); InvalidatePanel(); }, false, "assist.position");
+            ActionButton(content, "C03 重心提示：" + (game.CenterOfMassAssist ? "开" : "关"), () => { game.SetCenterOfMassAssist(!game.CenterOfMassAssist); InvalidatePanel(); }, false, "assist.mass");
             Text(content, "画中画会增加一次相机渲染。低性能设备可关闭或使用省电质量。", 15, Muted, 70);
             ActionButton(content, "返回", game.CloseSettings);
         }
@@ -332,21 +397,23 @@ namespace ClawMachine
         {
             TextMeshProUGUI label = Text(content, title + " " + Mathf.RoundToInt(value * multiplier) + suffix, 18, Ink, 30);
             RectTransform root = CreateRect(title + " slider", content); Layout(root, 44);
-            var slider = root.gameObject.AddComponent<Slider>(); slider.minValue = min; slider.maxValue = max; slider.direction = Slider.Direction.LeftToRight;
+            var slider = Ensure<Slider>(root); slider.onValueChanged.RemoveAllListeners(); slider.minValue = min; slider.maxValue = max; slider.direction = Slider.Direction.LeftToRight;
+            controlActions[root.gameObject] = "slider:" + title;
             RectTransform track = CreateRect("Track", root); track.anchorMin = new Vector2(0, 0.38f); track.anchorMax = new Vector2(1, 0.62f); track.offsetMin = track.offsetMax = Vector2.zero;
-            track.gameObject.AddComponent<Image>().color = new Color(0.80f, 0.82f, 0.75f);
-            RectTransform fill = CreateRect("Fill", track); Stretch(fill); fill.gameObject.AddComponent<Image>().color = Green;
+            Ensure<Image>(track).color = new Color(0.80f, 0.82f, 0.75f);
+            RectTransform fill = CreateRect("Fill", track); Stretch(fill); Ensure<Image>(fill).color = Green;
             RectTransform handle = CreateRect("Handle", root); handle.anchorMin = handle.anchorMax = new Vector2(0, 0.5f); handle.sizeDelta = new Vector2(24, 30);
-            var handleImage = handle.gameObject.AddComponent<Image>(); handleImage.color = Green;
+            var handleImage = Ensure<Image>(handle); handleImage.color = Green;
             slider.fillRect = fill; slider.handleRect = handle; slider.targetGraphic = handleImage;
             slider.SetValueWithoutNotify(value);
             slider.onValueChanged.AddListener(amount => { label.text = title + " " + Mathf.RoundToInt(amount * multiplier) + suffix; changed(amount); });
         }
-        private Button ActionButton(Transform parent, string caption, UnityAction action, bool primary = true)
+        private Button ActionButton(Transform parent, string caption, UnityAction action, bool primary = true, string actionKey = null)
         {
-            RectTransform root = CreateRect(caption, parent); Layout(root, 48);
-            var image = root.gameObject.AddComponent<Image>(); image.color = primary ? Green : new Color(0.87f, 0.89f, 0.82f);
-            var button = root.gameObject.AddComponent<Button>(); button.targetGraphic = image;
+            RectTransform root = CreateRect("Action button", parent); root.name = caption; Layout(root, 48);
+            var image = Ensure<Image>(root); image.color = primary ? Green : new Color(0.87f, 0.89f, 0.82f);
+            var button = Ensure<Button>(root); button.targetGraphic = image; button.interactable = true; button.onClick.RemoveAllListeners();
+            controlActions[root.gameObject] = "button:" + (actionKey ?? caption);
             ColorBlock colors = button.colors; colors.highlightedColor = new Color(1.1f, 1.1f, 1.1f); colors.pressedColor = new Color(0.84f, 0.90f, 0.84f); colors.disabledColor = new Color(0.72f, 0.74f, 0.69f); button.colors = colors;
             var label = Text(root, caption, 17, primary ? Color.white : Ink, 0);
             label.alignment = TextAlignmentOptions.Center; Stretch(label.rectTransform, new Vector2(8, 5), new Vector2(-8, -5));
@@ -359,31 +426,45 @@ namespace ClawMachine
             // RebuildPanel also runs after the Canvas is active. Suppress Awake/
             // OnEnable until this particular text has its independently owned font.
             root.gameObject.SetActive(false);
-            var text = root.gameObject.AddComponent<TextMeshProUGUI>();
+            var text = Ensure<TextMeshProUGUI>(root);
             text.font = font; text.fontSharedMaterial = fontMaterial; text.text = value ?? "";
             text.fontSize = size; text.color = color; text.richText = false;
             text.enableWordWrapping = true; text.overflowMode = TextOverflowModes.Overflow;
             text.raycastTarget = false; text.alignment = TextAlignmentOptions.TopLeft;
-            if (minimumHeight > 0) { var element = root.gameObject.AddComponent<LayoutElement>(); element.minHeight = minimumHeight; element.flexibleHeight = 0; }
-            textSizes.Add(new TextScaleRecord { Text = text, Size = size });
+            if (minimumHeight > 0 || root.GetComponent<LayoutElement>()) { var element = Ensure<LayoutElement>(root); element.minHeight = minimumHeight; element.preferredHeight = -1; element.flexibleHeight = 0; }
+            int record = textSizes.FindIndex(item => item.Text == text);
+            var entry = new TextScaleRecord { Text = text, Size = size };
+            if (record < 0) textSizes.Add(entry); else textSizes[record] = entry;
             root.gameObject.SetActive(true);
             return text;
         }
-        private static RectTransform CreateRect(string name, Transform parent)
+        private RectTransform CreateRect(string name, Transform parent)
         {
+            string key = null;
+            if (poolingPanel)
+            {
+                string group = parent.GetInstanceID() + ":" + name;
+                int index = poolUses.TryGetValue(group, out int used) ? used : 0;
+                poolUses[group] = index + 1; key = group + ":" + index;
+                if (panelNodes.TryGetValue(key, out RectTransform existing) && existing)
+                { existing.gameObject.SetActive(true); existing.SetAsLastSibling(); return existing; }
+            }
             var go = new GameObject(name, typeof(RectTransform)); go.layer = 5;
-            var rect = (RectTransform)go.transform; rect.SetParent(parent, false); return rect;
+            var rect = (RectTransform)go.transform; rect.SetParent(parent, false);
+            if (key != null) panelNodes.Add(key, rect);
+            return rect;
         }
+        private static T Ensure<T>(RectTransform root) where T : Component => root.GetComponent<T>() ?? root.gameObject.AddComponent<T>();
         private static void Stretch(RectTransform root) { Stretch(root, Vector2.zero, Vector2.zero); }
         private static void Stretch(RectTransform root, Vector2 min, Vector2 max) { root.anchorMin = Vector2.zero; root.anchorMax = Vector2.one; root.offsetMin = min; root.offsetMax = max; }
-        private static void Layout(RectTransform root, float height) { var element = root.gameObject.AddComponent<LayoutElement>(); element.minHeight = height; element.preferredHeight = height; element.flexibleHeight = 0; }
-        private static RectTransform Row(Transform parent, float height)
+        private static void Layout(RectTransform root, float height) { var element = Ensure<LayoutElement>(root); element.minHeight = height; element.preferredHeight = height; element.flexibleHeight = 0; }
+        private RectTransform Row(Transform parent, float height)
         {
             RectTransform root = CreateRect("Responsive button row", parent); Layout(root, height);
-            var row = root.gameObject.AddComponent<HorizontalLayoutGroup>(); row.spacing = 5; row.childControlWidth = row.childControlHeight = true; row.childForceExpandWidth = true; row.childForceExpandHeight = true; return root;
+            var row = Ensure<HorizontalLayoutGroup>(root); row.spacing = 5; row.childControlWidth = row.childControlHeight = true; row.childForceExpandWidth = true; row.childForceExpandHeight = true; return root;
         }
         private void Spacer(float height) { Layout(CreateRect("Space", content), height); }
-        private void InvalidatePanel() { panelKey = null; }
+        private void InvalidatePanel() { panelInvalid = true; }
         private void ApplyTextScale()
         {
             if (!game) return; previousTextScale = game.TextScale;
@@ -397,6 +478,70 @@ namespace ClawMachine
             pipImage.texture = game.Cameras.PipTexture;
             pipLabel.text = game.Cameras.PipViewName + " · 补充观察";
         }
+        public bool AllowsObservationPointer(Vector2 point)
+        {
+            if (!IsReady || !isActiveAndEnabled) return true;
+            return !ContainsScreenPoint(panel, point) && !ContainsScreenPoint(pipFrame, point) &&
+                !ContainsScreenPoint(observer, point) && !ContainsScreenPoint(help, point);
+        }
+        private static bool ContainsScreenPoint(RectTransform rect, Vector2 point)
+            => rect && rect.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(rect, point, null);
+        private RectTransform Marker(string label, Color color, float size)
+        {
+            RectTransform root = CreateRect(label, safeRoot);
+            root.anchorMin = root.anchorMax = new Vector2(0.5f, 0.5f);
+            root.sizeDelta = Vector2.one * size;
+            var graphic = root.gameObject.AddComponent<Image>(); graphic.color = color; graphic.raycastTarget = false;
+            root.gameObject.SetActive(false); return root;
+        }
+        private void PlaceMarker(RectTransform marker, Vector3 world, bool visible)
+        {
+            UnityEngine.Camera view = game.Cameras.CurrentCamera;
+            Vector3 screen = view ? view.WorldToScreenPoint(world) : Vector3.zero;
+            bool show = visible && view && screen.z > view.nearClipPlane && view.pixelRect.Contains(screen);
+            marker.gameObject.SetActive(show);
+            if (show && RectTransformUtility.ScreenPointToLocalPointInRectangle(safeRoot, screen, null, out Vector2 local)) marker.anchoredPosition = local;
+        }
+        private void UpdateReadOnlyFeedback()
+        {
+            var task = game.Task;
+            bool playing = !game.InMenu;
+            SetText(feedbackLabel, playing ? Hint(task.Session) : "");
+            int progress = !playing ? -1000 : task.Session.State == GraspState.Settling ? 100 + Mathf.RoundToInt(task.StableProgress * 100) : task.ContactCount;
+            if (previousProgress != progress)
+            {
+                previousProgress = progress;
+                SetText(progressLabel, !playing ? "" : progress >= 100 ? "出口稳定 " + (progress - 100) + "%" : "有效接触 " + progress + " / 3");
+            }
+            PrizePhysics target = task.Prize;
+            bool aiming = playing && !game.IsPaused && task.Session.State == GraspState.Aiming && target && task.Challenge;
+            bool position = aiming && task.Challenge.challengeId == "C01" && game.PositionAssist;
+            bool mass = aiming && task.Challenge.challengeId == "C03" && game.CenterOfMassAssist;
+            if (target)
+            {
+                Vector3 origin = task.Driver.CurrentToolPose.position;
+                Vector3 reference = target.Body.worldCenterOfMass;
+                float floor = target.AllBounds.min.y + 0.006f;
+                PlaceMarker(toolMarker, new Vector3(origin.x, floor, origin.z), position);
+                PlaceMarker(targetMarker, new Vector3(reference.x, floor, reference.z), position);
+                PlaceMarker(massMarker, reference, mass);
+                Vector3 delta = task.TaskSpace.ToLocal(reference) - task.TaskSpace.ToLocal(origin);
+                int mode = position ? 1 : mass ? 2 : 0, x = Mathf.RoundToInt(delta.x * 1000), z = Mathf.RoundToInt(delta.z * 1000);
+                if (previousAssistMode != mode || position && (previousAssistX != x || previousAssistZ != z))
+                {
+                    previousAssistMode = mode; previousAssistX = x; previousAssistZ = z;
+                    SetText(assistLabel, position ? "青色爪尖 / 金色目标\nX " + (x / 10f).ToString("+0.0;-0.0;0.0") + " cm    Z " + (z / 10f).ToString("+0.0;-0.0;0.0") + " cm" :
+                        mass ? "金色标记：真实重心\n外形中心与重心可能不同" : "");
+                }
+            }
+            else
+            {
+                toolMarker.gameObject.SetActive(false); targetMarker.gameObject.SetActive(false); massMarker.gameObject.SetActive(false);
+                previousAssistMode = -1;
+                SetText(assistLabel, "");
+            }
+        }
+        private static void SetText(TMP_Text text, string value) { if (text && text.text != value) text.text = value; }
         private void UpdateSafeArea()
         {
             previousSafeArea = Screen.safeArea; previousScreen = new Vector2(Screen.width, Screen.height);
@@ -428,41 +573,44 @@ namespace ClawMachine
             }
             canvasObject = ownedEventSystem = null; canvas = null; font = null; fontMaterial = null;
             if (game && game.Cameras) game.Cameras.SetObservationViewport(new Rect(0, 0, 1, 1));
-            safeRoot = content = pipFrame = panel = observer = help = null; pipImage = null; panelKey = null;
-            textSizes.Clear(); aimButtons.Clear(); previousTextScale = -1;
+            safeRoot = content = pipFrame = panel = observer = help = null; pipImage = null; panelInvalid = true;
+            textSizes.Clear(); aimButtons.Clear(); panelNodes.Clear(); poolUses.Clear(); scrollPositions.Clear(); focusPositions.Clear(); controlActions.Clear();
+            panelFamily = null; panelScroll = null; poolingPanel = false; previousTextScale = -1;
+            previousView = previousDistance = previousAssistMode = -1; previousProgress = previousAssistX = previousAssistZ = int.MinValue;
         }
         private static string StateName(GraspState state)
         {
-            switch (state.ToString())
+            switch (state)
             {
-                case "Aiming": return "定位 / AIM";
-                case "Approaching": case "Lowering": return "安全接近 / APPROACH";
-                case "ContactDescent": return "低速接触 / CONTACT";
-                case "Closing": return "验证抓持 / GRIP";
-                case "Lifting": return "提升 / LIFT";
-                case "Transporting": return "移送 / RETURN";
-                case "Releasing": return "释放 / RELEASE";
-                case "Settling": return "等待稳定 / SETTLE";
-                case "Result": return "本次结果";
-                case "End": return "本局结束";
-                case "Error": return "需要重置";
+                case GraspState.Aiming: return "定位 / AIM";
+                case GraspState.Approaching: return "安全接近 / APPROACH";
+                case GraspState.ContactDescent: return "低速接触 / CONTACT";
+                case GraspState.Closing: return "验证抓持 / GRIP";
+                case GraspState.Lifting: return "提升 / LIFT";
+                case GraspState.Transporting: return "移送 / RETURN";
+                case GraspState.Returning: return "空爪安全回位 / HOME";
+                case GraspState.Releasing: return "释放 / RELEASE";
+                case GraspState.Settling: return "等待稳定 / SETTLE";
+                case GraspState.Result: return "本次结果";
+                case GraspState.End: return "本局结束";
+                case GraspState.Error: return "需要重置";
                 default: return "准备中";
             }
         }
         private static string Hint(ClawSession session)
         {
             if (session.State == GraspState.Aiming) return "先正面看左右，再侧面看深度。对准对象上方后按 Enter，机构会安全接近并低速寻找抓点。";
-            if (session.State != GraspState.Result && session.State != GraspState.End) return "请观察接近、接触和抓持过程。只有目标释放后完整进入出口并稳定下来才获奖。";
+            if (session.Failure == GraspFailure.None && session.State != GraspState.Result && session.State != GraspState.End) return "请观察接近、接触和抓持过程。只有目标释放后完整进入出口并稳定下来才获奖。";
             if (session.Awarded) return "目标已稳定进入出口！耐心观察和合适的抓点让这次移送成功了。";
-            switch (session.Failure.ToString())
+            switch (session.Failure)
             {
-                case "Misaligned": return "抓点偏离可抓区域。下次用侧面检查深度，偏心对象要靠近标记抓点。";
-                case "NoContact": return "有效表面接触不足。请对准可包围的部位，避免只碰到边缘。";
-                case "Penetration": case "Penetrating": case "Obstructed": return "检测到穿透或障碍，已拒绝建立抓持。请换一个无遮挡的抓点。";
-                case "UnstableGrip": return "接触无法稳定支撑重量或重心。请抓更靠近重心的部位。";
-                case "Slipped": return "礼物在提升或移送时滑落。请更靠近推荐抓点，减少偏心力矩。";
-                case "WrongTarget": return "投放的是其他对象。请先确认任务目标，再选择要抓取的物体。";
-                case "Timeout": return "机构或稳定检测超时。可重置当前挑战，再检查接近路径。";
+                case GraspFailure.Misaligned: return "抓点偏离可抓区域。下次用侧面检查深度，偏心对象要靠近标记抓点。";
+                case GraspFailure.NoContact: return "有效表面接触不足。请对准可包围的部位，避免只碰到边缘。";
+                case GraspFailure.Penetrating: case GraspFailure.Obstructed: return "检测到穿透或障碍，已拒绝建立抓持。请换一个无遮挡的抓点。";
+                case GraspFailure.UnstableGrip: return "接触无法稳定支撑重量或重心。请抓更靠近重心的部位。";
+                case GraspFailure.Slipped: return "礼物在提升或移送时滑落。请更靠近推荐抓点，减少偏心力矩。";
+                case GraspFailure.WrongTarget: return "投放的是其他对象。请先确认任务目标，再选择要抓取的物体。";
+                case GraspFailure.Timeout: return "机构或稳定检测超时。可重置当前挑战，再检查接近路径。";
                 default: return "目标没有稳定进入出口。按下一次尝试会还原所有未获奖物体，次数继续计算。";
             }
         }

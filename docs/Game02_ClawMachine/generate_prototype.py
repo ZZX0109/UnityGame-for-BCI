@@ -17,6 +17,7 @@ BASE = ROOT / 'Assets/ClawMachine'
 MANIFEST = Path(__file__).with_name('GeneratedAssets.json')
 HEADER = '%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n'
 outputs = {}
+referenced_assets = set()
 
 
 def guid(path):
@@ -32,6 +33,7 @@ def ref(identifier):
 
 
 def external(path, identifier=11500000, kind=3):
+    referenced_assets.add(asset(path))
     return '{fileID: %d, guid: %s, type: %d}' % (identifier, guid(asset(path)), kind)
 
 
@@ -329,8 +331,8 @@ def build():
     audioController=s.mono(managers,'Audio/ClawAudioController')
     manager=s.mono(managers,'Core/ClawGameManager',field('task',task)+field('keyboard',inputController)+field('cameras',cameraController)+field('audioSource',audio)+field('audioController',audioController)+'  challenges:\n'+''.join('  - '+external('Challenges/C0'+str(i)+'.asset',11400000,2)+'\n' for i in (1,2,3)))
     shaderRoot=ROOT/'Assets/BCIShared/TMP/Resources/BCIShared/TMP'
-    primaryGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmap.shader.meta').read_text()).group(1)
-    compatGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmapCompatibility.shader.meta').read_text()).group(1)
+    primaryGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmap.shader.meta').read_text(encoding="utf-8")).group(1)
+    compatGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmapCompatibility.shader.meta').read_text(encoding="utf-8")).group(1)
     s.mono(managers,'UI/ClawGameUI',field('game',manager)+'  uiFont: '+external('Fonts/ClawUISans.otf',12800000,3)+'\n  bitmapShader: {fileID: 4800000, guid: '+primaryGuid+', type: 3}\n  bitmapCompatibilityShader: {fileID: 4800000, guid: '+compatGuid+', type: 3}\n')
     s.mono(root,'Presentation/ClawChallengeDisplay',field('game',manager)+'  accents:\n'+''.join('  - '+ref(next(c['id'] for c in panel['components'] if c['type']==23))+'\n' for panel in themePanels))
     # Round the visible shell without changing any collision geometry or ancestor.
@@ -402,29 +404,34 @@ def meta(path):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--force',action='store_true');parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    build();previous=json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
+    build();previous=json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
     changed=[]
     for rel,content in outputs.items():
-        p=ROOT/rel; actual=p.read_text() if p.exists() else None
+        p=ROOT/rel; actual=p.read_text(encoding="utf-8") if p.exists() else None
         if args.check:
             if actual!=content:changed.append(rel)
         elif actual!=content:
             if actual is not None and hashlib.sha256(actual.encode()).hexdigest()!=previous.get(rel) and not args.force:
                 raise SystemExit('Refusing to overwrite edited asset: '+rel+'; inspect it, then use --force if intended.')
-            p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content)
+            p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content, encoding="utf-8", newline="\n")
     for p in [BASE]+sorted(BASE.rglob('*')):
         if p.suffix=='.meta':continue
         mp=Path(str(p)+'.meta')
         if mp.exists():
-            existing=re.search(r'^guid: ([0-9a-f]{32})$',mp.read_text(),re.M)
-            if not existing or existing.group(1)!=guid(p.relative_to(ROOT).as_posix()):raise SystemExit('Unexpected existing GUID; preserved '+str(mp))
+            existing=re.search(r'^guid: ([0-9a-f]{32})$',mp.read_text(encoding="utf-8"),re.M)
+            # Only assets authored/referenced by this generator have a prescribed
+            # GUID. Hand-authored runtime/tests may use Unity-issued GUIDs; keep
+            # those intact and let validate_project check global uniqueness.
+            rel = p.relative_to(ROOT).as_posix()
+            prescribed = rel in outputs or rel in referenced_assets
+            if not existing or (prescribed and existing.group(1)!=guid(rel)):raise SystemExit('Unexpected existing GUID; preserved '+str(mp))
         elif args.check:changed.append(mp.relative_to(ROOT).as_posix())
-        else:mp.write_text('\n'.join(line.rstrip() for line in meta(p).splitlines())+'\n')
+        else:mp.write_text('\n'.join(line.rstrip() for line in meta(p).splitlines())+'\n', encoding="utf-8", newline="\n")
     if args.check:
         if changed:raise SystemExit('Generated assets differ: '+', '.join(changed))
-        print('C01-C03 generated scene, prefabs, materials, profiles and .meta: exact deterministic match.')
+        print('C01-C03 generated assets match; referenced GUIDs verified and hand-authored meta preserved.')
     else:
-        MANIFEST.write_text(json.dumps({p:hashlib.sha256(c.encode()).hexdigest() for p,c in sorted(outputs.items())},indent=2)+'\n')
+        MANIFEST.write_text(json.dumps({p:hashlib.sha256(c.encode()).hexdigest() for p,c in sorted(outputs.items())},indent=2)+'\n', encoding="utf-8", newline="\n")
         print('Authored',len(outputs),'assets; existing GUIDs preserved.')
 
 

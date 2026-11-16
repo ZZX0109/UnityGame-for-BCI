@@ -8,6 +8,88 @@ namespace ClawMachine.Tests.EditMode
     public sealed class CoreAuditTests
     {
         [Test]
+        public void EmptyClosing_ReturnsVerticallyThenHomeWithoutReleaseOrExtraAttempt()
+        {
+            GameObject root = CloneMachine(out GraspTaskController task, out AuditManipulatorStub driver);
+            try
+            {
+                Assert.IsTrue(task.StartChallenge()); Assert.IsTrue(task.StartGrab());
+                Assert.IsTrue(task.Session.Advance(GraspState.ContactDescent));
+                Assert.IsTrue(task.Session.Advance(GraspState.Closing));
+                Vector3 low = task.TaskSpace.ToWorld(new Vector3(0.2f, task.TaskSpace.LocalBounds.min.y + 0.05f, 0.15f));
+                Assert.IsTrue(driver.TryReset(new Pose(low, task.TaskSpace.Orientation)));
+                Set(task, "plan", new GraspPlan()); Set(task, "phaseTime", 1f);
+                int attempts = task.Session.AttemptId, resetCalls = driver.ResetCalls;
+                Tick(task);
+                Assert.AreEqual(GraspState.Returning, task.Session.State);
+                Vector3 high = task.TaskSpace.ToLocal(driver.LastCommand.position);
+                Assert.AreEqual(task.TaskSpace.LocalBounds.max.y, high.y, 0.00001f);
+                Assert.AreEqual(task.TaskSpace.ToLocal(low).x, high.x, 0.00001f);
+                Assert.AreEqual(task.TaskSpace.ToLocal(low).z, high.z, 0.00001f);
+                task.SetPaused(true); Tick(task);
+                Assert.AreEqual(GraspState.Returning, task.Session.State);
+                task.SetPaused(false); Tick(task);
+                Assert.AreEqual(task.TaskSpace.HomePose.position, driver.LastCommand.position);
+                Assert.AreEqual(GraspState.Returning, task.Session.State);
+                Assert.IsFalse(task.StartGrab()); Tick(task);
+                Assert.AreEqual(GraspState.Result, task.Session.State);
+                Assert.AreEqual(attempts, task.Session.AttemptId);
+                Assert.AreEqual(resetCalls, driver.ResetCalls, "Recovery moves, never teleports.");
+                Assert.IsFalse(task.Session.Released); Assert.IsFalse(task.Session.Awarded);
+                Assert.AreEqual(GraspFailure.NoContact, task.Session.Failure);
+                Assert.IsFalse(task.Session.TryAward(task.Session.SessionId, attempts, task.Challenge.targetId, task.Challenge.targetId, true));
+                task.Retry(); Assert.AreEqual(GraspState.Aiming, task.Session.State);
+                Assert.AreEqual(attempts, task.Session.AttemptId);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void EmptyReturn_StalledExecutorTimesOutAndResetInvalidatesRecovery()
+        {
+            GameObject root = CloneMachine(out GraspTaskController task, out AuditManipulatorStub driver);
+            float priorDelta = Time.fixedDeltaTime;
+            try
+            {
+                Time.fixedDeltaTime = 0.02f;
+                Assert.IsTrue(task.StartChallenge()); Assert.IsTrue(task.StartGrab());
+                Assert.IsTrue(task.Session.Advance(GraspState.ContactDescent)); Assert.IsTrue(task.Session.Advance(GraspState.Closing));
+                Assert.IsTrue(driver.TryReset(task.TaskSpace.PoseAtHeight(task.TaskSpace.HomePose.position, task.TaskSpace.LocalBounds.min.y)));
+                driver.HoldCommandPosition = true; Set(task, "plan", new GraspPlan()); Set(task, "phaseTime", 1f); Tick(task);
+                Assert.AreEqual(GraspState.Returning, task.Session.State);
+                int oldSession = task.Session.SessionId;
+                for (int i = 0; i < 110 && task.Session.State != GraspState.Error; i++) Tick(task);
+                Assert.AreEqual(GraspState.Error, task.Session.State); Assert.AreEqual(GraspFailure.Timeout, task.Session.Failure);
+                driver.HoldCommandPosition = false; task.ResetChallenge(true); Tick(task);
+                Assert.Greater(task.Session.SessionId, oldSession); Assert.AreEqual(GraspState.Aiming, task.Session.State);
+                Assert.AreEqual(0, task.Session.AttemptId); Assert.IsFalse(task.Session.Released);
+            }
+            finally { Time.fixedDeltaTime = priorDelta; Object.DestroyImmediate(root); }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void EmptyReturn_CancelOrDisableInvalidatesPendingResult(bool disable)
+        {
+            GameObject root = CloneMachine(out GraspTaskController task, out AuditManipulatorStub driver);
+            try
+            {
+                Assert.IsTrue(task.StartChallenge()); Assert.IsTrue(task.StartGrab());
+                Assert.IsTrue(task.Session.Advance(GraspState.ContactDescent)); Assert.IsTrue(task.Session.Advance(GraspState.Closing));
+                Set(task, "plan", new GraspPlan()); Set(task, "phaseTime", 1f); Tick(task);
+                Assert.AreEqual(GraspState.Returning, task.Session.State);
+                int epoch = task.Session.SessionId;
+                if (disable) typeof(GraspTaskController).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(task, null);
+                else task.Cancel(true);
+                Assert.Greater(task.Session.SessionId, epoch);
+                for (int i = 0; i < 5; i++) Tick(task);
+                Assert.AreEqual(GraspState.Idle, task.Session.State); Assert.AreEqual(0, task.Session.AttemptId);
+                Assert.IsFalse(task.Session.Awarded); Assert.IsFalse(task.Session.Released); Assert.IsFalse(driver.IsBusy);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
         public void SurfaceContact_RequiresAnOutsideCenterAndRejectsDeepPenetration()
         {
             using (var fixture = new GeometryFixture())

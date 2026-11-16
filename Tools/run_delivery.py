@@ -76,7 +76,7 @@ def main(argv=None):
         evidence = output / "Evidence"
         evidence.mkdir(parents=True)
         summary_path = evidence / "validation-summary.json"
-        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
 
         errors = check_project(ROOT)
         if errors:
@@ -111,7 +111,7 @@ def main(argv=None):
         if errors:
             raise ValueError("Post-import validation failed:\n" + "\n".join(errors))
         summary.update(status="passed", unityVersion=version, sourceFingerprint=source_fingerprint(ROOT))
-        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
         if args.tests_only:
             print(f"Unity tests passed; build NOT RUN. Evidence: {evidence}")
             return 0
@@ -133,7 +133,7 @@ def main(argv=None):
              "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
             for path in sorted(player.rglob("*")) if path.is_file() and path != manifest_path
         ]
-        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
         archive = output / "FirstPersonSokoban-Windows64.zip"
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
             for path in sorted(player.rglob("*")):
@@ -143,14 +143,14 @@ def main(argv=None):
             if bundle.testzip() is not None:
                 raise ValueError("ZIP integrity failed")
         digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-        (output / "SHA256SUMS.txt").write_text(digest + "  " + archive.name + "\n", encoding="utf-8")
+        (output / "SHA256SUMS.txt").write_text(digest + "  " + archive.name + "\n", encoding="utf-8", newline="\n")
         print(f"Delivery ready: {archive}; Unity tests passed; GUI acceptance NOT RUN.")
         return 0
     except (OSError, ValueError, RuntimeError, ET.ParseError, subprocess.TimeoutExpired) as exc:
         summary["status"] = "failed"
         summary["error"] = str(exc)
         if "summary_path" in locals():
-            summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+            summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
         print(f"[FAIL] {exc}", file=sys.stderr)
         return 1
 

@@ -24,6 +24,7 @@ namespace ClawMachine
         private Vector3 lastPosition;
         private Vector2 aimInput;
         private bool ready;
+        private bool returningHome;
         private int selectedPrize;
         public ClawSession Session { get; } = new ClawSession();
         public ClawChallengeDefinition Challenge => challenge;
@@ -37,6 +38,7 @@ namespace ClawMachine
         }
         public GripperController Gripper => gripper;
         public int ContactCount => gripper ? gripper.LastContacts : 0;
+        public float StableProgress => Prize && Prize.Profile && chute ? Mathf.Clamp01(chute.StableTime / Mathf.Max(0.1f, Prize.Profile.stableDwell)) : 0;
         public bool IsConfigured => driverComponent && Driver != null && Driver.IsConfigured && Driver.IsSimulation && taskSpace && taskSpace.IsConfigured &&
             gripper && gripper.IsConfigured && prizes != null && prizes.Length > 0 && chute && chute.IsConfigured && challenge && ChallengeHasBindings();
         public string Diagnostic { get; private set; } = "";
@@ -94,7 +96,7 @@ namespace ClawMachine
             if (!safety.Move(target, speed)) Abort(GraspFailure.Configuration, "Simulator rejected a safe task-space pose.");
         }
         private bool Arrived => !driver.IsBusy && Vector3.Distance(driver.CurrentToolPose.position, commandedPose.position) <= 0.008f && Quaternion.Angle(driver.CurrentToolPose.rotation, commandedPose.rotation) <= 2;
-        private bool IsAutomaticMotion => Session.State == GraspState.Approaching || Session.State == GraspState.ContactDescent || Session.State == GraspState.Lifting || Session.State == GraspState.Transporting;
+        private bool IsAutomaticMotion => Session.State == GraspState.Approaching || Session.State == GraspState.ContactDescent || Session.State == GraspState.Lifting || Session.State == GraspState.Transporting || Session.State == GraspState.Returning;
         private void FixedUpdate()
         {
             if (!ready || Session.Paused || Session.State == GraspState.Error) return;
@@ -141,8 +143,24 @@ namespace ClawMachine
                     if (phaseTime >= closeDuration)
                     {
                         Session.RecordFailure(gripper.TryGrip(plan.Candidate));
+                        if (!gripper.IsHolding)
+                        {
+                            // An empty claw never visits the chute or creates a release identity.
+                            // First lift vertically, then return horizontally at the safe ceiling.
+                            returningHome = false; Session.Advance(GraspState.Returning);
+                            driver.TrySetGripper(1);
+                            Move(taskSpace.PoseAtHeight(driver.CurrentToolPose.position, taskSpace.LocalBounds.max.y), liftSpeed);
+                            break;
+                        }
                         if (gripper.IsHolding && plan.Candidate.PrizeId != challenge.targetId) Session.RecordFailure(GraspFailure.WrongTarget);
                         Session.Advance(GraspState.Lifting); Move(taskSpace.PoseAtHeight(driver.CurrentToolPose.position, taskSpace.LocalBounds.max.y), liftSpeed);
+                    }
+                    break;
+                case GraspState.Returning:
+                    if (Arrived)
+                    {
+                        if (!returningHome) { returningHome = true; Move(taskSpace.HomePose, aimSpeed); }
+                        else { driver.Stop(); Session.Advance(GraspState.Result); }
                     }
                     break;
                 case GraspState.Lifting:
@@ -197,7 +215,7 @@ namespace ClawMachine
             safety.ResetStop(); driver.Stop(); gripper.SetCollisionContext(prizes); gripper.ResetGrip(); chute.Clear(); RestorePrizes();
             Session.Reset(challenge.attemptLimit, start);
             if (!driver.TryReset(taskSpace.HomePose)) { Abort(GraspFailure.Configuration, "Simulator reset was rejected."); return; }
-            phaseTime = noProgressTime = 0; aimInput = Vector2.zero; plan = default(GraspPlan); Diagnostic = ""; Physics.SyncTransforms();
+            phaseTime = noProgressTime = 0; returningHome = false; aimInput = Vector2.zero; plan = default(GraspPlan); Diagnostic = ""; Physics.SyncTransforms();
         }
         public void Cancel(bool returnToMenu) { if (ready) ResetChallenge(!returnToMenu); }
         public void EmergencyStop() { safety?.EmergencyStop(); Abort(GraspFailure.Cancelled, "Simulation stopped by user."); }

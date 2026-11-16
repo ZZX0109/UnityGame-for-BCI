@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "game": "claw",
+  "status": "failed",
+  "guiAcceptance": "not_run",
+  "windowsPlaythrough": "not_run",
+  "video": "not_run",
+  "performance": "not_run",
+  "build": "not_run",
+  "sourceCommit": "4b477ef05de0bd430ad778b7d75d7a5f38f49cf8",
+  "staticChecks": "passed",
+  "sourceBeforeImport": "a61c85a94eae1d23a686fc206cc108e7caa2fedfd91fb903b10cde467e134366",
+  "error": "Command failed with exit code 1."
+}

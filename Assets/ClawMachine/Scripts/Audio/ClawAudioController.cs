@@ -16,6 +16,7 @@ namespace ClawMachine
         private readonly Dictionary<ClawAudioCue, AudioClip> clips = new Dictionary<ClawAudioCue, AudioClip>();
         private float volume = 0.25f;
         private int slipSession = -1, slipAttempt = -1;
+        private GraspFailure feedbackFailure;
         public bool Initialized => task && cueSource && motorSource;
 
         public void Initialize(GraspTaskController owner, IManipulatorDriver manipulator, AudioSource source)
@@ -55,10 +56,12 @@ namespace ClawMachine
             bool aimingMotion = !task.Session.Paused && task.Session.State == GraspState.Aiming && driver.IsBusy;
             if (aimingMotion && !motorSource.isPlaying) motorSource.Play();
             else if (!aimingMotion && motorSource.isPlaying) motorSource.Stop();
-            if (task.Session.Failure == GraspFailure.Slipped &&
-                (slipSession != task.Session.SessionId || slipAttempt != task.Session.AttemptId))
+            if (task.Session.Paused) return;
+            if (task.Session.Failure != GraspFailure.None &&
+                (slipSession != task.Session.SessionId || slipAttempt != task.Session.AttemptId || feedbackFailure != task.Session.Failure))
             {
-                slipSession = task.Session.SessionId; slipAttempt = task.Session.AttemptId; Play(ClawAudioCue.Slip);
+                slipSession = task.Session.SessionId; slipAttempt = task.Session.AttemptId; feedbackFailure = task.Session.Failure;
+                Play(feedbackFailure == GraspFailure.Slipped ? ClawAudioCue.Slip : ClawAudioCue.Failure);
             }
         }
         private void OnPhase(GraspState phase)
@@ -70,6 +73,7 @@ namespace ClawMachine
                 case "Closing": Play(ClawAudioCue.Close); break;
                 case "Lifting": Play(ClawAudioCue.Lift); break;
                 case "Transporting": Play(ClawAudioCue.Transport); break;
+                case "Returning": Play(ClawAudioCue.Transport); break;
                 case "Releasing": Play(ClawAudioCue.Release); break;
                 case "Result": Play(task.Session.Awarded ? ClawAudioCue.Success : ClawAudioCue.Failure); break;
                 case "Error": Play(ClawAudioCue.Failure); break;
@@ -88,6 +92,7 @@ namespace ClawMachine
             foreach (AudioClip clip in clips.Values) if (clip) Destroy(clip);
             clips.Clear(); motorSource = null; motorObject = null; cueSource = null; task = null; driver = null;
             slipSession = slipAttempt = -1;
+            feedbackFailure = GraspFailure.None;
         }
         private void OnDisable() { Release(); }
 

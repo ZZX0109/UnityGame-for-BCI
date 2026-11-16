@@ -72,11 +72,11 @@ def main():
     script_guids = set()
     for folder in ('Core', 'Drivers', 'Gripper', 'Prize'):
         for meta in (scripts / folder).glob('*.cs.meta'):
-            script_guids.add(re.search(r'^guid: ([a-f0-9]+)$', meta.read_text(), re.M).group(1))
+            script_guids.add(re.search(r'^guid: ([a-f0-9]+)$', meta.read_text(encoding="utf-8"), re.M).group(1))
     baseline = subprocess.run(['git', 'show', args.baseline_ref + ':' + SCENE], cwd=ROOT,
-                              check=True, capture_output=True, text=True).stdout
+                              check=True, capture_output=True, text=True, encoding="utf-8").stdout
     before = snapshot(baseline, script_guids)
-    after = snapshot((ROOT / SCENE).read_text(), script_guids)
+    after = snapshot((ROOT / SCENE).read_text(encoding="utf-8"), script_guids)
     changed = sorted(key for key in before.keys() | after.keys() if before.get(key) != after.get(key))
     if changed:
         raise SystemExit('Physics/task source differs:\n' + '\n'.join(changed))

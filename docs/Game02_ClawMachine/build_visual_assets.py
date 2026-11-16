@@ -31,7 +31,7 @@ def main():
   else:p.write_bytes(data)
  manifest={name:hashlib.sha256(data).hexdigest() for name,data in generated.items()}
  p=BASE/'OriginalTextureManifest.json'
- if not args.check:p.write_text(json.dumps(manifest,indent=2)+'\n')
- elif json.loads(p.read_text())!=manifest:raise SystemExit('Visual manifest mismatch')
+ if not args.check:p.write_text(json.dumps(manifest,indent=2)+'\n', encoding="utf-8", newline="\n")
+ elif json.loads(p.read_text(encoding="utf-8"))!=manifest:raise SystemExit('Visual manifest mismatch')
  print('[OK] Four original 64x64 texturemaps reproducible; no third-party image assets.')
 if __name__=='__main__':main()

@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace ClawMachine
 {
-    public enum GraspState { Idle, Aiming, Approaching, Lowering = Approaching, ContactDescent, Closing, Lifting, Transporting, Releasing, Settling, Result, End, Resetting, Error }
+    // Append new states so existing serialized enum values remain stable.
+    public enum GraspState { Idle, Aiming, Approaching, Lowering = Approaching, ContactDescent, Closing, Lifting, Transporting, Releasing, Settling, Result, End, Resetting, Error, Returning }
     public enum GraspFailure { None, Misaligned, NoContact, Penetrating, Obstructed, UnstableGrip, Slipped, WrongTarget, MissedChute, Timeout, Cancelled, Configuration }
 
     // Single authority for transitions, attempt identity and once-only settlement.
@@ -47,11 +48,12 @@ namespace ClawMachine
                 case GraspState.Aiming: return to == GraspState.Approaching;
                 case GraspState.Approaching: return to == GraspState.ContactDescent;
                 case GraspState.ContactDescent: return to == GraspState.Closing;
-                case GraspState.Closing: return to == GraspState.Lifting;
+                case GraspState.Closing: return to == GraspState.Lifting || to == GraspState.Returning;
                 case GraspState.Lifting: return to == GraspState.Transporting;
                 case GraspState.Transporting: return to == GraspState.Releasing;
                 case GraspState.Releasing: return to == GraspState.Settling;
                 case GraspState.Settling: return to == GraspState.Result;
+                case GraspState.Returning: return to == GraspState.Result;
                 case GraspState.Result: return to == GraspState.Aiming || to == GraspState.End;
                 default: return false;
             }

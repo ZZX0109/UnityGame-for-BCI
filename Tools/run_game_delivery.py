@@ -145,7 +145,7 @@ def main(argv=None):
 
     def save():
         if summary_path:
-            summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     try:
         allowed = (root / "BuildOutput").resolve()
@@ -157,7 +157,7 @@ def main(argv=None):
         evidence.mkdir(parents=True)
         summary_path = evidence / "game-validation-summary.json"
         summary["sourceCommit"] = args.commit or subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8").strip()
         save()
         version = exact_version(root)
         if not (root / game["scene"]).is_file():
@@ -220,7 +220,7 @@ def main(argv=None):
                         target="StandaloneWindows64", files=[
                             {"path": p.relative_to(player).as_posix(), "bytes": p.stat().st_size, "sha256": file_hash(p)}
                             for p in sorted(player.rglob("*")) if p.is_file()])
-        (player / "build-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (player / "build-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         archive = output / (game["name"] + "-Windows64.zip")
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
             for path in sorted(player.rglob("*")):
@@ -229,7 +229,7 @@ def main(argv=None):
         with zipfile.ZipFile(archive) as bundle:
             if bundle.testzip() is not None:
                 raise ValueError("Windows ZIP integrity failed.")
-        (output / "SHA256SUMS.txt").write_text(file_hash(archive) + "  " + archive.name + "\n", encoding="utf-8")
+        (output / "SHA256SUMS.txt").write_text(file_hash(archive) + "  " + archive.name + "\n", encoding="utf-8", newline="\n")
         print("Delivery:", archive, "\nGUI/Windows playthrough, video and performance remain NOT RUN.")
         return 0
     except (OSError, ValueError, RuntimeError, ET.ParseError, subprocess.SubprocessError) as error:

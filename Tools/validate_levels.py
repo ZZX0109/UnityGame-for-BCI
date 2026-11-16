@@ -252,13 +252,13 @@ def write_report(directory, paths, results, mechanics):
               "mechanicsChecks": mechanics, "levels": []}
     for path,result,entry in zip(paths,results,catalog):
         name = f'{path.stem}.svg'
-        (directory/name).write_text(render_svg(path,result,entry['title']),encoding="utf-8")
+        (directory/name).write_text(render_svg(path,result,entry['title']),encoding="utf-8", newline="\n")
         report['levels'].append({"resource":path.stem,"id":entry['id'],"revision":entry.get('revision',1),
                                   "title":entry['title'],"sourceSHA256":hashlib.sha256(path.read_bytes()).hexdigest(),
                                   "map":path.read_text(encoding="utf-8").splitlines(),"diagram":name,**result})
-    (directory/'solutions.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding="utf-8")
+    (directory/'solutions.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding="utf-8", newline="\n")
     entries = '\n'.join(f'<article><h2>{html.escape(e["title"])} / {r["minimumPushes"]} pushes</h2><img src="{p.stem}.svg" alt="Exact map {p.stem}"/></article>' for p,r,e in zip(paths,results,catalog))
-    (directory/'index.html').write_text('<!doctype html><meta charset="utf-8"><title>Sokoban source-map atlas</title><style>body{background:#f4ede3;color:#42382e;font:16px system-ui;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:24px}article{background:#fff8ef;padding:16px}img{max-width:100%}</style><h1>Source-map atlas</h1><p>Generated from the level text files. These diagrams are not Unity gameplay screenshots. See solutions.json for every push and intervening walking route.</p><main>'+entries+'</main>',encoding="utf-8")
+    (directory/'index.html').write_text('<!doctype html><meta charset="utf-8"><title>Sokoban source-map atlas</title><style>body{background:#f4ede3;color:#42382e;font:16px system-ui;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:24px}article{background:#fff8ef;padding:16px}img{max-width:100%}</style><h1>Source-map atlas</h1><p>Generated from the level text files. These diagrams are not Unity gameplay screenshots. See solutions.json for every push and intervening walking route.</p><main>'+entries+'</main>',encoding="utf-8", newline="\n")
 
 
 def main(argv=None):

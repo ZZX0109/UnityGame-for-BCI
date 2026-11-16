@@ -1,3 +1,13 @@
+# 娃娃机 · 当前优化版本
+
+**2026-11-16 · `codex/optimize-game02`**
+
+本轮优化实现与验证边界见 [优化交付](Validation/Optimization-20261116.md) 和 [当前状态](Validation/CurrentStatus.md)。Python回归 57/57、纯托管规则 9/9通过；运行/测试/Editor源码独立编译通过。Unity许可证阻止本轮原生测试，尚未交付经过验证的新Windows游戏包或截图。
+
+以下保留原工程操作与历史说明；本轮事实以以上两份文档为准。
+
+---
+
 # 三维抓娃娃机开发分支
 
 当前分支：`game02/claw-machine-3d`。本轮按代码审查要求补齐三个任务配置、核心交互和 Canvas/TextMeshPro UI；推箱子主线资源同步保留。

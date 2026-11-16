@@ -1,0 +1,11 @@
+﻿PURE RULE PASS: Attempt_HasOneEntryAndRejectsSkippedPhases
+PURE RULE PASS: Pause_FreezesTransitionsAndBlocksAttemptEntry
+PURE RULE PASS: Award_RequiresReleaseCurrentIdentityTargetAndStableContainment
+PURE RULE PASS: NeverReleasedPrize_CannotAwardEvenIfAtChute
+PURE RULE PASS: Reset_InvalidatesOldRunAndClearsCountersPauseAndOutcome
+PURE RULE PASS: AttemptLimit_EndsAfterFinalFailedAttempt
+PURE RULE PASS: EmptyRecoveryAndSlippedDelivery_KeepDistinctAwardRules
+PURE RULE PASS: Returning_PauseRetryAndSingleAttempt
+PURE RULE PASS: Returning_ResetRejectsStaleAwardAndPendingResult
+PURE MANAGED RULES PASS: 9 checks; Unity native play/tests NOT RUN
+﻿
