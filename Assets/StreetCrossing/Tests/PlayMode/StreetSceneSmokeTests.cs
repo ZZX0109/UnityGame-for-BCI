@@ -27,17 +27,26 @@ namespace StreetCrossing.Tests.PlayMode
             StreetGameManager game = Object.FindObjectOfType<StreetGameManager>();
             Assert.That(game, Is.Not.Null); game.AutoPauseOnFocusLoss = false; game.SetInputSource(new QuietInput());
             Assert.That(game.State, Is.EqualTo(StreetGameState.Menu));
+            Assert.That(Object.FindObjectsOfType<BCI.RuntimeValidation.GameRuntimeAudit>().Length, Is.Zero,
+                "Normal scene loading must not create the opt-in Player auditor.");
+            int quality = QualitySettings.GetQualityLevel(), vSync = QualitySettings.vSyncCount, target = Application.targetFrameRate;
+            Assert.IsFalse(BCI.RuntimeValidation.GameRuntimeAudit.TryStart(new StreetCrossing.Validation.StreetRuntimeAudit()),
+                "Without --bci-audit-output the shared bootstrap must stay inert.");
+            Assert.That(Object.FindObjectsOfType<BCI.RuntimeValidation.GameRuntimeAudit>().Length, Is.Zero);
+            Assert.That(QualitySettings.GetQualityLevel(), Is.EqualTo(quality));
+            Assert.That(QualitySettings.vSyncCount, Is.EqualTo(vSync));
+            Assert.That(Application.targetFrameRate, Is.EqualTo(target));
             Assert.That(game.Player.View.transform.localPosition.y, Is.EqualTo(1.65f).Within(0.001f));
             game.StartPractice(); yield return null;
-            Assert.That(game.Traffic.Active.Count, Is.EqualTo(2));
+            Assert.That(game.Traffic.Active.Count, Is.EqualTo(4));
             game.Pause(); float frozen = game.WorldTime; TrafficPhase phase = game.Intersection.Phase;
             Vector3 position = game.Traffic.Active[0].transform.position;
             yield return new WaitForSecondsRealtime(0.15f);
             Assert.That(game.WorldTime, Is.EqualTo(frozen)); Assert.That(game.Intersection.Phase, Is.EqualTo(phase));
             Assert.That(game.Traffic.Active[0].transform.position, Is.EqualTo(position));
             for (int i = 0; i < 20; i++) { game.StartPractice(); game.Pause(); }
-            Assert.That(game.Traffic.Active.Count, Is.EqualTo(2));
-            Assert.That(Object.FindObjectsOfType<VehicleController>().Length, Is.EqualTo(2));
+            Assert.That(game.Traffic.Active.Count, Is.EqualTo(4));
+            Assert.That(Object.FindObjectsOfType<VehicleController>().Length, Is.EqualTo(4));
             Assert.That(game.Evaluation.Attempts, Is.Zero);
             Assert.That(game.Intersection.Phase, Is.EqualTo(TrafficPhase.VehicleGreen));
             Assert.That(Vector3.Distance(game.PlayerPosition, game.scenario.playerSpawn), Is.LessThan(0.02f));

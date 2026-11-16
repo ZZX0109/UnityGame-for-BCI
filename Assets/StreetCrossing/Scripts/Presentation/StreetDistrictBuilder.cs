@@ -1,4 +1,5 @@
 using UnityEngine;
+using StreetCrossing.Core;
 
 namespace StreetCrossing.Presentation
 {
@@ -89,6 +90,17 @@ namespace StreetCrossing.Presentation
             if (!distant) world.Label(Captions[(int)kind], new Vector3(0, residential ? 2.82f : 2.98f, -2.37f), .075f,
                 residential ? profile.accent : "F3EDDB", block, 0, width * .75f, .43f);
             if (corner) CornerEntrance(world, block, profile, width, cornerCut, arcadeCorner);
+            if (corner && side > 0)
+            {
+                // The north block sits west of its side street: its active side must face east, not penetrate the west neighbour.
+                foreach (Transform part in block.GetComponentsInChildren<Transform>())
+                {
+                    if (part == block) continue;
+                    Vector3 p = part.localPosition; Quaternion r = part.localRotation;
+                    part.localPosition = new Vector3(-p.x, p.y, p.z); part.localRotation = new Quaternion(r.x, -r.y, -r.z, r.w);
+                }
+                shell.GetComponent<MeshFilter>().sharedMesh = world.CornerMesh(new Vector3(width, height, 4), cornerCut, true);
+            }
             world.CombineVisuals(block);
             world.AddVisualLod(block, distant ? .018f : .006f);
             return block;
@@ -157,23 +169,28 @@ namespace StreetCrossing.Presentation
                     Renderer pavement = Part(world, streets, "Distant sidewalk continuation", new Vector3(end * 62, -.06f, side * (roadHalfWidth + 3.2f)), new Vector3(36, .12f, 6.4f), "D6CBAD");
                     pavement.sharedMaterial = world.PavingMaterial;
                     for (int bay = 0; bay < 3; bay++)
-                        Building(streets, world, profile, new Vector3(end * (46 + bay * 12), 0, side * 11.3f), side,
+                        Building(streets, world, profile, new Vector3(end * (46 + bay * 12), 0, StreetLayout.SidewalkZ(side * 11.3f)), side,
                             7.4f + (bay % 2) * 2.6f, profile.FacadeAt(bay + (end > 0 ? 3 : 0)), true, false, 10.8f);
                     for (int bay = 0; bay < 4; bay++)
                     {
                         float x = end * (43 + bay * 10);
-                        Part(world, streets, "Distant tree trunk", new Vector3(x, 1.3f, side * 5.4f), new Vector3(.22f, 2.6f, .22f), "82715D");
-                        Part(world, streets, "Distant tree crown", new Vector3(x, 3.6f, side * 5.4f), new Vector3(2.3f, 2.8f, 2.1f), profile.foliage, .9f);
+                        Part(world, streets, "Distant tree trunk", new Vector3(x, 1.3f, StreetLayout.SidewalkZ(side * 5.4f)), new Vector3(.22f, 2.6f, .22f), "82715D");
+                        Part(world, streets, "Distant tree crown", new Vector3(x, 3.6f, StreetLayout.SidewalkZ(side * 5.4f)), new Vector3(2.3f, 2.8f, 2.1f), profile.foliage, .9f);
                     }
                 }
                 for (int dash = 0; dash < 12; dash++)
-                    Part(world, streets, "Distant centre dash", new Vector3(end * (45 + dash * 3), .003f, 0), new Vector3(1.6f, .006f, .1f), "DBBC76", .002f);
+                {
+                    for (int side = -1; side <= 1; side += 2)
+                        Part(world, streets, "Distant same-direction lane dash", new Vector3(end * (45 + dash * 3), .003f, side * StreetLayout.LaneWidth), new Vector3(1.6f, .006f, .1f), "ECE9DA", .002f);
+                }
+                for (int side = -1; side <= 1; side += 2)
+                    Part(world, streets, "Distant double centre line", new Vector3(end * 62, .003f, side * .08f), new Vector3(36, .006f, .055f), "DBBC76", .002f);
             }
             // Low-contrast second row supplies real depth behind the street-facing blocks.
             for (int side = -1; side <= 1; side += 2)
             for (int bay = -3; bay <= 3; bay++)
             {
-                Transform skyline = Group(streets, "Background urban block", new Vector3(bay * 19 + 5, 0, side * 29));
+                Transform skyline = Group(streets, "Background urban block", new Vector3(bay * 19 + 5, 0, StreetLayout.SidewalkZ(side * 29)));
                 Part(world, skyline, "Background masonry", new Vector3(0, 6 + (bay & 1), 0), new Vector3(15, 12 + (bay & 1) * 2, 9), "C5C7BF");
                 for (int row = 0; row < 3; row++)
                     Part(world, skyline, "Distant window band", new Vector3(0, 3 + row * 3, side > 0 ? -4.53f : 4.53f), new Vector3(12, .85f, .03f), "71817D");

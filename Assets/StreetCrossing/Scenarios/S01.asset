@@ -29,13 +29,13 @@ MonoBehaviour:
   surfaceMaterial: {fileID: 2100000, guid: 2fd759a48d965539b0da9d9894b14fd9, type: 2}
   vehiclePrefab: {fileID: 100010, guid: 307a6895cccc5e3ab1c7caf4c61e5368, type: 3}
   rightHandTraffic: 1
-  roadHalfWidth: 3.3
+  roadHalfWidth: 6.6
   laneOffset: 1.65
   roadHalfLength: 42
   crosswalkHalfWidth: 1.8
   conflictHalfWidth: 2.3
   stopLineOffset: 4.6
-  maximumVehicles: 2
+  maximumVehicles: 4
   minimumSpeed: 6
   maximumSpeed: 7
   minimumSpawnInterval: 7
@@ -44,10 +44,10 @@ MonoBehaviour:
   comfortableBraking: 3
   reactionTime: 0.6
   queueGap: 2.5
-  walkingSpeed: 1.35
-  comfortableSpeed: 1.05
-  fastWalkingSpeed: 1.85
+  walkingSpeed: 2.5
+  comfortableSpeed: 2.0
+  fastWalkingSpeed: 3.4
   nearMissDistance: 1.8
   timeoutSeconds: 240
-  playerSpawn: {x: 0, y: 0.02, z: -8}
-  destination: {x: 0, y: 0, z: 7.5}
+  playerSpawn: {x: 0, y: 0.02, z: -11.3}
+  destination: {x: 0, y: 0, z: 10.8}

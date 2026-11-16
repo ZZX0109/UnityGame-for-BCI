@@ -142,16 +142,25 @@ namespace StreetCrossing.Core
         }
         public bool DirectionVisible(bool left)
         {
-            if (RoadObservationVisibility.TargetVisible(player.View, left ? world.LeftRoadTargets : world.RightRoadTargets, player.transform)) return true;
-            foreach (VehicleController car in traffic.Active)
+            // Four lanes need evidence for both approaching lanes on the chosen side.
+            // A visible car in the inner lane cannot prove that the occluded outer lane is visible.
+            int direction = left ? 1 : -1;
+            for (int lane = 0; lane < scenario.StraightLaneCount; lane++)
             {
-                if (Mathf.Abs(car.transform.position.z) > scenario.roadHalfWidth + 1 || (left ? car.Lane.Direction <= 0 : car.Lane.Direction >= 0)) continue;
-                float dx = car.transform.position.x - player.transform.position.x;
-                if ((left && dx > -2) || (!left && dx < 2)) continue;
-                Vector3 point = car.transform.position + Vector3.up * 0.9f;
-                if (RoadObservationVisibility.PointVisible(player.View, point, player.transform, car.transform)) return true;
+                if (scenario.DirectionForLane(lane) != direction) continue;
+                bool visible = RoadObservationVisibility.TargetVisible(player.View, world.RoadTargetsForLane(lane), player.transform);
+                if (!visible)
+                    foreach (VehicleController car in traffic.Active)
+                    {
+                        if (car.Lane.Direction != direction || Mathf.Abs(car.transform.position.z - scenario.LaneZ(lane)) > scenario.laneOffset * .5f) continue;
+                        float dx = car.transform.position.x - player.transform.position.x;
+                        if ((left && dx > -2) || (!left && dx < 2)) continue;
+                        Vector3 point = car.transform.position + Vector3.up * 0.9f;
+                        if (RoadObservationVisibility.PointVisible(player.View, point, player.transform, car.transform)) { visible = true; break; }
+                    }
+                if (!visible) return false;
             }
-            return false;
+            return true;
         }
         public void RegisterContact(int encounterId, float vehicleSpeed)
         {

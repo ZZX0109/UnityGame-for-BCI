@@ -46,7 +46,7 @@ namespace StreetCrossing.Presentation
                 // Leave a real body-width gap between opposite walkers and keep the north lane in front of the bus seat.
                 if (!(band == 0 && side > 0)) z += (i / 6) * .55f;
                 // Four separated standing positions fit inside the bus-shelter waiting area without sharing walking paths.
-                Vector3 start = waiting ? new Vector3(6.0f + (i / 4) * .66f, 0, 4.65f) : new Vector3(minX, 0, z);
+                Vector3 start = waiting ? new Vector3(6.0f + (i / 4) * .66f, 0, StreetLayout.SidewalkZ(4.65f)) : new Vector3(minX, 0, StreetLayout.SidewalkZ(z));
                 routes[i] = new StreetBackgroundRoute { start = start, end = waiting ? start : new Vector3(maxX, 0, start.z), waiting = waiting,
                     speed = .65f + (float)random.NextDouble() * .30f, phase = (float)random.NextDouble() };
             }

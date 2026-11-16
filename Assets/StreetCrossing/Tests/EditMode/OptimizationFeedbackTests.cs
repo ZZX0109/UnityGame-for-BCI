@@ -142,7 +142,12 @@ namespace StreetCrossing.Tests.EditMode
                 vehicle.Initialize(lane, 1, 0, 5);
                 var player = playerObject.GetComponent<CharacterController>();
                 player.height = 1.8f; player.radius = .3f; player.center = Vector3.up * .9f;
+                // Recreate the native character actor at its authored pose.
+                // EditMode does not run the player's normal first Move update.
+                player.enabled = false;
                 playerObject.transform.position = lane.Position(5);
+                player.enabled = true;
+                player.Move(Vector3.zero);
                 for (int i = 0; i < clutter.Length; i++)
                 {
                     clutter[i] = new GameObject("sweep clutter", typeof(BoxCollider));
@@ -154,7 +159,8 @@ namespace StreetCrossing.Tests.EditMode
                 vehicle.Motion.Reset(10, 5, vehicle.Motion.BodyHalfLength);
                 vehicle.ApplyPosition(); vehicle.UpdateVisuals(0);
                 Physics.SyncTransforms();
-                Assert.IsTrue(vehicle.SweptContact(player, old));
+                Assert.IsTrue(vehicle.SweptContact(player, old),
+                    "The sweep must include the initialized CharacterController after retrying full buffers.");
                 var sweep = typeof(VehicleController).GetField("sweepHits", BindingFlags.NonPublic | BindingFlags.Instance);
                 Assert.GreaterOrEqual(((RaycastHit[])sweep.GetValue(vehicle)).Length, 64);
                 vehicle.Motion.Reset(5, 0, vehicle.Motion.BodyHalfLength);

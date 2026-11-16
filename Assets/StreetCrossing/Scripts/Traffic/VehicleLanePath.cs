@@ -4,7 +4,7 @@ using StreetCrossing.Core;
 
 namespace StreetCrossing.Traffic
 {
-    public enum VehicleRouteKind { StraightNear, StraightFar, RightTurn, LeftTurn }
+    public enum VehicleRouteKind { StraightNear, StraightFar, RightTurn, LeftTurn, StraightNearOuter, StraightFarOuter }
     /// <summary>Arc-length sampled world route. The two S03 curves have actual continuously changing headings.</summary>
     public sealed class VehicleLanePath
     {
@@ -24,9 +24,21 @@ namespace StreetCrossing.Traffic
         public float Length => cumulative[cumulative.Length - 1];
         public VehicleLanePath(StreetScenarioDefinition scenario, int index)
         {
-            Index = index; Kind = (VehicleRouteKind)index; HalfLength = scenario.roadHalfLength;
-            Direction = scenario.DirectionForLane(index == 1 ? 1 : 0);
-            Z = index == 1 ? scenario.laneOffset : -scenario.laneOffset;
+            if (index < 0 || index >= scenario.StraightLaneCount + 2)
+                throw new System.ArgumentOutOfRangeException(nameof(index));
+            Index = index; HalfLength = scenario.roadHalfLength;
+            // Physical straight lanes are ordered across the road. Keep the
+            // existing route-kind enum values stable for presentation metadata.
+            switch (index)
+            {
+                case 0: Kind = VehicleRouteKind.StraightNearOuter; break;
+                case 1: Kind = VehicleRouteKind.StraightNear; break;
+                case 2: Kind = VehicleRouteKind.StraightFar; break;
+                case 3: Kind = VehicleRouteKind.StraightFarOuter; break;
+                default: Kind = index == scenario.StraightLaneCount ? VehicleRouteKind.RightTurn : VehicleRouteKind.LeftTurn; break;
+            }
+            Direction = scenario.DirectionForLane(IsTurning ? 0 : index);
+            Z = scenario.LaneZ(IsTurning ? 0 : index);
             List<Vector3> route = new List<Vector3>();
             float junctionX = -9 * scenario.DirectionForLane(0);
             if (!IsTurning)
@@ -36,13 +48,16 @@ namespace StreetCrossing.Traffic
             else
             {
                 // South approach/right turn and north approach/left turn merge into the near main-road lane.
-                float approachSide = index == 2 ? -Direction : Direction;
-                float approachX = junctionX + (index == 2 ? 1.65f : -1.65f) * Direction;
+                bool rightTurn = Kind == VehicleRouteKind.RightTurn;
+                float approachSide = rightTurn ? -Direction : Direction;
+                float approachX = junctionX + (rightTurn ? 1.65f : -1.65f) * Direction;
                 Vector3 start = new Vector3(approachX, 0, approachSide * 36);
-                Vector3 begin = new Vector3(approachX, 0, approachSide * 8);
-                Vector3 end = new Vector3(-3.6f * Direction, 0, Z);
-                Vector3 control1 = begin + new Vector3(0, 0, -approachSide * (index == 2 ? 3.5f : 5.3f));
-                Vector3 control2 = end - new Vector3(Direction * (index == 2 ? 2.1f : 3.9f), 0, 0);
+                Vector3 begin = new Vector3(approachX, 0, approachSide * (scenario.roadHalfWidth + 4.7f));
+                // The longer four-lane left turn must finish steering before
+                // the crosswalk approach, including the van's swept rear corner.
+                Vector3 end = new Vector3((rightTurn ? -3.6f : -6.0f) * Direction, 0, Z);
+                Vector3 control1 = begin + new Vector3(0, 0, -approachSide * (rightTurn ? 3.5f : 5.3f));
+                Vector3 control2 = end - new Vector3(Direction * (rightTurn ? 2.1f : 3.9f), 0, 0);
                 route.Add(start); route.Add(begin);
                 for (int step = 1; step <= 40; step++)
                 {
@@ -67,7 +82,10 @@ namespace StreetCrossing.Traffic
                 StopDistance = cumulative[1] - 1.0f;
                 ConflictEntry = NearestDistance(new Vector3(-scenario.conflictHalfWidth * Direction, 0, Z));
                 ConflictExit = NearestDistance(new Vector3(scenario.conflictHalfWidth * Direction, 0, Z));
-                JunctionEntry = StopDistance; JunctionExit = cumulative[cumulative.Length - 2] + 1;
+                JunctionEntry = StopDistance;
+                // Retain the original physical reservation exit even when the
+                // widened left curve becomes straight earlier.
+                JunctionExit = NearestDistance(new Vector3(-2.6f * Direction, 0, Z));
             }
         }
         public Vector3 Position(float distance)

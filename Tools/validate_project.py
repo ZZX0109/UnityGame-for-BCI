@@ -29,6 +29,10 @@ IMPORTERS = {
     ".physicMaterial": "NativeFormatImporter",
 }
 SERIALIZED = {".unity", ".prefab", ".mat", ".asset", ".controller", ".anim", ".physicMaterial"}
+GAME_ENTRY_SCENES = {
+    "ClawMachine": "Assets/ClawMachine/Scenes/ClawMachineScene.unity",
+    "StreetCrossing": "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity",
+}
 
 
 def package_asset_guids(root, errors):
@@ -166,8 +170,16 @@ def check_project(root):
     if settings.is_file():
         text = settings.read_text(encoding="utf-8-sig")
         scenes = re.findall(r"- enabled:\s*(\d+)\s+path:\s*([^\n]+)\s+guid:\s*([0-9a-f]{32})", text)
-        expected = "Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity"
-        if not any(enabled == "1" and path.strip() == expected for enabled, path, _ in scenes):
+        game_entries = [scene for folder, scene in GAME_ENTRY_SCENES.items()
+                        if (assets / folder).is_dir()]
+        enabled_scenes = [path.strip() for enabled, path, _ in scenes if enabled == "1"]
+        # Retained legacy assets are still validated above; their presence does
+        # not make them entry scenes for an independent game's ordinary build.
+        if len(game_entries) > 1:
+            errors.append("Multiple independent game roots require an explicit build-entry policy")
+        elif game_entries and enabled_scenes != game_entries:
+            errors.append("Independent game build must enable only " + game_entries[0])
+        elif not game_entries and "Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity" not in enabled_scenes:
             errors.append("PuzzleScene must be enabled in EditorBuildSettings")
         for _, path, guid in scenes:
             meta = root / (path.strip() + ".meta")

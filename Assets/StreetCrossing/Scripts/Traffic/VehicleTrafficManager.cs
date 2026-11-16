@@ -30,7 +30,7 @@ namespace StreetCrossing.Traffic
         public VehicleTrafficManager(StreetScenarioDefinition settings, IntersectionController signal, StreetGameManager owner, Transform trafficRoot, StreetWorld geometry, CharacterController pedestrian)
         {
             scenario = settings; intersection = signal; game = owner; root = trafficRoot; world = geometry; player = pedestrian;
-            lanes = new VehicleLanePath[settings.turningTraffic ? 4 : 2]; nextSpawn = new float[lanes.Length];
+            lanes = new VehicleLanePath[settings.StraightLaneCount + (settings.turningTraffic ? 2 : 0)]; nextSpawn = new float[lanes.Length];
             for (int i = 0; i < lanes.Length; i++) lanes[i] = new VehicleLanePath(settings, i);
             intersection.PhaseChanged += OnPhase; Reset();
         }
@@ -41,7 +41,7 @@ namespace StreetCrossing.Traffic
             active.Clear(); sequence = new TrafficSpawnSequence(scenario.seed); encounterId = turnOwner = 0;
             for (int lane = 0; lane < lanes.Length; lane++)
             {
-                int count = lane < 2 ? scenario.initialVehiclesPerStraightLane : 1;
+                int count = lane < scenario.StraightLaneCount ? scenario.initialVehiclesPerStraightLane : 1;
                 for (int i = count - 1; i >= 0; i--) Spawn(lane, 9 + i * 12 + (lane % 2) * 4);
                 nextSpawn[lane] = SpawnInterval(lane);
             }
@@ -49,7 +49,7 @@ namespace StreetCrossing.Traffic
         private float SpawnInterval(int lane)
         {
             float interval = sequence.Between(scenario.minimumSpawnInterval, scenario.maximumSpawnInterval);
-            return lane < 2 ? interval : interval / Mathf.Max(0.15f, scenario.turningShare);
+            return lane < scenario.StraightLaneCount ? interval : interval / Mathf.Max(0.15f, scenario.turningShare);
         }
         private void OnPhase(TrafficPhase phase)
         {

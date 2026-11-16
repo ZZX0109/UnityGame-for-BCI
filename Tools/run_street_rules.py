@@ -23,6 +23,8 @@ def main():
     data = args.unity_editor.resolve().parent / 'Data'
     compile_sources(ROOT, args.unity_editor, ROOT / 'Assets/StreetCrossing/Scripts', 'StreetCrossing.Runtime', output, [args.tmp_reference], True)
     groups = {
+        'FourLaneRulesTests': ['FourLaneCentersAreDistinctAndSymmetric', 'SidewalkOffsetMatchesTheNewSpawnAndDestination',
+            'CrossingSafetyRequiresAllFourRoadSectionsBeforeFarSideArrival'],
         'StreetRulesTests': [
             'RedLightBrakingIsGradualAndStopsTheFrontBeforeTheLine', 'QueuedFollowerMaintainsGapAndRestartsWithBoundedAcceleration',
             'AmberAllowsOnlyTheCarTooCloseToStopToFinishItsCommitment',

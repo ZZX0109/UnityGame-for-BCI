@@ -17,7 +17,13 @@ namespace BCIShared.Editor
         {
             // Resources is a project-wide namespace. Reuse a canonical settings asset
             // from another game instead of creating a competing global singleton.
-            if (Resources.Load<TMP_Settings>("TMP Settings")) return;
+            var existing = Resources.Load<TMP_Settings>("TMP Settings");
+            if (existing)
+            {
+                if (AssetDatabase.GetAssetPath(existing).Replace('\\', '/') == SettingsPath)
+                    EnsureLinebreakingAssets(existing);
+                return;
+            }
             foreach (string guid in AssetDatabase.FindAssets("t:TMP_Settings"))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid).Replace('\\', '/');
@@ -47,6 +53,7 @@ namespace BCIShared.Editor
             if (defaultFont != null) defaultFont.objectReferenceValue = null;
             data.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.CreateAsset(settings, SettingsPath);
+            EnsureLinebreakingAssets(settings);
             AssetDatabase.SaveAssets();
             AssetDatabase.ImportAsset(SettingsPath, ImportAssetOptions.ForceSynchronousImport);
         }
@@ -55,8 +62,41 @@ namespace BCIShared.Editor
         {
             EnsureResources();
             if (!Resources.Load<TMP_Settings>("TMP Settings")) throw new InvalidOperationException("A canonical Resources/TMP Settings asset is required before tests or player build.");
+            if (!TMP_Settings.leadingCharacters || !TMP_Settings.followingCharacters)
+                throw new InvalidOperationException("TMP Settings must reference both Asian line-breaking character assets before UI layout runs.");
+            TMP_Settings.LoadLinebreakingRules();
+            if (TMP_Settings.linebreakingRules.leadingCharacters == null || TMP_Settings.linebreakingRules.followingCharacters == null)
+                throw new InvalidOperationException("TMP line-breaking tables could not be loaded.");
             if (!AssetDatabase.LoadAssetAtPath<Shader>("Assets/BCIShared/TMP/Resources/BCIShared/TMP/BCITMPBitmap.shader"))
                 throw new InvalidOperationException("The shared original TMP bitmap shader is missing.");
+        }
+
+        private static void EnsureLinebreakingAssets(TMP_Settings settings)
+        {
+            // The package reads TextAsset.text unconditionally, including for CJK UI.
+            // Use real imported text files. Unity 2022.3 can serialize TextAsset
+            // sub-assets in a form its YAML importer cannot read on the next launch.
+            var data = new SerializedObject(settings);
+            bool changed = SetCharacters(data, "m_leadingCharacters", "LineBreakingLeading.txt");
+            changed |= SetCharacters(data, "m_followingCharacters", "LineBreakingFollowing.txt");
+            if (!changed) return;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static bool SetCharacters(SerializedObject data, string field, string filename)
+        {
+            var property = data.FindProperty(field);
+            if (property == null) throw new InvalidOperationException("Installed TMP is missing required settings field: " + field);
+            string path = "Assets/BCIShared/TMP/Resources/BCIShared/TMP/" + filename;
+            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+            if (!asset) throw new InvalidOperationException("Missing imported TMP line-breaking text: " + path);
+            if (property.objectReferenceValue == asset) return false;
+            // Preserve a deliberately assigned external table; migrate only our old sub-assets.
+            if (property.objectReferenceValue && AssetDatabase.GetAssetPath(property.objectReferenceValue) != SettingsPath) return false;
+            property.objectReferenceValue = asset;
+            return true;
         }
 
         private static void SetBool(SerializedObject data, string name, bool value) { var p = data.FindProperty(name); if (p != null) p.boolValue = value; }

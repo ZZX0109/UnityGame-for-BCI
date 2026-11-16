@@ -9,13 +9,13 @@ namespace StreetCrossing.Traffic
     {
         private IntersectionController intersection;
         private StreetGameManager game;
-        private readonly Renderer[,] vehicleLamps = new Renderer[2, 3];
+        private readonly Renderer[,] vehicleLamps = new Renderer[StreetLayout.StraightLaneCount, 3];
         private readonly Transform[] walkIcons = new Transform[2];
         private readonly Transform[] waitIcons = new Transform[2];
         private readonly Material[] lit = new Material[3];
         private Material off;
         private readonly TextMesh[] pedestrianLabels = new TextMesh[2];
-        private readonly TextMesh[] vehicleLabels = new TextMesh[2];
+        private readonly TextMesh[] vehicleLabels = new TextMesh[StreetLayout.StraightLaneCount];
         public void Initialize(StreetGameManager owner, StreetWorld world, StreetScenarioDefinition scenario)
         {
             game = owner; intersection = owner.Intersection;
@@ -40,22 +40,31 @@ namespace StreetCrossing.Traffic
                 pedestrianLabels[side] = world.Label("", new Vector3(0, 1.73f, -.18f), .035f, "E9E4D3", pole, 0, .64f, .16f);
                 Body(world, pole, "Pedestrian collar", new Vector3(0, 1.5f, 0), new Vector3(.16f, .10f, .16f), "546766", false, .04f);
             }
-            for (int lane = 0; lane < 2; lane++)
+            for (int lane = 0; lane < scenario.StraightLaneCount; lane++)
             {
                 int direction = scenario.DirectionForLane(lane);
                 Transform mast = new GameObject("Vehicle signal lane " + lane).transform; mast.SetParent(transform, false);
-                mast.localPosition = new Vector3(-direction * scenario.stopLineOffset, 0, lane == 0 ? -scenario.roadHalfWidth - .5f : scenario.roadHalfWidth + .5f);
+                float roadside = lane < scenario.StraightLaneCount / 2 ? -scenario.roadHalfWidth - .5f : scenario.roadHalfWidth + .5f;
+                mast.localPosition = new Vector3(-direction * scenario.stopLineOffset, 0, roadside);
                 mast.localRotation = Quaternion.Euler(0, direction * 90, 0);
-                Body(world, mast, "Vehicle pole", new Vector3(0, 2, 0), new Vector3(.1f, 4, .1f), "626D59", true, .045f);
-                Body(world, mast, "Vehicle housing", new Vector3(0, 3.25f, 0), new Vector3(.65f, 1.9f, .32f), "384B3B", true, .16f);
+                float lateral = (roadside - scenario.LaneZ(lane)) * direction;
+                if (lane == 0 || lane == scenario.StraightLaneCount - 1)
+                {
+                    Body(world, mast, "Vehicle pole", new Vector3(0, 2, 0), new Vector3(.1f, 4, .1f), "626D59", true, .045f);
+                    float span = Mathf.Abs(roadside - scenario.LaneZ(lane == 0 ? 1 : scenario.StraightLaneCount - 2));
+                    Body(world, mast, "Overhead signal arm", new Vector3(Mathf.Sign(lateral) * span * .5f, 4.14f, 0), new Vector3(span + .2f, .10f, .10f), "626D59", false, .045f);
+                }
+                // Four overhead heads, two roadside support poles; no support
+                // is placed in a newly occupied vehicle lane.
+                Body(world, mast, "Vehicle housing", new Vector3(lateral, 3.25f, 0), new Vector3(.65f, 1.9f, .32f), "384B3B", true, .16f);
                 for (int lamp = 0; lamp < 3; lamp++)
                 {
                     float y = 3.85f - lamp * .6f;
-                    Body(world, mast, "Vehicle circular bezel", new Vector3(0, y, -.19f), new Vector3(.51f, .51f, .055f), "1E3031", false, .25f);
-                    vehicleLamps[lane, lamp] = Body(world, mast, "Vehicle circular lens " + lamp, new Vector3(0, y, -.225f), new Vector3(.42f, .42f, .035f), "172B2C", false, .21f);
-                    Body(world, mast, "Vehicle lens hood", new Vector3(0, y + .27f, -.24f), new Vector3(.55f, .055f, .30f), "293C3D", false, .025f);
+                    Body(world, mast, "Vehicle circular bezel", new Vector3(lateral, y, -.19f), new Vector3(.51f, .51f, .055f), "1E3031", false, .25f);
+                    vehicleLamps[lane, lamp] = Body(world, mast, "Vehicle circular lens " + lamp, new Vector3(lateral, y, -.225f), new Vector3(.42f, .42f, .035f), "172B2C", false, .21f);
+                    Body(world, mast, "Vehicle lens hood", new Vector3(lateral, y + .27f, -.24f), new Vector3(.55f, .055f, .30f), "293C3D", false, .025f);
                 }
-                vehicleLabels[lane] = world.Label("", new Vector3(0, 2.12f, -.22f), .05f, "FAF1D9", mast, 0, .55f, .22f);
+                vehicleLabels[lane] = world.Label("", new Vector3(lateral, 2.12f, -.22f), .05f, "FAF1D9", mast, 0, .55f, .22f);
             }
             intersection.PhaseChanged += OnPhase; Refresh();
         }
@@ -97,7 +106,7 @@ namespace StreetCrossing.Traffic
                 pedestrianLabels[side].text = walk ? "WALK / 通行" : clearing ? "CLEAR / 清空" : "WAIT / 等待";
             }
             int active = intersection.Phase == TrafficPhase.VehicleGreen ? 2 : intersection.Phase == TrafficPhase.VehicleAmber ? 1 : 0;
-            for (int lane = 0; lane < 2; lane++)
+            for (int lane = 0; lane < vehicleLamps.GetLength(0); lane++)
             {
                 for (int lamp = 0; lamp < 3; lamp++) vehicleLamps[lane, lamp].sharedMaterial = active == lamp ? lit[lamp] : off;
                 vehicleLabels[lane].text = active == 2 ? "GO" : active == 1 ? "AMBER" : "STOP";

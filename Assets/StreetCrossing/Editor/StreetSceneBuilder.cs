@@ -71,9 +71,8 @@ namespace StreetCrossing.Editor
         [MenuItem("Street Crossing/Add S01 To Build Settings")]
         public static void AddToBuildSettings()
         {
-            ValidateAssets(); var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-            if (!scenes.Exists(s => s.path == ScenePath)) scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
-            EditorBuildSettings.scenes = scenes.ToArray();
+            ValidateAssets();
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         }
         [MenuItem("Street Crossing/Build S01 Windows x64")]
         public static void BuildWindows()

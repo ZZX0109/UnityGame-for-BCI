@@ -72,9 +72,11 @@ namespace StreetCrossing.UI
             guide = ui.Rect("Kerb and feedback guide", hud); guide.anchorMin = guide.anchorMax = new Vector2(0.5f, 0); guide.pivot = new Vector2(0.5f, 0); guide.anchoredPosition = new Vector2(0, 48);
             ui.Image(guide, new Color(0.97f, 0.95f, 0.88f, 0.94f)); StreetUIElements.Vertical(guide, 16, 4);
             guideTitle = Text("Guidance title", guide, "", 20); guideBody = Text("Guidance detail", guide, "", 17, StreetUIElements.Muted);
-            controls = Text("Controls", hud, "WASD 行走   鼠标观察   Shift 快步走   Esc 暂停", 15, Color.white);
-            controls.alignment = TextAlignmentOptions.Midline; controls.rectTransform.anchorMin = new Vector2(0, 0); controls.rectTransform.anchorMax = new Vector2(1, 0);
-            controls.rectTransform.offsetMin = new Vector2(24, 12); controls.rectTransform.offsetMax = new Vector2(-24, 38);
+            RectTransform controlsBar = ui.Rect("Controls contrast bar", hud); controlsBar.anchorMin = new Vector2(0, 0); controlsBar.anchorMax = new Vector2(1, 0);
+            controlsBar.offsetMin = new Vector2(24, 8); controlsBar.offsetMax = new Vector2(-24, 42);
+            ui.Image(controlsBar, StreetUIElements.Paper);
+            controls = Text("Controls", controlsBar, "WASD 行走   鼠标观察   Shift 快步走   Esc 暂停", 18, StreetUIElements.Ink);
+            controls.alignment = TextAlignmentOptions.Midline; StreetUIElements.Stretch(controls.rectTransform, 8, 8, 4, 4);
             marker = ui.Rect("World destination marker", hud); marker.anchorMin = marker.anchorMax = new Vector2(0.5f, 0.5f); marker.pivot = new Vector2(0.5f, 0.5f); marker.sizeDelta = new Vector2(228, 62);
             ui.Image(marker, new Color(0.18f, 0.3f, 0.23f, 0.94f)); markerText = Text("Destination direction", marker, "", 17, Color.white);
             markerText.alignment = TextAlignmentOptions.Midline; StreetUIElements.Stretch(markerText.rectTransform, 12, 12, 6, 6);

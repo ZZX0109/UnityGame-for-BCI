@@ -7,7 +7,7 @@ namespace StreetCrossing.Presentation
     public static class StreetDetailMesh
     {
         /// <summary>A true five-sided corner footprint, not a rectangular shell hidden by a diagonal door.</summary>
-        public static Mesh ChamferedCorner(Vector3 size, float cut)
+        public static Mesh ChamferedCorner(Vector3 size, float cut, bool mirrorX = false)
         {
             cut = Mathf.Clamp(cut, .1f, Mathf.Min(size.x, size.z) * .45f);
             Vector2[] outline = { new Vector2(-size.x * .5f, size.z * .5f), new Vector2(size.x * .5f, size.z * .5f),
@@ -28,6 +28,11 @@ namespace StreetCrossing.Presentation
                 foreach (Vector2 p in outline) { vertices.Add(new Vector3(p.x, y, p.y)); uv.Add(new Vector2(p.x / size.x + .5f, p.y / size.z + .5f)); }
                 for (int i = 0; i < outline.Length; i++)
                 { int a = first + i + 1, b = first + (i + 1) % outline.Length + 1; triangles.Add(first); triangles.Add(face == 0 ? b : a); triangles.Add(face == 0 ? a : b); }
+            }
+            if (mirrorX)
+            {
+                for (int i = 0; i < vertices.Count; i++) vertices[i] = new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z);
+                for (int i = 0; i < triangles.Count; i += 3) { int temporary = triangles[i + 1]; triangles[i + 1] = triangles[i + 2]; triangles[i + 2] = temporary; }
             }
             Mesh mesh = new Mesh { name = "Original chamfered street corner" }; mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0);
             mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); return mesh;

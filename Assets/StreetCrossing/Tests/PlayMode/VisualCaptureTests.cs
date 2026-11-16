@@ -14,6 +14,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -178,6 +179,18 @@ namespace StreetCrossing.Tests.PlayMode
             Time.timeScale = 0f;
             yield return null;
             yield return null;
+#if UNITY_EDITOR
+            // The first Game-view render can start asynchronous shader variants.
+            // Wait for rendered, compile-free frames rather than saving cyan placeholders.
+            float shaderDeadline = Time.realtimeSinceStartup + 45f;
+            int readyFrames = 0;
+            while (readyFrames < 5)
+            {
+                yield return new WaitForEndOfFrame();
+                readyFrames = ShaderUtil.anythingCompiling ? 0 : readyFrames + 1;
+                Assert.Less(Time.realtimeSinceStartup, shaderDeadline, "Shader compilation did not settle before visual capture.");
+            }
+#endif
             Canvas.ForceUpdateCanvases();
             yield return new WaitForEndOfFrame();
             pendingTexture = ScreenCapture.CaptureScreenshotAsTexture();

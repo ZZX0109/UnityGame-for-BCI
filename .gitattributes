@@ -11,3 +11,7 @@
 
 # Keep compiler/Editor evidence bytes and diagnostic spacing exactly as emitted.
 Validation/Evidence-*/**/*.log -text -whitespace
+
+# Preserve exact bytes of the renderer regressions already bound to the final native fingerprint.
+Assets/StreetCrossing/Tests/EditMode/StreetMaterialPersistenceTests.cs -text
+Assets/StreetCrossing/Tests/PlayMode/ShopSignVisibilityTests.cs -text

@@ -8,16 +8,17 @@ namespace StreetCrossing.Tests.EditMode
 {
     public sealed class StreetVisualProfileTests
     {
-        [TestCase("S01", StreetVisualIdentity.Residential, 3101, 2)]
+        [TestCase("S01", StreetVisualIdentity.Residential, 3101, 4)]
         [TestCase("S02", StreetVisualIdentity.Commercial, 3202, 10)]
         [TestCase("S03", StreetVisualIdentity.Corner, 3303, 8)]
-        public void ExplicitVisualIdentityKeepsExistingRoadAndTrafficBaseline(string id, StreetVisualIdentity identity, int seed, int cars)
+        public void ExplicitVisualIdentityUsesApprovedFourLaneBaselineAndStableSeed(string id, StreetVisualIdentity identity, int seed, int cars)
         {
             var scenario = AssetDatabase.LoadAssetAtPath<StreetScenarioDefinition>("Assets/StreetCrossing/Scenarios/" + id + ".asset");
             Assert.That(scenario, Is.Not.Null); Assert.That(scenario.visualProfile, Is.Not.Null);
             Assert.DoesNotThrow(() => scenario.visualProfile.Validate(id)); Assert.That(scenario.visualProfile.identity, Is.EqualTo(identity));
             Assert.That(scenario.seed, Is.EqualTo(seed)); Assert.That(scenario.maximumVehicles, Is.EqualTo(cars));
-            Assert.That(scenario.roadHalfWidth, Is.EqualTo(3.3f)); Assert.That(scenario.laneOffset, Is.EqualTo(1.65f));
+            Assert.That(scenario.roadHalfWidth, Is.EqualTo(StreetLayout.RoadHalfWidth)); Assert.That(scenario.StraightLaneCount, Is.EqualTo(4));
+            Assert.That(scenario.laneOffset, Is.EqualTo(1.65f));
             Assert.That(scenario.crosswalkHalfWidth, Is.EqualTo(1.8f)); Assert.That(scenario.stopLineOffset, Is.EqualTo(4.6f));
         }
 

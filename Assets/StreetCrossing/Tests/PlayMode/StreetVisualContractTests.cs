@@ -26,7 +26,7 @@ namespace StreetCrossing.Tests.PlayMode
                 Assert.That(details.GetComponentsInChildren<Collider>(true), Is.Empty, "Decoration must not silently change route or observation occlusion.");
                 Assert.That(details.GetComponentsInChildren<MeshRenderer>(true).Length, Is.GreaterThan(100));
                 Transform signals = environment.Find("Intersection Signals");
-                Assert.That(signals.GetComponentsInChildren<Collider>(true).Length, Is.EqualTo(8), "Keep only the original four poles and four housings as blockers.");
+                Assert.That(signals.GetComponentsInChildren<Collider>(true).Length, Is.EqualTo(10), "Four overhead vehicle heads share two roadside supports; pedestrian poles/housings stay outside the crossing.");
                 foreach (Transform child in signals)
                 {
                     if (!child.name.StartsWith("Pedestrian signal")) continue;
@@ -46,7 +46,7 @@ namespace StreetCrossing.Tests.PlayMode
                 if (index == 2)
                 {
                     Transform blocker = environment.Find("Opaque bus information shelter - changes visibility");
-                    Assert.That(blocker, Is.Not.Null); Assert.That(blocker.localPosition, Is.EqualTo(new Vector3(-2.7f, 1.1f, -4.1f)));
+                    Assert.That(blocker, Is.Not.Null); Assert.That(blocker.localPosition, Is.EqualTo(new Vector3(-2.7f, 1.1f, StreetLayout.SidewalkZ(-4.1f))));
                     Assert.That(blocker.localScale, Is.EqualTo(new Vector3(.9f, 2.2f, 1.4f)));
                     Assert.That(blocker.GetComponent<Collider>().enabled, Is.True);
                 }

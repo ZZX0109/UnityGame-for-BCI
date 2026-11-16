@@ -14,7 +14,7 @@ namespace StreetCrossing.Presentation
             StreetVisualProfile p = scenario.visualProfile;
             ShopWindows(root, world, p);
             Shelter(root, world, p, new Vector3(7, 0, scenario.roadHalfWidth + 2));
-            Bench(root, world, p, new Vector3(6.8f, 0, -7.5f));
+            Bench(root, world, p, new Vector3(6.8f, 0, StreetLayout.SidewalkZ(-7.5f)));
             KerbDetails(root, world, scenario.roadHalfWidth);
             if (p.identity == StreetVisualIdentity.Residential) GardenEntrance(root, world, p);
             else if (p.identity == StreetVisualIdentity.Commercial) MarketArcade(root, world, p);
@@ -30,7 +30,7 @@ namespace StreetCrossing.Presentation
 
         private static void ShopWindows(Transform parent, StreetWorld w, StreetVisualProfile p)
         {
-            Transform shop = Group(parent, "Recessed market windows", Vector3.zero);
+            Transform shop = Group(parent, "Recessed market windows", Vector3.forward * StreetLayout.SidewalkOffset);
             for (int bay = -1; bay <= 1; bay++)
             {
                 float x = bay * 3;
@@ -59,8 +59,8 @@ namespace StreetCrossing.Presentation
                 Renderer highlight = Part(shop, w, "Subtle window reflection strip", new Vector3(x - .92f, 1.65f, 9.55f), new Vector3(.055f, 1.65f, .012f), "A7C1B8", .015f);
                 highlight.transform.localRotation = Quaternion.Euler(0, 0, -12);
             }
-            Part(shop, w, "Raised market fascia", new Vector3(0, 3.8f, 9.68f), new Vector3(10.2f, .12f, .10f), p.secondary);
-            w.Label(p.shopCaption, new Vector3(0, 2.88f, 9.59f), .045f, "F3EBDD", shop, 0, 7, .22f);
+            Part(shop, w, "Raised market fascia", new Vector3(0, 4.34f, 9.68f), new Vector3(10.2f, .12f, .10f), p.secondary);
+            w.Label(p.shopCaption, new Vector3(0, 3.43f, 9.59f), .045f, "F3EBDD", shop, 0, 7, .16f);
         }
 
         private static void Shelter(Transform parent, StreetWorld w, StreetVisualProfile p, Vector3 position)
@@ -138,7 +138,7 @@ namespace StreetCrossing.Presentation
 
         private static void GardenEntrance(Transform parent, StreetWorld w, StreetVisualProfile p)
         {
-            Transform entrance = Group(parent, "Garden walk pergola", new Vector3(7.5f, 0, -8.7f));
+            Transform entrance = Group(parent, "Garden walk pergola", new Vector3(7.5f, 0, StreetLayout.SidewalkZ(-8.7f)));
             for (int side = -1; side <= 1; side += 2)
                 Part(entrance, w, "Pergola column", new Vector3(side * 1.8f, 1.65f, 0), new Vector3(.18f, 3.3f, .18f), p.accent);
             Part(entrance, w, "Pergola lintel", new Vector3(0, 3.3f, 0), new Vector3(4.1f, .25f, .25f), p.accent);
@@ -149,19 +149,18 @@ namespace StreetCrossing.Presentation
 
         private static void MarketArcade(Transform parent, StreetWorld w, StreetVisualProfile p)
         {
-            Transform market = Group(parent, "Commercial street canopy row", new Vector3(13, 0, 8.6f));
-            for (int bay = -1; bay <= 1; bay++)
-            {
-                Part(market, w, "Market projecting awning", new Vector3(bay * 3.0f, 2.85f, 0), new Vector3(2.8f, .18f, 1.4f), p.accent);
-                for (int stripe = -2; stripe <= 2; stripe++)
-                    Part(market, w, "Market canopy stripe", new Vector3(bay * 3 + stripe * .48f, 2.95f, 0), new Vector3(.22f, .018f, 1.35f), "E8D6AE", .008f);
-            }
-            w.Label(p.districtCaption, new Vector3(0, 3.45f, -.15f), .075f, p.accent, market, 0, 7.8f, .45f);
+            Transform market = Group(parent, "Commercial street canopy row", new Vector3(13, 0, StreetLayout.SidewalkZ(8.6f)));
+            // The reusable shop already supplies the 3.36m canopy. A second lower canopy and its old 3.45m text
+            // intersected that structure; keep one canopy and mount the district sign clearly above it.
+            for (int support = -1; support <= 1; support += 2)
+                Part(market, w, "District sign bracket", new Vector3(support * 3.1f, 3.68f, -.12f), new Vector3(.065f, .65f, .065f), p.metal);
+            Part(market, w, "Raised district sign backing", new Vector3(0, 4.0f, -.12f), new Vector3(7.9f, .55f, .075f), p.facade);
+            w.Label(p.districtCaption, new Vector3(0, 4.0f, -.20f), .075f, p.accent, market, 0, 7.5f, .42f);
         }
 
         private static void CornerLandmark(Transform parent, StreetWorld w, StreetVisualProfile p)
         {
-            Transform corner = Group(parent, "Corner square wayfinding", new Vector3(6, 0, -8.9f));
+            Transform corner = Group(parent, "Corner square wayfinding", new Vector3(6, 0, StreetLayout.SidewalkZ(-8.9f)));
             Part(corner, w, "Wayfinding pylon", new Vector3(0, 1.6f, 0), new Vector3(1.45f, 3.2f, .28f), p.metal, .16f);
             Part(corner, w, "Wayfinding inset", new Vector3(0, 1.7f, -.16f), new Vector3(1.23f, 2.7f, .025f), p.facade);
             for (int line = 0; line < 4; line++)

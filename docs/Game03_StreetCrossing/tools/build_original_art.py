@@ -89,7 +89,7 @@ Material:
         m_Scale: {x: 4, y: 4}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: NORMAL
+        m_Texture: NORMAL_TEXTURE
         m_Scale: {x: 4, y: 4}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -100,11 +100,12 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-'''.replace('NAME',name).replace('ALBEDO',texture_ref(name+'Albedo.png')).replace('NORMAL',texture_ref(name+'Normal.png')).replace('GLOSS',str(1-roughness))
+'''.replace('NAME',name).replace('ALBEDO',texture_ref(name+'Albedo.png')).replace('NORMAL_TEXTURE',texture_ref(name+'Normal.png')).replace('GLOSS',str(1-roughness))
  (RES/(name+'.mat')).write_text(text, encoding="utf-8", newline="\n")
 def material(name,color,metal=0,gloss=.25):
  text=(GAME/'Materials/StreetSurface.mat').read_text(encoding="utf-8").replace('m_Name: StreetSurface','m_Name: '+name)
  import re
+ text=re.sub(r'm_LightmapFlags: \d+', 'm_LightmapFlags: 4', text)
  text=re.sub(r'- _Color: .*', '- _Color: {r: %.4f, g: %.4f, b: %.4f, a: 1}'%color,text)
  text=re.sub(r'- _Metallic: .*','- _Metallic: '+str(metal),text);text=re.sub(r'- _Glossiness: .*','- _Glossiness: '+str(gloss),text)
  p=RES/(name+'.mat');p.write_text(text, encoding="utf-8", newline="\n");return p

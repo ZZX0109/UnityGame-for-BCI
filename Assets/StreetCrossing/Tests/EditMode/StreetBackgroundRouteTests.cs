@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using StreetCrossing.Presentation;
+using StreetCrossing.Core;
 using UnityEngine;
 
 namespace StreetCrossing.Tests.EditMode
@@ -18,8 +19,8 @@ namespace StreetCrossing.Tests.EditMode
             {
                 Vector3 point = route.Position(sample * .1f);
                 Assert.That(point.x, Is.GreaterThan(4.3f), "Keep the required approach/destination/observation corridor empty, including body width.");
-                Assert.That(Mathf.Abs(point.z), Is.GreaterThan(3.3f + .45f), "An actor must never enter the traffic roadway.");
-                Assert.That(Mathf.Abs(point.x + 9), Is.GreaterThan(3.3f + .45f), "Keep the entire S03 side approach empty.");
+                Assert.That(Mathf.Abs(point.z), Is.GreaterThan(StreetLayout.RoadHalfWidth + .45f), "An actor must never enter the traffic roadway.");
+                Assert.That(Mathf.Abs(point.x + 9), Is.GreaterThan(StreetLayout.SideRoadHalfWidth + .45f), "Keep the entire S03 side approach empty.");
                 Assert.That(point.x, Is.LessThan(36), "Keep actors inside the original visible sidewalk segment.");
             }
         }

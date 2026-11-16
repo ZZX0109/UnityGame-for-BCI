@@ -26,11 +26,11 @@ MonoBehaviour:
     vehicleEntry: 0
     pedestrianEntry: 0
   - phase: 3
-    duration: 15
+    duration: 20
     vehicleEntry: 0
     pedestrianEntry: 1
   - phase: 4
-    duration: 6
+    duration: 8
     vehicleEntry: 0
     pedestrianEntry: 0
   - phase: 5

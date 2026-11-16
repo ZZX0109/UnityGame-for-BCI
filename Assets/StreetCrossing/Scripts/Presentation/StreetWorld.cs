@@ -12,21 +12,42 @@ namespace StreetCrossing.Presentation
         private readonly Transform root;
         private readonly Material source;
         private readonly Font font;
+        private Material worldTextMaterial;
         private readonly StreetAssetLibrary modules = new StreetAssetLibrary();
         private readonly Dictionary<string, Mesh> detailMeshes = new Dictionary<string, Mesh>();
         private StreetVisualProfile profile;
         public Transform VisualDetailsRoot { get; private set; }
         private readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
         private readonly List<Mesh> combinedMeshes = new List<Mesh>();
+        private List<Vector2[]> turningAprons;
         private readonly List<CrossingZone> zones = new List<CrossingZone>();
         public IReadOnlyList<CrossingZone> Zones => zones;
         public Vector3[] LeftRoadTargets { get; private set; }
         public Vector3[] RightRoadTargets { get; private set; }
+        private readonly Vector3[][] laneRoadTargets = new Vector3[StreetLayout.StraightLaneCount][];
+        public Vector3[] RoadTargetsForLane(int lane) => laneRoadTargets[lane];
         public Transform TrafficRoot { get; private set; }
         public Material AsphaltMaterial => modules.Asphalt;
         public Material PavingMaterial => modules.Paving;
         public Material GlassMaterial => Material("667F7A", .72f);
-        public StreetWorld(Transform parent, Material referencedSurface, Font uiFont) { root = parent; source = referencedSurface; font = uiFont; }
+        public StreetWorld(Transform parent, Material referencedSurface, Font uiFont)
+        {
+            root = parent; source = referencedSurface; font = uiFont;
+            Font.textureRebuilt += RefreshWorldTextAtlas;
+        }
+        private void RefreshWorldTextAtlas(Font rebuilt)
+        {
+            if (rebuilt == font && worldTextMaterial && font.material)
+                worldTextMaterial.mainTexture = font.material.mainTexture;
+        }
+        private Material WorldTextMaterial()
+        {
+            if (worldTextMaterial) return worldTextMaterial;
+            Shader shader = Resources.Load<Shader>("StreetCrossing/WorldText");
+            if (!shader) throw new System.InvalidOperationException("The depth-tested street text shader is missing.");
+            worldTextMaterial = new Material(shader) { name = "Street world text (depth tested)", mainTexture = font.material.mainTexture };
+            return worldTextMaterial;
+        }
         public Material Material(string hex, float smoothness = 0.18f)
         {
             string key = hex + ":" + smoothness.ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
@@ -37,6 +58,9 @@ namespace StreetCrossing.Presentation
         }
         public void Dispose()
         {
+            Font.textureRebuilt -= RefreshWorldTextAtlas;
+            if (worldTextMaterial) Object.Destroy(worldTextMaterial);
+            worldTextMaterial = null;
             foreach (Material material in materials.Values) Object.Destroy(material); materials.Clear();
             foreach (Mesh mesh in detailMeshes.Values) Object.Destroy(mesh); detailMeshes.Clear();
             foreach (Mesh mesh in combinedMeshes) Object.Destroy(mesh); combinedMeshes.Clear();
@@ -88,10 +112,10 @@ namespace StreetCrossing.Presentation
             GameObject go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(parent, false); go.transform.localPosition = position;
             go.GetComponent<MeshFilter>().sharedMesh = mesh; Renderer renderer = go.GetComponent<Renderer>(); renderer.sharedMaterial = Material(color, smoothness); return renderer;
         }
-        public Mesh CornerMesh(Vector3 size, float cut)
+        public Mesh CornerMesh(Vector3 size, float cut, bool mirrorX = false)
         {
-            string key = "Corner:" + size.ToString("F3") + ":" + cut.ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
-            if (!detailMeshes.TryGetValue(key, out Mesh mesh)) { mesh = StreetDetailMesh.ChamferedCorner(size, cut); detailMeshes.Add(key, mesh); }
+            string key = "Corner:" + size.ToString("F3") + ":" + cut.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + ":" + mirrorX;
+            if (!detailMeshes.TryGetValue(key, out Mesh mesh)) { mesh = StreetDetailMesh.ChamferedCorner(size, cut, mirrorX); detailMeshes.Add(key, mesh); }
             return mesh;
         }
         private GameObject Shape(PrimitiveType type, string name, Transform parent, Vector3 p, Vector3 scale, string color, bool collider = true)
@@ -110,12 +134,14 @@ namespace StreetCrossing.Presentation
             TextMesh mesh = go.AddComponent<TextMesh>(); mesh.font = font; mesh.fontSize = 80; mesh.characterSize = size;
             mesh.text = text; mesh.anchor = TextAnchor.MiddleCenter; mesh.alignment = TextAlignment.Center;
             ColorUtility.TryParseHtmlString("#" + color, out Color c); mesh.color = c;
-            go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+            // Dynamic Font's default GUI material draws through walls. World signs must obey scene depth.
+            go.GetComponent<MeshRenderer>().sharedMaterial = WorldTextMaterial();
             WorldLabelFit fit = go.AddComponent<WorldLabelFit>(); fit.maximumWidth = maxWidth; fit.maximumHeight = maxHeight; return mesh;
         }
         public void Build(StreetScenarioDefinition s)
         {
             profile = s.visualProfile; profile.Validate(s.scenarioId);
+            turningAprons = StreetJunctionGeometry.TurnAprons(s);
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.78f, 0.82f, 0.83f);
             RenderSettings.ambientEquatorColor = new Color(0.64f, 0.61f, 0.53f);
@@ -124,9 +150,15 @@ namespace StreetCrossing.Presentation
             GameObject sun = new GameObject("Soft morning sunlight"); sun.transform.SetParent(root, false); sun.transform.rotation = Quaternion.Euler(43, -32, 0);
             Light light = sun.AddComponent<Light>(); light.type = LightType.Directional; light.color = new Color(1, 0.92f, 0.79f); light.intensity = 1.05f; light.shadows = LightShadows.Soft; light.shadowStrength = 0.55f;
             float width = s.roadHalfWidth;
-            float leftApproachZ = s.DirectionForLane(0) > 0 ? -s.laneOffset : s.laneOffset;
+            float leftApproachZ = s.DirectionForLane(0) > 0 ? s.LaneZ(0) : s.LaneZ(s.StraightLaneCount - 1);
             LeftRoadTargets = new[] { new Vector3(-14, 1.1f, leftApproachZ), new Vector3(-20, 1.1f, leftApproachZ), new Vector3(-28, 1.1f, leftApproachZ) };
             RightRoadTargets = new[] { new Vector3(14, 1.1f, -leftApproachZ), new Vector3(20, 1.1f, -leftApproachZ), new Vector3(28, 1.1f, -leftApproachZ) };
+            for (int lane = 0; lane < s.StraightLaneCount; lane++)
+            {
+                int direction = s.DirectionForLane(lane);
+                float z = s.LaneZ(lane);
+                laneRoadTargets[lane] = new[] { new Vector3(-14 * direction, 1.1f, z), new Vector3(-20 * direction, 1.1f, z), new Vector3(-28 * direction, 1.1f, z) };
+            }
             Box("Road asphalt", new Vector3(0, -0.16f, 0), new Vector3(s.roadHalfLength * 2 + 4, 0.3f, width * 2), "53534D");
             for (int side = -1; side <= 1; side += 2)
             {
@@ -137,7 +169,7 @@ namespace StreetCrossing.Presentation
                     float a = end < 0 ? -43.9f : 2.1f, b = end < 0 ? -2.1f : 43.9f;
                     float junction = -9 * s.DirectionForLane(0);
                     if (s.turningTraffic && junction > a && junction < b)
-                    { KerbSegment(a, junction - 3.4f, side * (width + 0.08f)); KerbSegment(junction + 3.4f, b, side * (width + 0.08f)); }
+                    { Vector2 opening = StreetJunctionGeometry.CurbOpening(s, side, turningAprons); KerbSegment(a, opening.x, side * (width + 0.08f)); KerbSegment(opening.y, b, side * (width + 0.08f)); }
                     else KerbSegment(a, b, side * (width + 0.08f));
                 }
                 Box("Tactile waiting paving", new Vector3(0, 0.008f, side * (width + 0.55f)), new Vector3(s.crosswalkHalfWidth * 2, 0.012f, 0.65f), "CFAD62", false);
@@ -148,18 +180,18 @@ namespace StreetCrossing.Presentation
                 for (int b = -2; b <= 2; b++)
                 {
                     if ((side == 1 && b == 0) || (s.turningTraffic && b == -s.DirectionForLane(0))) continue;
-                    Building(new Vector3(b * 13, 0, side * 11.3f), side, 6.8f + ((b + 3) % 3) * 0.9f, (b + 3) % 2 == 0 ? "D9CBB7" : "D5BA9A");
+                    Building(new Vector3(b * 13, 0, StreetLayout.SidewalkZ(side * 11.3f)), side, 6.8f + ((b + 3) % 3) * 0.9f, (b + 3) % 2 == 0 ? "D9CBB7" : "D5BA9A");
                 }
-                for (int x = -26; x <= 26; x += 13) if (Mathf.Abs(x) > 4 && (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6)) { Tree(new Vector3(x, 0, side * 5.5f)); Lamp(new Vector3(x + 3.5f, 0, side * 4.7f)); }
-                Box("Street end pedestrian barrier", new Vector3(39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
-                Box("Street end pedestrian barrier", new Vector3(-39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
+                for (int x = -26; x <= 26; x += 13) if (Mathf.Abs(x) > 4 && (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6)) { Tree(new Vector3(x, 0, StreetLayout.SidewalkZ(side * 5.5f))); Lamp(new Vector3(x + 3.5f, 0, StreetLayout.SidewalkZ(side * 4.7f))); }
+                Box("Street end pedestrian barrier", new Vector3(39, 0.65f, StreetLayout.SidewalkZ(side * 6.3f)), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
+                Box("Street end pedestrian barrier", new Vector3(-39, 0.65f, StreetLayout.SidewalkZ(side * 6.3f)), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
             }
-            for (int n = -4; n <= 4; n++) Box("Crosswalk stripe", new Vector3(0, 0.002f, n * 0.7f), new Vector3(s.crosswalkHalfWidth * 2, 0.003f, 0.35f), "ECE9DA", false);
-            for (int n = -13; n <= 13; n++) if (Mathf.Abs(n) > 1) Box("Centre line dash", new Vector3(n * 3, 0.004f, 0), new Vector3(1.6f, 0.018f, 0.1f), "E6C16C", false);
-            for (int lane = 0; lane < 2; lane++)
+            for (float z = -width + .5f; z < width - .3f; z += .7f) Box("Crosswalk stripe", new Vector3(0, .002f, z), new Vector3(s.crosswalkHalfWidth * 2, .003f, .35f), "ECE9DA", false);
+            BuildLaneMarkings(s);
+            for (int lane = 0; lane < s.StraightLaneCount; lane++)
             {
-                int direction = s.DirectionForLane(lane); float z = lane == 0 ? -s.laneOffset : s.laneOffset;
-                Box("Vehicle stop line", new Vector3(-direction * s.stopLineOffset, 0.005f, z), new Vector3(0.22f, 0.02f, 3.05f), "F0ECDC", false);
+                int direction = s.DirectionForLane(lane); float z = s.LaneZ(lane);
+                Box("Vehicle stop line", new Vector3(-direction * s.stopLineOffset, 0.005f, z), new Vector3(0.22f, 0.02f, StreetLayout.LaneWidth - .25f), "F0ECDC", false);
                 Box("Lane direction shaft", new Vector3(-direction * 11, 0.005f, z), new Vector3(1.4f, 0.02f, 0.15f), "D7D4C6", false);
                 for (int edge = -1; edge <= 1; edge += 2)
                 {
@@ -176,8 +208,8 @@ namespace StreetCrossing.Presentation
             if (s.turningTraffic) BuildSideJunction(s);
             if (s.kerbOcclusion)
             {
-                Box("Opaque bus information shelter - changes visibility", new Vector3(-2.7f, 1.1f, -4.1f), new Vector3(0.9f, 2.2f, 1.4f), "6E7F62");
-                Label("视线受阻时\n先调整站位", new Vector3(-2.7f, 1.35f, -4.83f), 0.04f, "FAF1D9", null, 0, 0.75f, 0.8f);
+                Box("Opaque bus information shelter - changes visibility", new Vector3(-2.7f, 1.1f, StreetLayout.SidewalkZ(-4.1f)), new Vector3(0.9f, 2.2f, 1.4f), "6E7F62");
+                Label("视线受阻时\n先调整站位", new Vector3(-2.7f, 1.35f, StreetLayout.SidewalkZ(-4.83f)), 0.04f, "FAF1D9", null, 0, 0.75f, 0.8f);
             }
             Shop(); BusStop(new Vector3(7, 0, width + 2));
             VisualDetailsRoot = new GameObject("Visual details - " + profile.identity).transform; VisualDetailsRoot.SetParent(root, false);
@@ -187,12 +219,11 @@ namespace StreetCrossing.Presentation
             BuildFurnitureBounds(s);
             StreetBackgroundPopulation population = new GameObject("Background population").AddComponent<StreetBackgroundPopulation>();
             population.transform.SetParent(VisualDetailsRoot, false); population.Initialize(root.GetComponentInParent<Core.StreetGameManager>(), this, s);
-            Inspectable(Box("Start notice", new Vector3(-2.8f, 1.2f, -7.7f), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA"), "过街练习", "沿人行道到路沿，观察左右来车和行人信号。确认车流停稳、行人绿灯后，从斑马线前往对面便利店。");
-            Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, -7.79f), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
-            Label("目的地", new Vector3(0, 2.7f, 9.48f), 0.07f, "2A6D50");
+            Inspectable(Box("Start notice", new Vector3(-2.8f, 1.2f, StreetLayout.SidewalkZ(-7.7f)), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA"), "过街练习", "沿人行道到路沿，观察左右来车和行人信号。确认车流停稳、行人绿灯后，从斑马线前往对面便利店。");
+            Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, StreetLayout.SidewalkZ(-7.79f)), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
             Box("Destination welcome mat", s.destination + new Vector3(0, 0.008f, 0), new Vector3(2.7f, 0.02f, 1.2f), "80946F", false);
             TrafficRoot = new GameObject("Vehicle routes and pool").transform; TrafficRoot.SetParent(root, false);
-            Zone(CrossingRegion.Approach, new Vector3(0, 0.9f, -6.9f), new Vector3(6, 3, 5.5f));
+            Zone(CrossingRegion.Approach, new Vector3(0, 0.9f, StreetLayout.SidewalkZ(-6.9f)), new Vector3(6, 3, 5.5f));
             Zone(CrossingRegion.Kerb, new Vector3(0, 0.9f, -width - 0.45f), new Vector3(4.1f, 3, 1.1f));
             // Entry includes the near half-metre of roadway, sampled before conflict in the evaluator.
             Zone(CrossingRegion.Entry, new Vector3(0, 0.9f, -width), new Vector3(s.crosswalkHalfWidth * 2, 3, 0.9f));
@@ -204,18 +235,67 @@ namespace StreetCrossing.Presentation
         }
         private void KerbSegment(float a, float b, float z)
         { if (b > a) Box("Kerb beyond ramp", new Vector3((a + b) * 0.5f, 0.02f, z), new Vector3(b - a, 0.16f, 0.18f), "E6DDC8"); }
+        private void BuildLaneMarkings(StreetScenarioDefinition s)
+        {
+            for (int boundary = 1; boundary < s.StraightLaneCount; boundary++)
+            {
+                float z = -s.roadHalfWidth + boundary * StreetLayout.LaneWidth;
+                if (boundary == s.StraightLaneCount / 2)
+                {
+                    foreach (Vector2 segment in new[] { new Vector2(-s.roadHalfLength, -2.4f), new Vector2(2.4f, s.roadHalfLength) })
+                    {
+                        float junction = -9 * s.DirectionForLane(0);
+                        if (s.turningTraffic && junction > segment.x && junction < segment.y)
+                        { CentreLine(segment.x, junction - StreetLayout.SideRoadHalfWidth - .1f); CentreLine(junction + StreetLayout.SideRoadHalfWidth + .1f, segment.y); }
+                        else CentreLine(segment.x, segment.y);
+                    }
+                }
+                else for (int n = -13; n <= 13; n++)
+                    if (Mathf.Abs(n) > 1 && (!s.turningTraffic || Mathf.Abs(n * 3 + 9 * s.DirectionForLane(0)) > 4.3f))
+                        Box("Same-direction lane dash", new Vector3(n * 3, .004f, z), new Vector3(1.6f, .008f, .10f), "ECE9DA", false);
+            }
+        }
+        private void CentreLine(float a, float b)
+        {
+            if (b <= a) return;
+            for (int side = -1; side <= 1; side += 2)
+                Box("Double centre line", new Vector3((a + b) * .5f, .004f, side * .08f), new Vector3(b - a, .008f, .055f), "D7B569", false);
+        }
         private void BuildSideJunction(StreetScenarioDefinition s)
         {
             float x = -9 * s.DirectionForLane(0);
-            Box("S03 intersecting side street", new Vector3(x, 0.008f, 0), new Vector3(6.6f, 0.025f, 78), "53534D");
+            Box("S03 intersecting side street", new Vector3(x, 0.008f, 0), new Vector3(StreetLayout.SideRoadHalfWidth * 2, 0.025f, 78 + StreetLayout.SidewalkOffset * 2), "53534D");
+            BuildTurnAprons(s);
             for (int n = -12; n <= 12; n++) if (Mathf.Abs(n) > 2) Box("Side street centre markings", new Vector3(x, 0.025f, n * 3), new Vector3(0.12f, 0.01f, 1.6f), "E6C16C", false);
             for (int side = -1; side <= 1; side += 2)
             {
-                Box("Turn approach yield line", new Vector3(x + side * 1.65f, 0.027f, -side * 9), new Vector3(3, 0.02f, 0.22f), "F0ECDC", false);
-                Zone(CrossingRegion.RoadwayHazard, new Vector3(x, 0.9f, side * 21), new Vector3(6.6f, 3, 36));
+                Box("Turn approach yield line", new Vector3(x + side * 1.65f, 0.027f, StreetLayout.SidewalkZ(-side * 9)), new Vector3(3, 0.02f, 0.22f), "F0ECDC", false);
+                Zone(CrossingRegion.RoadwayHazard, new Vector3(x, 0.9f, side * (s.roadHalfWidth + 17.7f)), new Vector3(6.6f, 3, 36));
             }
-            Inspectable(Box("Turning traffic notice", new Vector3(x + 4.5f, 1.8f, -5.42f), new Vector3(2.35f, .85f, .10f), "E9DFCA"), "转弯车辆让行", "本情境包含侧路转弯和视线遮挡。请留在人行道内调整站位，确认转弯车辆已停稳，行人绿灯时再从指定横道过街。");
-            Label("转弯车辆让行", new Vector3(x + 4.5f, 1.8f, -5.5f), 0.06f, "32483D", null, 0, 2.2f, 0.5f);
+            Inspectable(Box("Turning traffic notice", new Vector3(x + 4.5f, 1.8f, StreetLayout.SidewalkZ(-5.42f)), new Vector3(2.35f, .85f, .10f), "E9DFCA"), "转弯车辆让行", "本情境包含侧路转弯和视线遮挡。请留在人行道内调整站位，确认转弯车辆已停稳，行人绿灯时再从指定横道过街。");
+            Label("转弯车辆让行", new Vector3(x + 4.5f, 1.8f, StreetLayout.SidewalkZ(-5.5f)), 0.06f, "32483D", null, 0, 2.2f, 0.5f);
+        }
+        private void BuildTurnAprons(StreetScenarioDefinition s)
+        {
+            Transform geometry = new GameObject("Route-aligned turn shoulders").transform; geometry.SetParent(root, false);
+            float junction = -9 * s.DirectionForLane(0);
+            foreach (Vector2[] polygon in turningAprons)
+            {
+                Mesh mesh = StreetJunctionGeometry.Surface(polygon, .021f); combinedMeshes.Add(mesh);
+                GameObject surface = new GameObject("Turn shoulder asphalt", typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider)); surface.transform.SetParent(geometry, false);
+                surface.GetComponent<MeshFilter>().sharedMesh = mesh; surface.GetComponent<MeshRenderer>().sharedMaterial = modules.Asphalt; surface.GetComponent<MeshCollider>().sharedMesh = mesh;
+                for (int i = 0; i < polygon.Length; i++)
+                {
+                    Vector2 a = polygon[i], b = polygon[(i + 1) % polygon.Length];
+                    // The two shared seams join existing road; the other polygon edges receive real visible curbstones.
+                    if (Mathf.Abs(Mathf.Abs(a.y) - s.roadHalfWidth) < .001f && Mathf.Abs(a.y - b.y) < .001f) continue;
+                    if (Mathf.Abs(Mathf.Abs(a.x - junction) - StreetLayout.SideRoadHalfWidth) < .001f && Mathf.Abs(a.x - b.x) < .001f) continue;
+                    Vector2 delta = b - a, outward = new Vector2(delta.y, -delta.x).normalized;
+                    Vector2 centre = (a + b) * .5f + outward * .10f;
+                    GameObject kerb = Box("Kerb around turn shoulder", new Vector3(centre.x, .02f, centre.y), new Vector3(delta.magnitude, .16f, .18f), "E6DDC8", true, geometry);
+                    kerb.transform.localRotation = Quaternion.Euler(0, -Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, 0);
+                }
+            }
         }
         private void Zone(CrossingRegion type, Vector3 centre, Vector3 size)
         {
@@ -240,41 +320,42 @@ namespace StreetCrossing.Presentation
         }
         private void BuildFurnitureBounds(StreetScenarioDefinition s)
         {
-            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, -7.5f), new Vector3(2.25f, 1, .65f));
+            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.5f)), new Vector3(2.25f, 1, .65f));
             for (int side = -1; side <= 1; side += 2)
             {
-                PhysicalBounds("Cycle stand bounds", new Vector3((side > 0 ? 19 : 17) + .8f, .44f, side * 8.4f), new Vector3(2.3f, .88f, .72f));
-                PhysicalBounds("Litter bin bounds", new Vector3(25, .52f, side * 7.8f), new Vector3(.62f, 1.04f, .62f));
+                PhysicalBounds("Cycle stand bounds", new Vector3((side > 0 ? 19 : 17) + .8f, .44f, StreetLayout.SidewalkZ(side * 8.4f)), new Vector3(2.3f, .88f, .72f));
+                PhysicalBounds("Litter bin bounds", new Vector3(25, .52f, StreetLayout.SidewalkZ(side * 7.8f)), new Vector3(.62f, 1.04f, .62f));
                 for (int slot = -2; slot <= 2; slot++)
                 {
                     float x = slot * profile.furnishingSpacing;
                     if (slot != 0 && Mathf.Abs(x) < 37 && (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6))
-                        PhysicalBounds("Kerb bollard bounds", new Vector3(x, .46f, side * 3.85f), new Vector3(.13f, .92f, .13f));
+                        PhysicalBounds("Kerb bollard bounds", new Vector3(x, .46f, StreetLayout.SidewalkZ(side * 3.85f)), new Vector3(.13f, .92f, .13f));
                 }
                 float height = s.turningTraffic ? (side > 0 ? 10.2f : 8.8f) : 9.8f;
-                Vector3 corner = new Vector3(s.turningTraffic ? (-9 - 8.4f) * s.DirectionForLane(0) : 36, height * .5f, side * (s.turningTraffic ? 12 : 11.3f));
+                Vector3 corner = new Vector3(s.turningTraffic ? (-9 - 8.4f) * s.DirectionForLane(0) : 36, height * .5f, StreetLayout.SidewalkZ(side * (s.turningTraffic ? 12 : 11.3f)));
                 Transform geometry = root.Find("Additional world geometry");
                 GameObject obstacle = new GameObject("Corner building bounds"); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = corner;
                 obstacle.transform.localRotation = Quaternion.Euler(0, side > 0 ? 0 : 180, 0);
                 // Match the visible cut corner rather than leaving an invisible rectangular obstruction outside its doorway.
-                obstacle.AddComponent<MeshCollider>().sharedMesh = CornerMesh(new Vector3(s.turningTraffic ? 6.6f : 7.1f, height, 4), side > 0 ? 1.15f : .7f);
+                obstacle.AddComponent<MeshCollider>().sharedMesh = CornerMesh(new Vector3(s.turningTraffic ? 6.6f : 7.1f, height, 4), side > 0 ? 1.15f : .7f, side > 0);
             }
         }
         private void Shop()
         {
-            Box("Convenience shop", new Vector3(0, 2.1f, 12), new Vector3(10.5f, 4.2f, 4.3f), profile.facade);
-            Inspectable(Box("Shop sign backing", new Vector3(0, 3.25f, 9.79f), new Vector3(10.7f, 1, 0.2f), profile.accent), "街角便利店", "本次目的地是便利店门前的绿色地垫。安全走完斑马线后，继续沿人行道前往门口。");
-            Label("街 角 便 利 店", new Vector3(0, 3.25f, 9.65f), 0.16f, "FAF1D9", null, 0, 9.5f, 0.68f);
+            Box("Convenience shop", new Vector3(0, 2.1f, StreetLayout.SidewalkZ(12)), new Vector3(10.5f, 4.2f, 4.3f), profile.facade);
+            Inspectable(Box("Shop sign backing", new Vector3(0, 3.8f, StreetLayout.SidewalkZ(9.79f)), new Vector3(10.7f, 1, 0.2f), profile.accent), "街角便利店", "本次目的地是便利店门前的绿色地垫。安全走完斑马线后，继续沿人行道前往门口。");
+            // Both scripts sit above the projecting canopy even from the destination eye height, with normal scene depth.
+            Label("街 角 便 利 店", new Vector3(0, 3.78f, StreetLayout.SidewalkZ(9.65f)), 0.16f, "FAF1D9", null, 0, 9.5f, 0.4f);
             for (int n = -1; n <= 1; n++)
             {
-                Box("Shopfront frame", new Vector3(n * 3, 1.45f, 9.78f), new Vector3(2.8f, 2.45f, 0.14f), "D0B995").GetComponent<Renderer>().enabled = false;
-                Box("Shop glazing", new Vector3(n * 3, 1.45f, 9.68f), new Vector3(2.55f, 2.2f, 0.06f), "85988A").GetComponent<Renderer>().enabled = false;
-                Box("Shop transom", new Vector3(n * 3, 1.65f, 9.6f), new Vector3(2.6f, 0.06f, 0.08f), "E5DBC6", false);
+                Box("Shopfront frame", new Vector3(n * 3, 1.45f, StreetLayout.SidewalkZ(9.78f)), new Vector3(2.8f, 2.45f, 0.14f), "D0B995").GetComponent<Renderer>().enabled = false;
+                Box("Shop glazing", new Vector3(n * 3, 1.45f, StreetLayout.SidewalkZ(9.68f)), new Vector3(2.55f, 2.2f, 0.06f), "85988A").GetComponent<Renderer>().enabled = false;
+                Box("Shop transom", new Vector3(n * 3, 1.65f, StreetLayout.SidewalkZ(9.6f)), new Vector3(2.6f, 0.06f, 0.08f), "E5DBC6", false);
             }
-            Box("Striped awning", new Vector3(0, 2.6f, 9.25f), new Vector3(10.5f, 0.16f, 1.3f), profile.secondary);
-            for (int n = -5; n <= 5; n++) Box("Awning stripe", new Vector3(n * 0.9f, 2.69f, 9.25f), new Vector3(0.4f, 0.015f, 1.3f), profile.accent, false);
-            Box("Planter", new Vector3(4.25f, 0.35f, 8.8f), new Vector3(1.2f, 0.7f, 0.8f), "A87857");
-            Shape(PrimitiveType.Sphere, "Planter greenery", root, new Vector3(4.25f, 0.9f, 8.8f), new Vector3(1.1f, 0.65f, 0.8f), "667C49", false);
+            Box("Striped awning", new Vector3(0, 2.6f, StreetLayout.SidewalkZ(9.25f)), new Vector3(10.5f, 0.16f, .95f), profile.secondary);
+            for (int n = -5; n <= 5; n++) Box("Awning stripe", new Vector3(n * 0.9f, 2.69f, StreetLayout.SidewalkZ(9.25f)), new Vector3(0.4f, 0.015f, .95f), profile.accent, false);
+            Box("Planter", new Vector3(4.25f, 0.35f, StreetLayout.SidewalkZ(8.8f)), new Vector3(1.2f, 0.7f, 0.8f), "A87857");
+            Shape(PrimitiveType.Sphere, "Planter greenery", root, new Vector3(4.25f, 0.9f, StreetLayout.SidewalkZ(8.8f)), new Vector3(1.1f, 0.65f, 0.8f), "667C49", false);
         }
         private void BusStop(Vector3 p)
         {

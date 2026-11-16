@@ -213,7 +213,7 @@ namespace StreetCrossing.Tests.EditMode
             Assert.That(lane.OccupiesConflict(car), Is.True, "The rear bumper is still inside.");
             car.Reset(lane.ConflictExit + VehicleKinematics.HalfLength + 0.01f, 1);
             Assert.That(lane.OccupiesConflict(car), Is.False);
-            VehicleLanePath opposite = new VehicleLanePath(scenario, 1);
+            VehicleLanePath opposite = new VehicleLanePath(scenario, scenario.StraightLaneCount - 1);
             Assert.That(lane.Direction, Is.EqualTo(-opposite.Direction));
             Assert.That(lane.Position(lane.StopDistance).x, Is.EqualTo(-scenario.stopLineOffset).Within(0.0001f));
             Assert.That(opposite.Position(opposite.StopDistance).x, Is.EqualTo(scenario.stopLineOffset).Within(0.0001f));

@@ -54,12 +54,13 @@ namespace StreetCrossing.Tests.PlayMode
                     Assert.That(Physics.CheckCapsule(samplePosition + Vector3.up * .27f, samplePosition + Vector3.up * 1.48f, .23f, ~0, QueryTriggerInteraction.Ignore),
                         Is.False, "A background actor's complete safe route intersects world geometry at " + samplePosition);
                 }
-                Bounds corridor = new Bounds(new Vector3(0, 1, -.25f), new Vector3(2.8f, 2, 16));
+                float startZ = game.scenario.playerSpawn.z, endZ = game.scenario.destination.z;
+                Bounds corridor = new Bounds(new Vector3(0, 1, (startZ + endZ) * .5f), new Vector3(2.8f, 2, endZ - startZ + 1.5f));
                 foreach (Collider collider in environment.Find("Additional world geometry").GetComponentsInChildren<Collider>())
                     Assert.That(collider.bounds.Intersects(corridor), Is.False, collider.name + " blocks the original practice route.");
-                Assert.That(game.scenario.roadHalfWidth, Is.EqualTo(3.3f)); Assert.That(game.scenario.crosswalkHalfWidth, Is.EqualTo(1.8f));
-                Assert.That(game.scenario.playerSpawn, Is.EqualTo(new Vector3(0, .02f, -8)));
-                Assert.That(game.scenario.destination, Is.EqualTo(new Vector3(0, 0, 7.5f)));
+                Assert.That(game.scenario.roadHalfWidth, Is.EqualTo(StreetLayout.RoadHalfWidth)); Assert.That(game.scenario.crosswalkHalfWidth, Is.EqualTo(1.8f));
+                Assert.That(game.scenario.playerSpawn, Is.EqualTo(new Vector3(0, .02f, StreetLayout.SpawnZ)));
+                Assert.That(game.scenario.destination, Is.EqualTo(new Vector3(0, 0, StreetLayout.DestinationZ)));
                 // Each theme contains complete low-cost facade variants and two dedicated corner blocks.
                 int cornerCount = 0; bool[] facadeKinds = new bool[6];
                 foreach (Transform part in environment.GetComponentsInChildren<Transform>())

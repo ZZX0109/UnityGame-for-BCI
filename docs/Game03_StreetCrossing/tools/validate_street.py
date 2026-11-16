@@ -2,6 +2,15 @@
 from pathlib import Path
 import json,re,subprocess,sys
 ROOT=Path(__file__).resolve().parents[3];GAME=ROOT/'Assets/StreetCrossing'
+
+
+def disallowed_global_bootstrap(path, text):
+ if 'RuntimeInitializeOnLoadMethod' not in text:return False
+ allowed=GAME/'Scripts/Validation/StreetRuntimeAudit.cs'
+ if path.resolve()!=allowed.resolve() or text.count('RuntimeInitializeOnLoadMethod')!=1:return True
+ clean=re.sub(r'//[^\n]*|/\*.*?\*/','',text,flags=re.S)
+ entry=r'\[RuntimeInitializeOnLoadMethod\(RuntimeInitializeLoadType\.AfterSceneLoad\)\]\s*private\s+static\s+void\s+InitializeWhenRequested\(\)\s*\{\s*GameRuntimeAudit\.TryStart\(new\s+StreetRuntimeAudit\(\)\);\s*\}'
+ return re.search(entry,clean) is None
 def main():
  errors=[]
  for command in ([sys.executable,str(ROOT/'Tools/validate_project.py')],[sys.executable,str(Path(__file__).with_name('build_street_font.py')),'--check']):
@@ -25,7 +34,7 @@ def main():
  if scenarios['S03']['turning']!=1 or scenarios['S03']['occlusion']!=1:errors.append('S03 needs real turns and kerb occlusion.')
  for path in (GAME/'Scripts').rglob('*.cs'):
   text=path.read_text(encoding="utf-8")
-  if 'FirstPersonSokoban' in text or 'ClawMachine' in text or 'RuntimeInitializeOnLoadMethod' in text:errors.append('Cross-game/global bootstrap dependency: '+str(path))
+  if 'FirstPersonSokoban' in text or 'ClawMachine' in text or disallowed_global_bootstrap(path,text):errors.append('Cross-game/global bootstrap dependency: '+str(path))
   if path.parent.name=='UI' and ('OnGUI' in text or 'GUILayout.' in text):errors.append('IMGUI remains: '+str(path))
   stripped=re.sub(r'//[^\n]*|/\*.*?\*/|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'','',text,flags=re.S)
   stack=[];pairs={')':'(',']':'[','}':'{'}
@@ -46,7 +55,8 @@ def main():
   for suffix in ['Albedo','Normal']:
    if not (GAME/'Art'/f'{name}{suffix}.png').is_file():errors.append('Missing original texture '+name+suffix)
  entry=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text(encoding="utf-8")
- if entry.index('StreetCrossing/Scenes/StreetCrossingScene.unity')>entry.index('FirstPersonSokoban/Scenes/PuzzleScene.unity'):errors.append('Street scene must be the default entry on the street game branch.')
+ enabled=re.findall(r'- enabled:\s*1\s+path:\s*([^\n]+)',entry)
+ if [path.strip() for path in enabled]!=['Assets/StreetCrossing/Scenes/StreetCrossingScene.unity']:errors.append('Independent Street build must enable only StreetCrossingScene.')
  for error in errors:print('[FAIL]',error)
  if errors:return 1
  print('[OK] S01/S02/S03 data/windows, explicit regions, isolated Canvas/TMP source, reusable art and canonical resources checks passed.')

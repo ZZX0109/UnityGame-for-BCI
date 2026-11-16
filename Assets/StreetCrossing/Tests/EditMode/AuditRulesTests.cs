@@ -236,7 +236,7 @@ namespace StreetCrossing.Tests.EditMode
                 Assert.That(scenario.phaseTable.phases[(int)TrafficPhase.Walk].duration, Is.GreaterThanOrEqualTo(scenario.SafeCrossingSeconds));
                 Assert.That(string.IsNullOrWhiteSpace(scenario.title) || string.IsNullOrWhiteSpace(scenario.description), Is.False);
             }
-            Assert.That(first.maximumVehicles, Is.EqualTo(2));
+            Assert.That(first.maximumVehicles, Is.EqualTo(4));
             Assert.That(dense.maximumVehicles, Is.GreaterThan(first.maximumVehicles));
             Assert.That(dense.initialVehiclesPerStraightLane, Is.GreaterThan(first.initialVehiclesPerStraightLane));
             Assert.That(dense.maximumSpawnInterval, Is.LessThan(first.minimumSpawnInterval));
@@ -253,8 +253,8 @@ namespace StreetCrossing.Tests.EditMode
             Assert.That(variants.Count, Is.EqualTo(3));
         }
 
-        [TestCase(2, VehicleRouteKind.RightTurn)]
-        [TestCase(3, VehicleRouteKind.LeftTurn)]
+        [TestCase(4, VehicleRouteKind.RightTurn)]
+        [TestCase(5, VehicleRouteKind.LeftTurn)]
         public void TurningRoutesHaveRealCurvatureAndMergeWithTheNearLane(int routeIndex, VehicleRouteKind kind)
         {
             StreetScenarioDefinition scenario = Scenario("S03"); VehicleLanePath route = new VehicleLanePath(scenario, routeIndex);
@@ -270,7 +270,7 @@ namespace StreetCrossing.Tests.EditMode
                 Vector3 forward = heading * Vector3.forward; diagonalHeading |= Mathf.Abs(forward.x) > 0.2f && Mathf.Abs(forward.z) > 0.2f; previous = heading;
             }
             Assert.That(diagonalHeading, Is.True);
-            Assert.That(route.Position(route.Length - 2).z, Is.EqualTo(-scenario.laneOffset).Within(0.01f));
+            Assert.That(route.Position(route.Length - 2).z, Is.EqualTo(scenario.LaneZ(0)).Within(0.01f));
             Assert.That(route.StopDistance, Is.LessThan(route.JunctionExit));
             Assert.That(route.ConflictEntry, Is.LessThan(route.ConflictExit));
         }
@@ -278,7 +278,7 @@ namespace StreetCrossing.Tests.EditMode
         [Test]
         public void TurningVehicleWithoutAdmissionWaitsBeforeTheJunctionThenCanProceed()
         {
-            VehicleLanePath route = new VehicleLanePath(Scenario("S03"), 2); VehicleKinematics car = new VehicleKinematics(); car.Reset(0, 5);
+            VehicleLanePath route = new VehicleLanePath(Scenario("S03"), StreetLayout.StraightLaneCount); VehicleKinematics car = new VehicleKinematics(); car.Reset(0, 5);
             for (int step = 0; step < 1000; step++) car.Step(0.02f, route.StopDistance, false, float.PositiveInfinity, 2.5f, 1.7f, 3, 0.6f);
             Assert.That(car.Front, Is.LessThan(route.StopDistance)); Assert.That(car.Speed, Is.LessThan(0.04f));
             for (int step = 0; step < 600; step++) car.Step(0.02f, route.StopDistance, true, float.PositiveInfinity, 2.5f, 1.7f, 3, 0.6f, 3.1f);
@@ -300,10 +300,10 @@ namespace StreetCrossing.Tests.EditMode
         [Test]
         public void MergedTurningLeaderConstrainsFasterStraightFollowerDespiteDifferentRouteIds()
         {
-            StreetScenarioDefinition scenario = Scenario("S03"); VehicleLanePath straight = new VehicleLanePath(scenario, 0), turn = new VehicleLanePath(scenario, 2);
+            StreetScenarioDefinition scenario = Scenario("S03"); VehicleLanePath straight = new VehicleLanePath(scenario, 0), turn = new VehicleLanePath(scenario, scenario.StraightLaneCount);
             VehicleKinematics follower = new VehicleKinematics(), leader = new VehicleKinematics();
-            follower.Reset(straight.NearestDistance(new Vector3(2, 0, -scenario.laneOffset)), 8);
-            leader.Reset(turn.NearestDistance(new Vector3(16, 0, -scenario.laneOffset)), 2, 2.6f);
+            follower.Reset(straight.NearestDistance(new Vector3(2, 0, scenario.LaneZ(0))), 8);
+            leader.Reset(turn.NearestDistance(new Vector3(16, 0, scenario.LaneZ(0))), 2, 2.6f);
             bool slowed = false;
             for (int step = 0; step < 300; step++)
             {
@@ -322,11 +322,11 @@ namespace StreetCrossing.Tests.EditMode
         public void PhysicalFollowingIgnoresOppositeOffLaneAndBehindVehicles()
         {
             StreetScenarioDefinition scenario = Scenario("S03"); VehicleLanePath path = new VehicleLanePath(scenario, 0); VehicleKinematics follower = new VehicleKinematics();
-            follower.Reset(path.NearestDistance(new Vector3(2, 0, -scenario.laneOffset)), 6);
-            Vector3 ahead = new Vector3(12, 0, -scenario.laneOffset);
+            follower.Reset(path.NearestDistance(new Vector3(2, 0, scenario.LaneZ(0))), 6);
+            Vector3 ahead = new Vector3(12, 0, scenario.LaneZ(0));
             Assert.That(float.IsPositiveInfinity(VehicleFollowing.ProjectedRear(path, follower, ahead, Vector3.left, 2.1f, 0.9f, 0.9f)), Is.True);
             Assert.That(float.IsPositiveInfinity(VehicleFollowing.ProjectedRear(path, follower, ahead + Vector3.forward * 5, Vector3.right, 2.1f, 0.9f, 0.9f)), Is.True);
-            Assert.That(float.IsPositiveInfinity(VehicleFollowing.ProjectedRear(path, follower, new Vector3(-3, 0, -scenario.laneOffset), Vector3.right, 2.1f, 0.9f, 0.9f)), Is.True);
+            Assert.That(float.IsPositiveInfinity(VehicleFollowing.ProjectedRear(path, follower, new Vector3(-3, 0, scenario.LaneZ(0)), Vector3.right, 2.1f, 0.9f, 0.9f)), Is.True);
         }
     }
 }
