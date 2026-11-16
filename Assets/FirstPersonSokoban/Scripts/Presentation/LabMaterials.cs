@@ -9,6 +9,9 @@ namespace FirstPersonSokoban.Presentation
     /// per-renderer material clones: one palette owns the shared room materials.
     /// The menu preview can create a separate owner and release it independently.
     /// </summary>
+    // Editor tools/tests can explicitly initialize a palette too. Participate
+    // in edit-time destruction so those owners release their generated assets.
+    [ExecuteAlways]
     public sealed class LabMaterials : MonoBehaviour
     {
         public static readonly Color AccentColor = Hex("BB6039");
@@ -17,6 +20,7 @@ namespace FirstPersonSokoban.Presentation
 
         private readonly List<Material> materials = new List<Material>();
         private readonly List<Texture2D> textures = new List<Texture2D>();
+        private readonly Dictionary<Font, Material> worldTextMaterials = new Dictionary<Font, Material>();
         private bool initialized;
 
         public Material Floor { get; private set; }
@@ -42,6 +46,7 @@ namespace FirstPersonSokoban.Presentation
             if (shader == null)
                 throw new System.InvalidOperationException("The laboratory presentation requires the built-in Standard shader.");
             initialized = true;
+            Font.textureRebuilt += RefreshWorldTextAtlas;
 
             Texture2D floorGrain = Grain("Floor fine aggregate", 0, false);
             Texture2D wallGrain = Grain("Wall powder coat", 1, false);
@@ -63,6 +68,29 @@ namespace FirstPersonSokoban.Presentation
             Glass = Surface(shader, "Gallery Ochre", "D3A04D", 0f, 0.18f, wallGrain, wallRoughness);
             Light = Emissive(shader, "Gallery Warm White", Hex("FFF3DE"), 0.12f);
             Warning = Emissive(shader, "Gallery Attention", WarningColor, 0.06f);
+        }
+
+        public Material WorldText(Font font)
+        {
+            if (font == null) throw new System.ArgumentNullException(nameof(font));
+            Initialize();
+            if (worldTextMaterials.TryGetValue(font, out Material existing)) return existing;
+            Shader shader = Resources.Load<Shader>("Materials/GalleryWorldText");
+            if (shader == null) throw new System.InvalidOperationException("The gallery world text shader is missing.");
+            var material = new Material(shader)
+            {
+                name = "Gallery World Text (Runtime)",
+                mainTexture = font.material.mainTexture
+            };
+            worldTextMaterials.Add(font, material);
+            materials.Add(material);
+            return material;
+        }
+
+        private void RefreshWorldTextAtlas(Font font)
+        {
+            if (font != null && worldTextMaterials.TryGetValue(font, out Material material) && material != null)
+                material.mainTexture = font.material.mainTexture;
         }
 
         private Material Surface(Shader shader, string name, string color, float metallic,
@@ -163,10 +191,12 @@ namespace FirstPersonSokoban.Presentation
 
         private void OnDestroy()
         {
+            Font.textureRebuilt -= RefreshWorldTextAtlas;
             foreach (Material material in materials) Release(material);
             foreach (Texture2D texture in textures) Release(texture);
             materials.Clear();
             textures.Clear();
+            worldTextMaterials.Clear();
         }
 
         private static void Release(Object value)

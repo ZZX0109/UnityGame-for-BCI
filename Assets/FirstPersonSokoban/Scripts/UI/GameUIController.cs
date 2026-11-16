@@ -32,6 +32,7 @@ namespace FirstPersonSokoban.UI
         private Text mechanismSubtitle;
         private Text mechanismBody;
         private Text movementAssist;
+        private Image movementAssistPlate;
         private Text deadlockLessonText;
         private Action confirmationAction;
         private Action confirmationCancel;
@@ -177,6 +178,8 @@ namespace FirstPersonSokoban.UI
             interaction.gameObject.SetActive(false);
 
             guidance = Group(hud.transform, "Guidance");
+            PanelImage(guidance.transform, "Guidance Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(0, 192), new Vector2(930, 48), Panel);
             guidanceText = Label(guidance.transform, "Guidance Text", "", 17, White,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 192), new Vector2(900, 46), TextAnchor.MiddleCenter);
             Shadow guidanceShadow = guidanceText.gameObject.AddComponent<Shadow>();
@@ -190,8 +193,13 @@ namespace FirstPersonSokoban.UI
             deadlockText = Label(deadlock.transform, "Deadlock Text", "", 17, Amber,
                 new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -151), new Vector2(730, 44), TextAnchor.MiddleCenter);
             deadlock.gameObject.SetActive(false);
+            PanelImage(hud.transform, "Control Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(0, 28), new Vector2(1000, 38), Panel);
             Label(hud.transform, "Control Labels", "WASD  移动    E  推动    Z  撤销    R  重置    ESC  暂停", 16, Muted,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(980, 36), TextAnchor.MiddleCenter);
+            movementAssistPlate = PanelImage(hud.transform, "Movement Assist Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
+                new Vector2(0, 76), new Vector2(880, 40), Panel);
+            movementAssistPlate.gameObject.SetActive(false);
             movementAssist = Label(hud.transform, "Movement Assist", "", 18, Accent,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 76), new Vector2(850, 34), TextAnchor.MiddleCenter, FontStyle.Bold);
             deadlockLesson = Group(hud.transform, "Deadlock Explanation");
@@ -606,7 +614,11 @@ namespace FirstPersonSokoban.UI
             mechanismContinue = null;
         }
 
-        public void SetMovementAssist(string message) => movementAssist.text = message;
+        public void SetMovementAssist(string message)
+        {
+            movementAssist.text = message;
+            movementAssistPlate.gameObject.SetActive(!string.IsNullOrEmpty(message));
+        }
 
         public void ShowDeadlockExplanation(string message)
         {

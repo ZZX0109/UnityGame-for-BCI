@@ -154,7 +154,7 @@ namespace FirstPersonSokoban.Presentation
                     new Vector3(0.82f, 0.14f, 0.004f), palette.Wall);
             }
             Label(wall, "Gallery Artwork Caption", "FORM / SPACE", new Vector3(0, 1.27f, 0.014f),
-                0.018f, LabMaterials.Hex("695344"));
+                0.018f, LabMaterials.Hex("695344"), palette);
         }
 
         private static void Disc(Transform parent, string name, Vector3 position, float radius, Material material)
@@ -216,7 +216,7 @@ namespace FirstPersonSokoban.Presentation
                             LocalPart(face.Frame, "Passage Wayfinding Plaque", new Vector3(0, 0.92f, 0.012f),
                                 new Vector3(1.62f, 0.26f, 0.012f), palette.Wall);
                             Label(face.Frame, "Passage Wayfinding Label", $"LINK / {number:00}",
-                                new Vector3(0, 0.92f, 0.022f), 0.018f, LabMaterials.Hex("695344"));
+                                new Vector3(0, 0.92f, 0.022f), 0.018f, LabMaterials.Hex("695344"), palette);
                             break;
                         }
                     }
@@ -357,7 +357,7 @@ namespace FirstPersonSokoban.Presentation
         }
 
         private static void Label(Transform parent, string name, string content, Vector3 position,
-            float characterSize, Color color)
+            float characterSize, Color color, LabMaterials palette)
         {
             Transform label = new GameObject(name).transform;
             label.SetParent(parent, false);
@@ -376,7 +376,7 @@ namespace FirstPersonSokoban.Presentation
             {
                 text.font.RequestCharactersInTexture(content, text.fontSize, FontStyle.Normal);
                 Renderer renderer = text.GetComponent<Renderer>();
-                renderer.sharedMaterial = text.font.material;
+                renderer.sharedMaterial = palette.WorldText(text.font);
                 // TextMesh glyph scale depends on the imported font. Fit the label
                 // into its physical plaque rather than assuming a pixel/world ratio.
                 Bounds bounds = renderer.localBounds;

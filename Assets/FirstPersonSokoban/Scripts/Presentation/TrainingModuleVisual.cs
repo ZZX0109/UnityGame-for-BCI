@@ -161,7 +161,7 @@ namespace FirstPersonSokoban.Presentation
             mesh.alignment = TextAlignment.Center;
             mesh.color = color;
             Renderer renderer = mesh.GetComponent<Renderer>();
-            renderer.sharedMaterial = font.material;
+            renderer.sharedMaterial = palette.WorldText(font);
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             labels.Add(new LabelFit { Renderer = renderer, Size = size });

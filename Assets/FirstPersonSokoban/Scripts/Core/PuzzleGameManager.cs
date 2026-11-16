@@ -70,6 +70,8 @@ namespace FirstPersonSokoban.Core
             (ElapsedSeconds > 0f || Board.PushCount > 0 || loader.Player.DistanceTravelled > 0f);
         public bool AssistanceEnabled { get; private set; } = true;
         public int UndoDepth => undo == null ? 0 : undo.Count;
+        /// <summary>Explicit automation can suppress hardware commands while the normal simulation and HUD keep updating.</summary>
+        public bool ControlsEnabled { get; set; } = true;
 
         public void SetAssistanceEnabled(bool enabled)
         {
@@ -96,6 +98,12 @@ namespace FirstPersonSokoban.Core
             // timeScale 在暂停时为 0，失焦/暂停期间不会累计有效游戏时间。
             if (Phase == GamePhase.Playing || Phase == GamePhase.Animating)
                 ElapsedSeconds += Time.deltaTime;
+
+            if (!ControlsEnabled)
+            {
+                if (Phase == GamePhase.Playing) UpdateInteractionPrompt();
+                return;
+            }
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {

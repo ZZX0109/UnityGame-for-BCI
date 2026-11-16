@@ -242,12 +242,17 @@ namespace FirstPersonSokoban.Tests.PlayMode
             game.StartLevel(1);
             yield return new WaitForFixedUpdate();
             var player = game.Loader.Player;
-            player.Teleport(new Vector3(6.65f, 0.04f, 10f));
+            // The box at (3,4) has a wall directly north. Stand east of it:
+            // pushing west is legal, so only the lateral offset may deny it.
+            player.Teleport(new Vector3(8f, 0.04f, 8.65f));
             Vector3 to = new Vector3(6f, 0.9f, 8f) - player.PlayerCamera.transform.position;
             player.SetLookRotation(Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg,
                 -Mathf.Atan2(to.y, new Vector2(to.x, to.z).magnitude) * Mathf.Rad2Deg);
             Physics.SyncTransforms();
             yield return null;
+            Assert.IsTrue(game.Loader.Interactor.EvaluateAim().HasBox);
+            Assert.AreEqual(PushDenyReason.StanceOffset, PushDiagnostics.Evaluate(
+                game.Board, new Vector2Int(3, 4), new Vector2Int(4, 4), false).Reason);
             Assert.IsNotEmpty(ui.CurrentMovementAssist);
             game.TryPush();
             Assert.AreEqual(0, game.Board.PushCount);
@@ -255,8 +260,8 @@ namespace FirstPersonSokoban.Tests.PlayMode
             Assert.IsEmpty(ui.CurrentMovementAssist);
             game.TryPush();
             Assert.AreEqual(0, game.Board.PushCount);
-            player.Teleport(new Vector3(6f, 0.04f, 10f));
-            player.SetLookRotation(180f, 0f);
+            player.Teleport(new Vector3(8f, 0.04f, 8f));
+            player.SetLookRotation(270f, 0f);
             Physics.SyncTransforms();
             yield return null;
             game.TryPush();
@@ -275,6 +280,23 @@ namespace FirstPersonSokoban.Tests.PlayMode
             ui.ShowVictory(7, 8, 60f, 32, 32, 0, 100f, 2, 2);
             StringAssert.Contains("全部关卡已完成", ui.VictorySummary);
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator GeneratedGalleryLabelsUseDepthMaterialAndCrateFacesPointOutward()
+        {
+            game.StartLevel(7);
+            yield return null;
+            yield return null;
+            TextMesh[] labels = game.Loader.LevelRoot.GetComponentsInChildren<TextMesh>();
+            Assert.Greater(labels.Length, 8, "The actual room must include crates and wall captions.");
+            foreach (TextMesh label in labels)
+                Assert.AreEqual("FirstPersonSokoban/GalleryWorldText", label.GetComponent<Renderer>().sharedMaterial.shader.name,
+                    label.name + " must obey scene depth.");
+            foreach (var box in game.Loader.Boxes)
+            foreach (TextMesh label in box.GetComponentsInChildren<TextMesh>())
+                Assert.Greater(Vector3.Dot(-label.transform.forward, label.transform.position - box.transform.position), .8f,
+                    "Crate number fronts must face away from the solid crate.");
         }
 
         [UnityTest]

@@ -7,6 +7,28 @@ namespace FirstPersonSokoban.Tests.EditMode
     public sealed class LabMaterialOwnershipTests
     {
         [Test]
+        public void WorldTextSharesAnOwnedMaterialAndDoesNotModifyTheUiFontMaterial()
+        {
+            var owner = new GameObject("World text ownership test");
+            Material world = null;
+            Font font = Resources.Load<Font>("Fonts/SokobanUISans");
+            Assert.NotNull(font);
+            Shader original = font.material.shader;
+            try
+            {
+                LabMaterials palette = owner.AddComponent<LabMaterials>();
+                world = palette.WorldText(font);
+                Assert.AreSame(world, palette.WorldText(font));
+                Assert.AreNotSame(font.material, world);
+                Assert.AreEqual("FirstPersonSokoban/GalleryWorldText", world.shader.name);
+                Assert.AreSame(original, font.material.shader);
+            }
+            finally { Object.DestroyImmediate(owner); }
+            Assert.IsTrue(world == null, "The palette must release its world text clone.");
+            Assert.IsTrue(font.material != null, "Destroying the clone must preserve the UI font material.");
+        }
+
+        [Test]
         public void PaletteInitializationIsIdempotentAndOwnedResourcesAreReleased()
         {
             var owner = new GameObject("Palette ownership test");
