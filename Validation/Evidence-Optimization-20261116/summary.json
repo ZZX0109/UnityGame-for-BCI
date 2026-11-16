@@ -3,7 +3,7 @@
   "generatedAtUtc": "2026-11-16T03:23:32.801462+00:00",
   "branch": "codex/optimize-game03",
   "baseCommit": "6c33e1cf77ee7c4ab9db7d64d5b89d4dd04ddb22",
-  "sourceFingerprint": "c9dcb7c5132cf54466a23648d7523c1e32c04b9dac78c64f5999d0bc9f8d9eb8",
+  "sourceFingerprint": "96379768014dd36bcd4b445d8048446d21dc8f2415e74db5cbb3775b4ab18834",
   "pythonTests": {
     "passed": 55,
     "total": 55
@@ -23,7 +23,7 @@
   "visualCapture": "not_run",
   "performance": "not_measured",
   "blocker": "No valid Unity Editor license found; com.unity.editor.headless entitlement unavailable.",
-  "deliverySourceFingerprint": "562cee4b392865fc77fbe800b0a5bbfceecf014351fee8e2803d09c4c1492f9b",
+  "deliverySourceFingerprint": "c7eaf17d3ba9a9d2792fbc9a441d33918704b8785f8bd49cf02d5f3cdb603dc9",
   "workspaceOnlyExcludedFiles": [
     "ProjectSettings/PackageManagerSettings.asset"
   ]
