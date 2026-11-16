@@ -23,6 +23,19 @@ namespace FirstPersonSokoban.UI
         private CanvasGroup toast;
         private CanvasGroup guidance;
         private CanvasGroup deadlock;
+        private CanvasGroup confirmation;
+        private CanvasGroup mechanism;
+        private CanvasGroup confirmationOrigin;
+        private CanvasGroup deadlockLesson;
+        private Text confirmationMessage;
+        private Text mechanismTitle;
+        private Text mechanismSubtitle;
+        private Text mechanismBody;
+        private Text movementAssist;
+        private Text deadlockLessonText;
+        private Action confirmationAction;
+        private Action confirmationCancel;
+        private Action mechanismContinue;
 
         private Text levelNumber;
         private Text levelTitle;
@@ -64,6 +77,11 @@ namespace FirstPersonSokoban.UI
         public RectTransform ContinueButtonRect => continueButtonRect;
         public MenuLayoutController MenuLayout => menuLayout;
         public bool SettingsOpen => settings != null && settings.gameObject.activeSelf;
+        public bool ConfirmationOpen => confirmation != null && confirmation.gameObject.activeSelf;
+        public bool MechanismOpen => mechanism != null && mechanism.gameObject.activeSelf;
+        public bool DeadlockExplanationOpen => deadlockLesson != null && deadlockLesson.gameObject.activeSelf;
+        public string CurrentMovementAssist => movementAssist == null ? string.Empty : movementAssist.text;
+        public string VictorySummary => victoryBest == null ? string.Empty : victoryBest.text;
         public int LevelCardCount => levelButtons == null ? 0 : levelButtons.Length;
         public RectTransform LevelCardRect(int index) => levelButtons[index].GetComponent<RectTransform>();
 
@@ -81,6 +99,8 @@ namespace FirstPersonSokoban.UI
             BuildPause();
             BuildSettings();
             BuildVictory();
+            BuildConfirmation();
+            BuildMechanism();
         }
 
         private void OnDestroy()
@@ -172,6 +192,16 @@ namespace FirstPersonSokoban.UI
             deadlock.gameObject.SetActive(false);
             Label(hud.transform, "Control Labels", "WASD  移动    E  推动    Z  撤销    R  重置    ESC  暂停", 16, Muted,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 28), new Vector2(980, 36), TextAnchor.MiddleCenter);
+            movementAssist = Label(hud.transform, "Movement Assist", "", 18, Accent,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 76), new Vector2(850, 34), TextAnchor.MiddleCenter, FontStyle.Bold);
+            deadlockLesson = Group(hud.transform, "Deadlock Explanation");
+            RectTransform lesson = PanelImage(deadlockLesson.transform, "Explanation Card", new Vector2(0.5f, 1),
+                new Vector2(0.5f, 1), new Vector2(0, -212), new Vector2(840, 130), Panel).rectTransform;
+            deadlockLessonText = Label(lesson, "Explanation", "", 18, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(-66, 0), new Vector2(660, 104), TextAnchor.MiddleLeft);
+            Button(lesson, "Dismiss Explanation", "关闭", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(338, 0), new Vector2(100, 46), DismissDeadlockExplanation, false);
+            deadlockLesson.gameObject.SetActive(false);
 
             toast = Group(hud.transform, "Toast");
             PanelImage(toast.transform, "Toast Plate", new Vector2(0.5f, 0), new Vector2(0.5f, 0),
@@ -276,7 +306,7 @@ namespace FirstPersonSokoban.UI
                 int index = i;
                 Button card = Button(levelContent, $"Level {i + 1}", "",
                     new Vector2(0, 1), new Vector2(0.5f, 1), Vector2.zero,
-                    new Vector2(424, 104), () => game.StartLevel(index), false);
+                    new Vector2(424, 104), () => game.RequestStartLevel(index), false);
                 LayoutElement element = card.gameObject.AddComponent<LayoutElement>();
                 element.minHeight = element.preferredHeight = 104;
                 levelButtons[i] = card;
@@ -302,7 +332,8 @@ namespace FirstPersonSokoban.UI
             }
             Button continueButton = Button(levelPanel, "Continue", "开始训练  →",
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(424, 58),
-                () => game.StartLevel(SaveManager.UnlockedCount(PuzzleGameManager.LevelCount) - 1));
+                () => { if (game.CanContinueSession) game.ContinueSession();
+                    else game.RequestStartLevel(SaveManager.UnlockedCount(PuzzleGameManager.LevelCount) - 1); });
             continueButtonRect = continueButton.GetComponent<RectTransform>();
             continueButtonRect.anchorMin = new Vector2(0, 0);
             continueButtonRect.anchorMax = new Vector2(1, 0);
@@ -314,7 +345,7 @@ namespace FirstPersonSokoban.UI
             Label(levelPanel, "Scroll Hint", "滚动查看全部关卡", 14, Muted,
                 new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 88), new Vector2(330, 22), TextAnchor.MiddleCenter);
             Button(menu.transform, "Exit", "退出", new Vector2(1, 0), new Vector2(1, 0),
-                new Vector2(-56, 22), new Vector2(100, 38), ExitGame, false, true);
+                new Vector2(-56, 22), new Vector2(100, 38), game.RequestExit, false, true);
             menuLayout = menu.gameObject.AddComponent<MenuLayoutController>();
             menuLayout.identityGroup = identityGroup;
             menuLayout.identityContent = identityContent;
@@ -350,13 +381,13 @@ namespace FirstPersonSokoban.UI
             Button(card, "Resume", "继续探索  →", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, 62), new Vector2(400, 58), () => game.Resume());
             Button(card, "Restart", "重新开始", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(0, -10), new Vector2(400, 54), () => game.RestartLevel(), false, true);
+                new Vector2(0, -10), new Vector2(400, 54), game.RequestMenuRestart, false, true);
             Button(card, "Settings", "设置与舒适度", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, -78), new Vector2(400, 54), ShowSettings, false);
             Button(card, "Menu", "返回主菜单", Vector2.one * 0.5f, Vector2.one * 0.5f,
                 new Vector2(0, -146), new Vector2(400, 54), () => game.ShowMenu(), false);
             Button(card, "Exit", "退出游戏", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(0, -214), new Vector2(400, 50), ExitGame, false, true);
+                new Vector2(0, -214), new Vector2(400, 50), game.RequestExit, false, true);
             Label(card, "Pause Hint", "ESC 继续  ·  切出窗口后会自动暂停", 16, Muted,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -284), new Vector2(490, 30), TextAnchor.MiddleCenter);
         }
@@ -364,14 +395,14 @@ namespace FirstPersonSokoban.UI
         private void BuildSettings()
         {
             settings = Group(canvasRoot, "Settings");
-            settingsCard = Modal(settings, "Settings Card", new Vector2(660, 840));
+            settingsCard = Modal(settings, "Settings Card", new Vector2(660, 900));
             Label(settingsCard, "Settings Eyebrow", "MAKE IT COMFORTABLE", 15, Accent,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 350), new Vector2(560, 32), TextAnchor.MiddleCenter, FontStyle.Bold);
             Label(settingsCard, "Settings Title", "设置与舒适度", 38, White,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 294), new Vector2(560, 62), TextAnchor.MiddleCenter, FontStyle.Bold);
             Label(settingsCard, "Settings Note", "点击数值切换 · 自动保存", 17, Muted,
                 Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 244), new Vector2(560, 30), TextAnchor.MiddleCenter);
-            settingButtons = new Button[7];
+            settingButtons = new Button[8];
             settingButtons[0] = CycleRow("鼠标灵敏度", 180, CycleSensitivity);
             settingButtons[1] = CycleRow("视野 FOV", 120, CycleFov);
             settingButtons[2] = CycleRow("反转 Y 视角", 60, () => GameSettings.InvertY = !GameSettings.InvertY);
@@ -379,10 +410,11 @@ namespace FirstPersonSokoban.UI
             settingButtons[4] = CycleRow("全屏显示", -60, () => GameSettings.FullScreen = !GameSettings.FullScreen);
             settingButtons[5] = CycleRow("声音音量", -120, CycleVolume);
             settingButtons[6] = CycleRow("实验室环境音", -180, () => GameSettings.AmbientAudio = !GameSettings.AmbientAudio);
+            settingButtons[7] = CycleRow("推向与站位辅助", -240, () => game.SetAssistanceEnabled(!game.AssistanceEnabled));
             Button(settingsCard, "Restore Defaults", "恢复默认", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(-140, -296), new Vector2(248, 56), () => { GameSettings.ResetToDefaults(); RefreshSettings(); }, false);
+                new Vector2(-140, -350), new Vector2(248, 56), () => { GameSettings.ResetToDefaults(); game.SetAssistanceEnabled(true); RefreshSettings(); }, false);
             Button(settingsCard, "Settings Back", "保存并返回", Vector2.one * 0.5f, Vector2.one * 0.5f,
-                new Vector2(140, -296), new Vector2(248, 56), CloseSettings);
+                new Vector2(140, -350), new Vector2(248, 56), CloseSettings);
             RefreshSettings();
             settings.gameObject.SetActive(false);
         }
@@ -431,6 +463,7 @@ namespace FirstPersonSokoban.UI
             SetButtonText(4, GameSettings.FullScreen ? "开" : "关");
             SetButtonText(5, $"{Mathf.RoundToInt(GameSettings.MasterVolume * 100f)} %");
             SetButtonText(6, GameSettings.AmbientAudio ? "开" : "关");
+            SetButtonText(7, game.AssistanceEnabled ? "开 · 本次会话" : "关 · 本次会话");
         }
 
         private void SetButtonText(int index, string value)
@@ -467,6 +500,7 @@ namespace FirstPersonSokoban.UI
 
         public void ShowMenu()
         {
+            ClearDialogCallbacks();
             RefreshLevelCards();
             SetOnly(menu);
             hud.gameObject.SetActive(false);
@@ -474,6 +508,7 @@ namespace FirstPersonSokoban.UI
 
         public void ShowHUD()
         {
+            ClearDialogCallbacks();
             hud.gameObject.SetActive(true);
             SetOnly(null);
             guidance.gameObject.SetActive(!string.IsNullOrEmpty(CurrentGuidance));
@@ -481,6 +516,105 @@ namespace FirstPersonSokoban.UI
         }
 
         public void ShowPause() => SetOnly(pause);
+
+        private void BuildConfirmation()
+        {
+            confirmation = Group(canvasRoot, "Confirm Progress Loss");
+            RectTransform card = Modal(confirmation, "Confirmation Card", new Vector2(700, 430));
+            Label(card, "Title", "确认放弃本关进度", 32, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 136), new Vector2(600, 60), TextAnchor.MiddleCenter, FontStyle.Bold);
+            confirmationMessage = Label(card, "Message", "", 21, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 28), new Vector2(590, 130), TextAnchor.MiddleCenter);
+            Button(card, "Cancel", "取消 · 保留进度", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(-150, -122), new Vector2(270, 58), CancelConfirmation);
+            Button(card, "Confirm", "放弃并继续", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(150, -122), new Vector2(270, 58), ConfirmPendingAction, false, true);
+            confirmation.gameObject.SetActive(false);
+        }
+
+        private void BuildMechanism()
+        {
+            mechanism = Group(canvasRoot, "Level Mechanism");
+            RectTransform card = Modal(mechanism, "Mechanism Card", new Vector2(760, 600));
+            mechanismTitle = Label(card, "Title", "", 34, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 212), new Vector2(660, 58), TextAnchor.MiddleCenter, FontStyle.Bold);
+            mechanismSubtitle = Label(card, "Subtitle", "", 22, Accent,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 144), new Vector2(660, 48), TextAnchor.MiddleCenter);
+            mechanismBody = Label(card, "Body", "", 24, White,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, 28), new Vector2(650, 168), TextAnchor.MiddleCenter);
+            Label(card, "Hint", "说明不计时 · 辅助可在设置中关闭", 17, Muted,
+                Vector2.one * 0.5f, Vector2.one * 0.5f, new Vector2(0, -104), new Vector2(650, 40), TextAnchor.MiddleCenter);
+            Button(card, "Begin", "开始探索", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -174), new Vector2(440, 58), DismissMechanism);
+            Button(card, "Skip", "跳过说明 · ESC", Vector2.one * 0.5f, Vector2.one * 0.5f,
+                new Vector2(0, -244), new Vector2(440, 46), DismissMechanism, false);
+            mechanism.gameObject.SetActive(false);
+        }
+
+        public void ShowConfirmation(string message, Action accepted, Action cancelled = null)
+        {
+            if (ConfirmationOpen) return;
+            confirmationOrigin = ActiveOverlay();
+            confirmationMessage.text = message;
+            confirmationAction = accepted;
+            confirmationCancel = cancelled;
+            SetOnly(confirmation);
+        }
+
+        public void ConfirmPendingAction()
+        {
+            if (!ConfirmationOpen) return;
+            Action action = confirmationAction;
+            ClearDialogCallbacks();
+            SetOnly(null);
+            action?.Invoke();
+        }
+
+        public void CancelConfirmation()
+        {
+            if (!ConfirmationOpen) return;
+            Action cancelled = confirmationCancel;
+            CanvasGroup origin = confirmationOrigin;
+            ClearDialogCallbacks();
+            SetOnly(origin);
+            cancelled?.Invoke();
+        }
+
+        public void ShowMechanism(string title, string subtitle, string body, Action proceed)
+        {
+            mechanismTitle.text = title;
+            mechanismSubtitle.text = subtitle;
+            mechanismBody.text = body;
+            mechanismContinue = proceed;
+            SetOnly(mechanism);
+        }
+
+        public void DismissMechanism()
+        {
+            if (!MechanismOpen) return;
+            Action proceed = mechanismContinue;
+            mechanismContinue = null;
+            SetOnly(null);
+            proceed?.Invoke();
+        }
+
+        private void ClearDialogCallbacks()
+        {
+            confirmationAction = null;
+            confirmationCancel = null;
+            confirmationOrigin = null;
+            mechanismContinue = null;
+        }
+
+        public void SetMovementAssist(string message) => movementAssist.text = message;
+
+        public void ShowDeadlockExplanation(string message)
+        {
+            deadlockLessonText.text = message;
+            deadlockLesson.gameObject.SetActive(true);
+        }
+
+        public void DismissDeadlockExplanation() => deadlockLesson.gameObject.SetActive(false);
 
         public void ShowSettings()
         {
@@ -519,8 +653,11 @@ namespace FirstPersonSokoban.UI
                                 $"{effectivePushes:00}  有效推动     {totalPushes:00}  累计推动     {undos:00}  撤销\n" +
                                 $"{distance:0.0} m  行走";
             int best = SaveManager.GetBestPushes(levelIndex);
+            int completed = SaveManager.CompletedCount(levelCount);
             victoryBest.text = (best >= 0 ? $"最佳有效解法  ·  {best} 次推动" : "首次完成") +
-                               (hasNext ? $"  ·  下一关 {levelIndex + 2:00} 已解锁" : "  ·  全部关卡已完成");
+                               (completed == levelCount ? "  ·  全部关卡已完成" : hasNext
+                                   ? $"  ·  下一关 {levelIndex + 2:00} 已解锁"
+                                   : $"  ·  已完成 {completed} / {levelCount} 关，可回菜单继续探索");
             nextButton.GetComponentInChildren<Text>().text = hasNext ? "进入下一关" : "返回主菜单";
             SetOnly(victory);
         }
@@ -587,7 +724,7 @@ namespace FirstPersonSokoban.UI
 
         private void NextLevel()
         {
-            if (game.CurrentLevelIndex + 1 < PuzzleGameManager.LevelCount) game.StartLevel(game.CurrentLevelIndex + 1);
+            if (game.CurrentLevelIndex + 1 < PuzzleGameManager.LevelCount) game.RequestStartLevel(game.CurrentLevelIndex + 1);
             else game.ShowMenu();
         }
 
@@ -601,27 +738,30 @@ namespace FirstPersonSokoban.UI
                 int best = SaveManager.GetBestPushes(i);
                 if (best >= 0) completed++;
                 levelButtons[i].interactable = available;
-                levelNotes[i].text = best >= 0 ? $"已完成\n最佳 {best} 推" : available ? "可开始  →" : "待解锁";
+                levelNotes[i].text = game.CanContinueSession && game.CurrentLevelIndex == i ? "进行中\n继续本关" :
+                    best >= 0 ? $"已完成\n最佳 {best} 推" : available ? "可开始  →" : "待解锁";
                 levelNotes[i].color = !available ? Muted : best >= 0 ? Success : Accent;
                 levelCardImages[i].color = available && i == unlocked - 1 ? Hex("F0D9C7") : PanelLight;
             }
             menuProgress.text = $"{completed:00} / {levelButtons.Length:00} 已完成";
             chapterProgress.anchorMax = new Vector2((float)completed / Mathf.Max(1, levelButtons.Length), 1f);
-            continueButtonRect.GetComponentInChildren<Text>().text = completed == levelButtons.Length
+            continueButtonRect.GetComponentInChildren<Text>().text = game.CanContinueSession
+                ? $"继续本关 · 第 {game.CurrentLevelIndex + 1:00} 关  →" : completed == levelButtons.Length
                 ? "再次训练  →" : unlocked == 1 ? "开始训练  →" : $"继续训练 · 第 {unlocked:00} 关  →";
         }
 
         private CanvasGroup ActiveOverlay()
         {
-            foreach (CanvasGroup group in new[] { menu, pause, victory })
+            foreach (CanvasGroup group in new[] { menu, pause, victory, settings, mechanism })
                 if (group != null && group.gameObject.activeSelf) return group;
             return null;
         }
 
         private void SetOnly(CanvasGroup visible)
         {
-            foreach (CanvasGroup group in new[] { menu, pause, victory, settings })
+            foreach (CanvasGroup group in new[] { menu, pause, victory, settings, confirmation, mechanism })
             {
+                if (group == null) continue;
                 bool active = group == visible;
                 group.gameObject.SetActive(active);
                 group.alpha = active ? 1f : 0f;

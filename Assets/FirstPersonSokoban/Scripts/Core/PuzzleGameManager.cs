@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using FirstPersonSokoban.Interaction;
 using FirstPersonSokoban.PlayerSystem;
 using FirstPersonSokoban.SaveSystem;
@@ -20,6 +21,7 @@ namespace FirstPersonSokoban.Core
         private const float RestartConfirmWindow = 2.5f;
         private const int DeadlockStatesPerFrame = 200;
         private const int DeadlockCacheLimit = 128;
+        private const double DeadlockMillisecondsPerFrame = 2.0;
 
         public static int LevelCount => LevelCatalog.Count;
 
@@ -34,6 +36,11 @@ namespace FirstPersonSokoban.Core
         private float restartConfirmUntil;
         private bool tutorialActive;
         private bool deadlockActive;
+        private bool hasSession;
+        private bool firstDeadlockExplained;
+        private readonly HashSet<int> introducedLevels = new HashSet<int>();
+        private float pendingDistance;
+        private float pendingElapsed;
 
         // 推动事务：协程句柄 + 推动前快照。中途退出必须取消动画并回滚逻辑状态。
         private Coroutine pushRoutine;
@@ -58,6 +65,18 @@ namespace FirstPersonSokoban.Core
         public int DeadlockGeneration => deadlockGeneration;
         public string CurrentGuidance => ui == null ? string.Empty : ui.CurrentGuidance;
         public string CurrentDeadlockHint => ui == null ? string.Empty : ui.CurrentDeadlockHint;
+        public bool CanContinueSession => hasSession && Board != null && !Board.IsComplete;
+        public bool HasProgress => CanContinueSession &&
+            (ElapsedSeconds > 0f || Board.PushCount > 0 || loader.Player.DistanceTravelled > 0f);
+        public bool AssistanceEnabled { get; private set; } = true;
+        public int UndoDepth => undo == null ? 0 : undo.Count;
+
+        public void SetAssistanceEnabled(bool enabled)
+        {
+            AssistanceEnabled = enabled;
+            if (!enabled) { preview.Hide(); ui.SetMovementAssist(string.Empty); }
+            else if (Phase == GamePhase.Playing) UpdateInteractionPrompt();
+        }
 
         public void Initialize(GridManager gridManager, LevelLoader levelLoader, GameUIController controller)
         {
@@ -94,6 +113,10 @@ namespace FirstPersonSokoban.Core
         /// <summary>Escape closes settings before changing the underlying game phase.</summary>
         public void HandleEscape()
         {
+            if (ui != null && ui.ConfirmationOpen) { ui.CancelConfirmation(); return; }
+            if (ui != null && ui.MechanismOpen) { ui.DismissMechanism(); return; }
+            if (Phase == GamePhase.Playing && ui != null && ui.DeadlockExplanationOpen)
+                { ui.DismissDeadlockExplanation(); return; }
             if (ui != null && ui.SettingsOpen) { ui.CloseSettings(); return; }
             if (Phase == GamePhase.Paused) Resume();
             else if (Phase == GamePhase.Playing || Phase == GamePhase.Animating) Pause();
@@ -126,6 +149,7 @@ namespace FirstPersonSokoban.Core
             CancelActivePush(false);
             CancelDeadlockSearch();
             deadlockCache.Clear();
+            hasSession = false;
 
             Time.timeScale = 1f;
             CurrentLevelIndex = Mathf.Clamp(levelIndex, 0, LevelCount - 1);
@@ -141,6 +165,7 @@ namespace FirstPersonSokoban.Core
             SetHighlight(null);
             deadlockActive = false;
             ui.SetDeadlock(false, string.Empty);
+            ui.DismissDeadlockExplanation();
             ui.SetLevel(CurrentLevelIndex + 1, CurrentLevelTitle);
             ui.SetStats(CountCompletedGoals(), Board.Definition.Goals.Count, Board.EffectivePushCount);
         }
@@ -149,6 +174,7 @@ namespace FirstPersonSokoban.Core
         {
             LoadLevel(levelIndex);
             Phase = GamePhase.Playing;
+            hasSession = true;
             restartConfirmUntil = 0f;
             tutorialActive = CurrentLevelIndex == 0;
             loader.Player.SetInputLocked(false);
@@ -156,6 +182,71 @@ namespace FirstPersonSokoban.Core
             ui.ShowHUD();
             ui.SetGuidance(tutorialActive ? FirstPushTutorial : string.Empty);
             UpdateInteractionPrompt();
+        }
+
+        // UI entry points protect an existing session; direct StartLevel remains
+        // available to reviewed test routes and explicit reset operations.
+        public void RequestStartLevel(int levelIndex)
+        {
+            int target = Mathf.Clamp(levelIndex, 0, LevelCount - 1);
+            if (CanContinueSession && target == CurrentLevelIndex) { ContinueSession(); return; }
+            ConfirmDiscard("切换关卡将放弃本关进度，是否继续？", () => StartLevelWithIntroduction(target));
+        }
+
+        private void StartLevelWithIntroduction(int levelIndex)
+        {
+            StartLevel(levelIndex);
+            if (introducedLevels.Add(CurrentLevelIndex))
+            {
+                Pause();
+                ui.ShowMechanism(CurrentLevelTitle, LevelCatalog.Get(CurrentLevelIndex).Subtitle,
+                    MechanismDescription(CurrentLevelIndex), Resume);
+            }
+        }
+
+        private static string MechanismDescription(int index)
+        {
+            switch (index)
+            {
+                case 0: return "先用 WASD 移动、鼠标观察。对准箱子正面按 E 推一格。Z 撤销，R 连按两次重置。";
+                case 1: return "内墙会遮住直达路线。先观察转角两侧，确认下一次推动后还能绕到箱子背面。";
+                case 2: return "两间展厅通过连廊相接。逐箱规划运输路线，留意箱子是否挡住另一箱的通道。";
+                case 3: return "距离目标更近未必就是正确方向。先沿回廊观察，再确定可以换向的位置。";
+                case 4: return "入口只有一格宽。观察哪个箱子挡住通路，先为自己打开进入内厅的空间。";
+                case 5: return "箱子可能需要临时让位。停车前检查是否还能绕到另一侧，把箱子推回主路线。";
+                case 6: return "先对齐狭口，再连续推动。箱子贴近非目标墙边可能无法返回，随时可用 Z 撤销。";
+                default: return "连通的展厅需要安排先后次序。先观察深处与入口的关系，避免已归位箱子挡住后续路线。";
+            }
+        }
+
+        public void ContinueSession()
+        {
+            if (!CanContinueSession) return;
+            if (Phase == GamePhase.Paused) { Resume(); return; }
+            if (Phase != GamePhase.Menu) return;
+            Time.timeScale = 1f;
+            Phase = GamePhase.Playing;
+            restartConfirmUntil = 0f;
+            loader.Player.SetInputLocked(false);
+            LockCursor(true);
+            ui.ShowHUD();
+            RefreshDeadlock();
+            UpdateInteractionPrompt();
+        }
+
+        public void RequestMenuRestart()
+            => ConfirmDiscard("重新开始会清空本关进度，是否继续？", RestartLevel);
+
+        public void RequestExit()
+            => ConfirmDiscard("退出后本关局面不会保留，成绩与解锁不受影响。是否退出？", ui.ExitGame);
+
+        private void ConfirmDiscard(string message, Action action)
+        {
+            if (ui.ConfirmationOpen) return;
+            if (!HasProgress) { action(); return; }
+            bool restorePlay = Phase == GamePhase.Playing || Phase == GamePhase.Animating;
+            if (restorePlay) Pause();
+            ui.ShowConfirmation(message, action, restorePlay ? (Action)Resume : null);
         }
 
         /// <summary>
@@ -175,6 +266,7 @@ namespace FirstPersonSokoban.Core
             deadlockActive = false;
             ui.SetDeadlock(false, string.Empty);
             ui.ShowMenu();
+            ui.SetMovementAssist(string.Empty);
         }
 
         public void Pause()
@@ -183,9 +275,11 @@ namespace FirstPersonSokoban.Core
             phaseBeforePause = Phase;
             Phase = GamePhase.Paused;
             Time.timeScale = 0f; // 动画协程一并冻结，暂停请求不会丢失
+            CancelDeadlockSearch();
             loader.Player.SetInputLocked(true);
             LockCursor(false);
             ui.ShowPause();
+            ui.SetMovementAssist(string.Empty);
         }
 
         public void Resume()
@@ -201,7 +295,7 @@ namespace FirstPersonSokoban.Core
             LockCursor(Phase == GamePhase.Playing || Phase == GamePhase.Animating);
             ui.ShowHUD();
 
-            if (isPlaying) UpdateInteractionPrompt();
+            if (isPlaying) { RefreshDeadlock(); UpdateInteractionPrompt(); }
             else preview.Hide();
         }
 
@@ -212,7 +306,7 @@ namespace FirstPersonSokoban.Core
             LabAudio.Play(SoundCue.Reset);
         }
 
-        /// <summary>键盘 R 走二次确认，避免误触丢失进度；菜单按钮仍可立即重置。</summary>
+        /// <summary>键盘 R 保留二次确认；菜单按钮通过 RequestMenuRestart 保护进度。</summary>
         public void RequestRestart()
         {
             if (Phase != GamePhase.Playing) return;
@@ -237,6 +331,7 @@ namespace FirstPersonSokoban.Core
 
             BoardSnapshot snapshot = undo.Pop();
             Board.Restore(snapshot);
+            ui.DismissDeadlockExplanation();
             loader.SyncViews(Board);
             loader.Player.SetLookRotation(snapshot.PlayerYaw, snapshot.PlayerPitch);
             loader.Player.Teleport(snapshot.PlayerWorld);
@@ -288,11 +383,14 @@ namespace FirstPersonSokoban.Core
             // 这样中途取消时撤销栈里不会残留一条「没发生的推动」。
             pendingSnapshot = Board.Capture(playerGrid, loader.Player.transform.position,
                 loader.Player.LookYaw, loader.Player.LookPitch);
+            pendingDistance = loader.Player.DistanceTravelled;
+            pendingElapsed = ElapsedSeconds;
             Board.ApplyPush(push);
             aim.Box.SetGridPosition(push.BoxTo);
             tutorialActive = false;
             ui.SetGuidance(string.Empty);
             ui.SetInteractionPrompt(string.Empty, false);
+            ui.SetMovementAssist(string.Empty);
             LabAudio.Play(SoundCue.Push);
             pushRoutine = StartCoroutine(AnimatePush(aim.Box, push));
         }
@@ -344,6 +442,7 @@ namespace FirstPersonSokoban.Core
             if (Board.IsComplete)
             {
                 Phase = GamePhase.Victory;
+                hasSession = false;
                 loader.Player.SetInputLocked(true);
                 LockCursor(false);
                 SaveManager.RecordCompletion(CurrentLevelIndex, Board.EffectivePushCount, ElapsedSeconds, LevelCount);
@@ -378,11 +477,13 @@ namespace FirstPersonSokoban.Core
             if (!rollback || snapshot == null || Board == null || loader == null) return;
 
             Board.Rollback(snapshot);
+            ElapsedSeconds = pendingElapsed;
             loader.SyncViews(Board);
             if (loader.Player != null)
             {
                 loader.Player.Teleport(snapshot.PlayerWorld);
                 loader.Player.SetLookRotation(snapshot.PlayerYaw, snapshot.PlayerPitch);
+                loader.Player.RestoreDistance(pendingDistance);
             }
             if (preview != null) preview.Hide();
             SetHighlight(null);
@@ -404,6 +505,7 @@ namespace FirstPersonSokoban.Core
 
         private void UpdateInteractionPrompt()
         {
+            ui.SetMovementAssist(string.Empty);
             AimResult aim = loader.Interactor.EvaluateAim();
             if (!aim.HasBox)
             {
@@ -422,7 +524,12 @@ namespace FirstPersonSokoban.Core
             SetHighlight(aim.Box);
             if (assessment.CanPush)
             {
-                preview.Show(grid.GridToWorld(assessment.Result.BoxTo));
+                if (AssistanceEnabled)
+                {
+                    preview.Show(grid.GridToWorld(assessment.Result.BoxTo));
+                    ui.SetMovementAssist("推动方向 " + DirectionArrow(assessment.Result.Direction) + "  ·  箱子前进一格");
+                }
+                else preview.Hide();
                 // 多箱场景明确写出当前锁定的箱子，避免辅助瞄准「选中了旁边那个」。
                 string selector = SelectedBoxLabel(aim.Box);
                 ui.SetInteractionPrompt(string.IsNullOrEmpty(selector) ? "E  推动箱子" : "E  推动 " + selector,
@@ -435,7 +542,27 @@ namespace FirstPersonSokoban.Core
                 string hint = PushDiagnostics.HintFor(assessment.Reason);
                 ui.SetInteractionPrompt(string.IsNullOrEmpty(hint) ? "调整站位后再推" : hint, true, false);
                 ui.SetGuidance(tutorialActive ? FirstPushTutorial : assessment.Message);
+                if (AssistanceEnabled && assessment.Reason == PushDenyReason.StanceOffset)
+                {
+                    Vector3 center = grid.GridToWorld(playerGrid, loader.Player.transform.position.y);
+                    Vector2Int direction = aim.Box.GridPosition - playerGrid;
+                    Vector3 correction = direction.x != 0
+                        ? new Vector3(0f, 0f, center.z - loader.Player.transform.position.z)
+                        : new Vector3(center.x - loader.Player.transform.position.x, 0f, 0f);
+                    float side = Vector3.Dot(correction, loader.Player.transform.right);
+                    ui.SetMovementAssist(Mathf.Abs(side) > 0.05f
+                        ? (side < 0f ? "← 向左横移到箱子中线" : "向右横移到箱子中线 →")
+                        : "稍向后退，回到相邻格中心再推");
+                }
             }
+        }
+
+        private string DirectionArrow(Vector2Int direction)
+        {
+            Vector3 world = new Vector3(direction.x, 0f, direction.y);
+            Vector3 local = loader.Player.transform.InverseTransformDirection(world);
+            if (Mathf.Abs(local.x) > Mathf.Abs(local.z)) return local.x < 0f ? "←" : "→";
+            return local.z < 0f ? "↓" : "↑";
         }
 
         private string SelectedBoxLabel(BoxView box)
@@ -483,7 +610,7 @@ namespace FirstPersonSokoban.Core
             while (!session.IsDone)
             {
                 if (Time.timeScale <= 0f) { yield return null; continue; }
-                session.Step(DeadlockStatesPerFrame);
+                session.Step(DeadlockStatesPerFrame, DeadlockMillisecondsPerFrame);
                 yield return null;
             }
 
@@ -503,6 +630,11 @@ namespace FirstPersonSokoban.Core
             if (deadlockActive && !wasDeadlocked) LabAudio.Play(SoundCue.Warning);
             ui.SetDeadlock(deadlockActive,
                 deadlockActive ? report.Reason + "  ·  Z 撤销 / R 重置" : string.Empty);
+            if (deadlockActive && !firstDeadlockExplained)
+            {
+                firstDeadlockExplained = true;
+                ui.ShowDeadlockExplanation("死锁表示当前箱位已无法全部归位。按 Z 撤销，或连按两次 R 重新开始。ESC 关闭此说明。");
+            }
         }
 
         private void CancelDeadlockSearch()

@@ -1,0 +1,19 @@
+﻿PURE RULE PASS: ValidPush_MovesExactlyOneCellAndCompletesGoal
+PURE RULE PASS: WallBlocked_DoesNotChangeStateOrPushCount
+PURE RULE PASS: TwoAdjacentBoxes_CannotBePushedTogether
+PURE RULE PASS: DiagonalOrDistantPlayer_CannotPush
+PURE RULE PASS: Undo_RestoresBoxesAndPlayerWorldPosition
+PURE RULE PASS: Reset_RestoresInitialStateAndCounters
+PURE RULE PASS: Completion_RequiresEveryGoal
+PURE RULE PASS: Validator_RejectsMismatchedBoxesAndGoals
+PURE RULE PASS: Validator_RejectsDuplicatePlayersAndIllegalSymbols
+PURE RULE PASS: L1 minimum=1 slices=3
+PURE RULE PASS: L2 minimum=7 slices=37
+PURE RULE PASS: L3 minimum=22 slices=2386
+PURE RULE PASS: L4 minimum=12 slices=49
+PURE RULE PASS: L5 minimum=4 slices=21
+PURE RULE PASS: L6 minimum=10 slices=227
+PURE RULE PASS: L7 minimum=5 slices=30
+PURE RULE PASS: L8 minimum=32 slices=3541
+PURE MANAGED RULES PASS: 19 checks; Unity native play/tests NOT RUN
+﻿

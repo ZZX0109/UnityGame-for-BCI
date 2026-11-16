@@ -1,3 +1,13 @@
+# 推箱子 · 当前优化版本
+
+**2026-11-16 · `codex/optimize-game01`**
+
+本轮优化实现与验证边界见 [优化交付](Validation/Optimization-20261116.md) 和 [当前状态](Validation/CurrentStatus.md)。Python回归 38/38、纯托管规则 19/19通过；运行/测试/Editor源码独立编译通过。Unity许可证阻止本轮原生测试，尚未交付经过验证的新Windows游戏包或截图。
+
+以下保留原工程操作与历史说明；本轮事实以以上两份文档为准。
+
+---
+
 # FirstPersonSokoban · 第一人称三维推箱子
 
 **2026-11-13 · 暖色艺术馆、八关机制与布局预览候选版 · 保留旧解锁进度**

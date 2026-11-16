@@ -115,6 +115,9 @@ namespace FirstPersonSokoban.PlayerSystem
             MoveAndMeasure(delta);
         }
 
+        /// <summary>Only a cancelled push transaction restores this measurement.</summary>
+        public void RestoreDistance(float distance) => DistanceTravelled = Mathf.Max(0f, distance);
+
         private void MoveAndMeasure(Vector3 delta)
         {
             Vector3 before = transform.position;

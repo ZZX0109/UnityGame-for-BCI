@@ -72,5 +72,13 @@ namespace FirstPersonSokoban.SaveSystem
             if (value < 0) value = store.GetInt(LegacyUnlockedKey, 1);
             return Mathf.Clamp(value, 1, levelCount);
         }
+
+        public static int CompletedCount(int levelCount)
+        {
+            int completed = 0;
+            for (int i = 0; i < Mathf.Min(levelCount, LevelCatalog.Count); i++)
+                if (GetBestPushes(i) >= 0) completed++;
+            return completed;
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace FirstPersonSokoban.Core
@@ -46,6 +47,12 @@ namespace FirstPersonSokoban.Core
         private readonly int maxStates;
         private readonly Queue<Node> frontier = new Queue<Node>();
         private readonly HashSet<string> visited = new HashSet<string>();
+        private readonly HashSet<Vector2Int> nodeReachable = new HashSet<Vector2Int>();
+        private readonly HashSet<Vector2Int> candidateReachable = new HashSet<Vector2Int>();
+        private readonly HashSet<Vector2Int> occupiedScratch = new HashSet<Vector2Int>();
+        private readonly Queue<Vector2Int> floodQueue = new Queue<Vector2Int>();
+        private readonly StringBuilder keyScratch = new StringBuilder();
+        private readonly Vector2Int[] sortedScratch;
         private bool done;
         private SolveResult result;
 
@@ -58,25 +65,32 @@ namespace FirstPersonSokoban.Core
 
             this.level = level;
             this.maxStates = maxStates;
+            sortedScratch = new Vector2Int[currentBoxes.Count];
 
             var initial = new Vector2Int[currentBoxes.Count];
             for (int i = 0; i < currentBoxes.Count; i++) initial[i] = currentBoxes[i];
 
             frontier.Enqueue(new Node { Player = player, Boxes = initial, Pushes = 0 });
-            visited.Add(Key(initial, CanonicalPlayer(level, initial, player)));
+            FillReachable(initial, player, candidateReachable);
+            visited.Add(SessionKey(initial, Canonical(candidateReachable, player)));
         }
 
         public bool IsDone => done;
         public SolveResult Result => result;
         public int ExploredStates => visited.Count;
 
-        public void Step(int maxExpansions)
+        public void Step(int maxExpansions, double maxMilliseconds = double.PositiveInfinity)
         {
             if (done) return;
             int expansions = maxExpansions <= 0 ? 1 : maxExpansions;
+            long started = Stopwatch.GetTimestamp();
 
             for (int expanded = 0; expanded < expansions && !done;)
             {
+                // A soft budget: finish one atomic expansion, then yield. The
+                // solver keeps all state; time slicing never means unsolvable.
+                if (expanded > 0 && (Stopwatch.GetTimestamp() - started) * 1000.0 /
+                    Stopwatch.Frequency >= maxMilliseconds) return;
                 if (frontier.Count == 0)
                 {
                     Finish(SolveStatus.Unsolvable);
@@ -91,27 +105,75 @@ namespace FirstPersonSokoban.Core
                     break;
                 }
 
-                HashSet<Vector2Int> reachable = Reachable(level, node.Player, node.Boxes);
+                FillReachable(node.Boxes, node.Player, nodeReachable);
                 foreach (Vector2Int box in node.Boxes)
                 foreach (Vector2Int direction in Directions)
                 {
                     Vector2Int stand = box - direction;
                     Vector2Int destination = box + direction;
-                    if (!reachable.Contains(stand) || !Walkable(level, destination) ||
+                    if (!nodeReachable.Contains(stand) || !Walkable(level, destination) ||
                         System.Array.IndexOf(node.Boxes, destination) >= 0) continue;
 
                     Vector2Int[] next = (Vector2Int[])node.Boxes.Clone();
                     next[System.Array.IndexOf(next, box)] = destination;
-                    if (!visited.Add(Key(next, CanonicalPlayer(level, next, box)))) continue;
+                    FillReachable(next, box, candidateReachable);
+                    if (!visited.Add(SessionKey(next, Canonical(candidateReachable, box)))) continue;
                     if (visited.Count > maxStates)
                     {
                         Finish(SolveStatus.SearchLimitReached);
-                        break;
+                        return;
                     }
                     frontier.Enqueue(new Node { Player = box, Boxes = next, Pushes = node.Pushes + 1 });
                 }
             }
         }
+
+        private void FillReachable(IReadOnlyList<Vector2Int> boxes, Vector2Int player,
+            HashSet<Vector2Int> found)
+        {
+            occupiedScratch.Clear();
+            for (int i = 0; i < boxes.Count; i++) occupiedScratch.Add(boxes[i]);
+            found.Clear();
+            floodQueue.Clear();
+            if (!Walkable(level, player) || occupiedScratch.Contains(player)) return;
+            found.Add(player);
+            floodQueue.Enqueue(player);
+            while (floodQueue.Count > 0)
+            {
+                Vector2Int current = floodQueue.Dequeue();
+                foreach (Vector2Int direction in Directions)
+                {
+                    Vector2Int next = current + direction;
+                    if (!Walkable(level, next) || occupiedScratch.Contains(next) || !found.Add(next)) continue;
+                    floodQueue.Enqueue(next);
+                }
+            }
+        }
+
+        private Vector2Int Canonical(HashSet<Vector2Int> cells, Vector2Int fallback)
+        {
+            int best = int.MaxValue;
+            foreach (Vector2Int cell in cells)
+            {
+                int index = cell.y * level.Width + cell.x;
+                if (index < best) { best = index; fallback = cell; }
+            }
+            return fallback;
+        }
+
+        private string SessionKey(IReadOnlyList<Vector2Int> boxes, Vector2Int canonical)
+        {
+            for (int i = 0; i < boxes.Count; i++) sortedScratch[i] = boxes[i];
+            System.Array.Sort(sortedScratch, CompareCells);
+            keyScratch.Clear();
+            keyScratch.Append(canonical.x).Append(',').Append(canonical.y);
+            foreach (Vector2Int cell in sortedScratch)
+                keyScratch.Append(';').Append(cell.x).Append(',').Append(cell.y);
+            return keyScratch.ToString();
+        }
+
+        private static int CompareCells(Vector2Int a, Vector2Int b)
+            => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y);
 
         private void Finish(SolveStatus status, int minimumPushes = -1)
         {
@@ -171,18 +233,6 @@ namespace FirstPersonSokoban.Core
         private static bool Walkable(LevelDefinition level, Vector2Int position)
             => level.IsInside(position) && level.TileAt(position) != TileType.Wall;
 
-        private static string Key(IReadOnlyList<Vector2Int> boxes, Vector2Int canonicalPlayer)
-        {
-            var sorted = new Vector2Int[boxes.Count];
-            for (int i = 0; i < boxes.Count; i++) sorted[i] = boxes[i];
-            System.Array.Sort(sorted, (a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
-
-            var key = new StringBuilder();
-            key.Append(canonicalPlayer.x).Append(',').Append(canonicalPlayer.y);
-            foreach (Vector2Int position in sorted)
-                key.Append(';').Append(position.x).Append(',').Append(position.y);
-            return key.ToString();
-        }
     }
 
     public static class LevelSolver

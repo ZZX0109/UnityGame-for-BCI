@@ -1,0 +1,1 @@
+Assets\FirstPersonSokoban\Scripts\Core\LevelCatalog.cs(31,33): warning CS0649: Field 'LevelCatalog.CatalogData.levels' is never assigned to, and will always have its default value null

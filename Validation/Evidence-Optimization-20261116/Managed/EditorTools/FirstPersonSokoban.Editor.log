@@ -1,0 +1,4 @@
+Assets\FirstPersonSokoban\Editor\DeliveryBuild.cs(24,27): warning CS0649: Field 'DeliveryBuild.ValidationSummary.unityVersion' is never assigned to, and will always have its default value null
+Assets\FirstPersonSokoban\Editor\DeliveryBuild.cs(26,27): warning CS0649: Field 'DeliveryBuild.ValidationSummary.sourceFingerprint' is never assigned to, and will always have its default value null
+Assets\FirstPersonSokoban\Editor\DeliveryBuild.cs(25,27): warning CS0649: Field 'DeliveryBuild.ValidationSummary.sourceCommit' is never assigned to, and will always have its default value null
+Assets\FirstPersonSokoban\Editor\DeliveryBuild.cs(23,27): warning CS0649: Field 'DeliveryBuild.ValidationSummary.status' is never assigned to, and will always have its default value null

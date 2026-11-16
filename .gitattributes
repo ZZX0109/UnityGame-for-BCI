@@ -1,7 +1,13 @@
-# Unity YAML 与脚本按文本处理，其余保持原样
-* text=auto
+# Text assets use LF so source/font provenance hashes match every checkout.
+* text=auto eol=lf
 *.png binary
 *.jpg binary
 *.fbx binary
 *.dll binary
 *.exe binary
+*.otf binary
+*.ttf binary
+*.ttc binary
+
+# Keep compiler/Editor evidence bytes and diagnostic spacing exactly as emitted.
+Validation/Evidence-*/**/*.log -text -whitespace

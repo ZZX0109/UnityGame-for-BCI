@@ -1,0 +1,44 @@
+{
+  "unityTests": "not_run",
+  "windowsBuild": "not_run",
+  "gui": "not_run",
+  "performance": "not_run",
+  "commands": [
+    {
+      "command": [
+        "Tools/validate_project.py"
+      ],
+      "exitCode": 0,
+      "log": "01.log"
+    },
+    {
+      "command": [
+        "Tools/validate_levels.py",
+        "--mechanics"
+      ],
+      "exitCode": 0,
+      "log": "02.log"
+    },
+    {
+      "command": [
+        "Tools/build_ui_font.py",
+        "--check"
+      ],
+      "exitCode": 0,
+      "log": "03.log"
+    },
+    {
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "Tools/tests",
+        "-v"
+      ],
+      "exitCode": 0,
+      "log": "04.log"
+    }
+  ],
+  "status": "passed"
+}

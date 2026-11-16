@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-16",
+  "generatedAtUtc": "2026-11-16T03:23:32.424450+00:00",
+  "branch": "codex/optimize-game01",
+  "baseCommit": "a73a3a6c4997540851325afaa478188d5fd33781",
+  "sourceFingerprint": "ef7a540575a87e800388ae655429456b1130806565be17f67d3d466140c0cfcf",
+  "pythonTests": {
+    "passed": 38,
+    "total": 38
+  },
+  "managedRules": {
+    "passed": 19,
+    "total": 19
+  },
+  "managedCompilation": {
+    "editorRuntime": "passed",
+    "playerDefinesRuntime": "passed",
+    "testSources": "passed",
+    "editorTools": "passed"
+  },
+  "unityTestRunner": "not_run",
+  "windowsBuild": "not_built",
+  "visualCapture": "not_run",
+  "performance": "not_measured",
+  "blocker": "No valid Unity Editor license found; com.unity.editor.headless entitlement unavailable.",
+  "deliverySourceFingerprint": "48b1c933d7ab7e91f3c4a5a776b89a74b1fb4e55824e4190e4513ba5f955b8b9",
+  "workspaceOnlyExcludedFiles": [
+    "ProjectSettings/PackageManagerSettings.asset"
+  ]
+}

@@ -135,7 +135,7 @@ def build(source: Path, font_index: int) -> int:
         "fontSHA256": sha256(FONT_PATH), "unicodeCodepoints": covered,
     }
     MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-                             encoding="utf-8")
+                             encoding="utf-8", newline="\n")
     return check()
 
 
