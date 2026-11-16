@@ -31,7 +31,7 @@ GAMES = {
              "scene": "Assets/ClawMachine/Scenes/ClawMachineScene.unity",
              "prepare": "ClawMachine.Editor.ClawSceneBuilder.PrepareForValidation"},
     "street": {"namespace": "StreetCrossing.Tests.PlayMode.VisualCaptureTests",
-               "scenarios": ["S01", "S02", "S03"], "views": ["start", "kerb", "crosswalk"],
+               "scenarios": ["S01", "S02", "S03"], "views": ["start", "kerb-left", "kerb-right", "crosswalk", "destination"],
                "scene": "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity",
                "prepare": "StreetCrossing.Editor.StreetSceneBuilder.PrepareForValidation"},
 }
@@ -147,7 +147,7 @@ def main(argv=None):
 
     def save():
         if summary_path:
-            summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     def run(command, env=None):
         print("Running:", " ".join(map(str, command)), flush=True)
@@ -159,7 +159,7 @@ def main(argv=None):
             raise ValueError("Use a fresh empty directory inside BuildOutput.")
         output.mkdir(parents=True)
         summary_path = output / "visual-capture-summary.json"
-        summary["sourceCommit"] = args.commit or subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+        summary["sourceCommit"] = args.commit or subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8").strip()
         save()
         requested = None
         if args.expect_size:
@@ -193,7 +193,7 @@ def main(argv=None):
         if source_fingerprint(root) != fingerprint:
             raise ValueError("Source/assets changed during capture. Review and use a fresh run.")
         verified = check_captures(screenshots, args.game, requested)
-        (output / "verified-capture-manifest.json").write_text(json.dumps(verified, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (output / "verified-capture-manifest.json").write_text(json.dumps(verified, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         summary.update(status="captured_pending_review", sourceFingerprint=fingerprint, unityVersion=VERSION,
                        screenshots=len(verified["screenshots"]))
         save()

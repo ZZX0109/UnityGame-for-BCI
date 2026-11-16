@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "game": "street",
+  "status": "failed",
+  "guiAcceptance": "not_run",
+  "windowsPlaythrough": "not_run",
+  "video": "not_run",
+  "performance": "not_run",
+  "build": "not_run",
+  "sourceCommit": "6c33e1cf77ee7c4ab9db7d64d5b89d4dd04ddb22",
+  "staticChecks": "passed",
+  "sourceBeforeImport": "37f5e80a2baa0e73341b1dc746c2e77b377046892bb0f9d0fde6f8e3fba5eabf",
+  "error": "Command failed with exit code 1."
+}

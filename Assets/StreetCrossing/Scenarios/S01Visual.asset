@@ -21,3 +21,6 @@ MonoBehaviour:
   foliage: 708C60
   shopCaption: CORNER MARKET
   districtCaption: GARDEN WALK
+  backgroundPeople: 6
+  facadeSequence: 000000000100000002000000030000000400000005000000
+  furnishingSpacing: 17

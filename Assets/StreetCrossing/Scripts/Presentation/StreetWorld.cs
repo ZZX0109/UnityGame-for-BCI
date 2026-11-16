@@ -17,11 +17,15 @@ namespace StreetCrossing.Presentation
         private StreetVisualProfile profile;
         public Transform VisualDetailsRoot { get; private set; }
         private readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
+        private readonly List<Mesh> combinedMeshes = new List<Mesh>();
         private readonly List<CrossingZone> zones = new List<CrossingZone>();
         public IReadOnlyList<CrossingZone> Zones => zones;
         public Vector3[] LeftRoadTargets { get; private set; }
         public Vector3[] RightRoadTargets { get; private set; }
         public Transform TrafficRoot { get; private set; }
+        public Material AsphaltMaterial => modules.Asphalt;
+        public Material PavingMaterial => modules.Paving;
+        public Material GlassMaterial => Material("667F7A", .72f);
         public StreetWorld(Transform parent, Material referencedSurface, Font uiFont) { root = parent; source = referencedSurface; font = uiFont; }
         public Material Material(string hex, float smoothness = 0.18f)
         {
@@ -35,6 +39,46 @@ namespace StreetCrossing.Presentation
         {
             foreach (Material material in materials.Values) Object.Destroy(material); materials.Clear();
             foreach (Mesh mesh in detailMeshes.Values) Object.Destroy(mesh); detailMeshes.Clear();
+            foreach (Mesh mesh in combinedMeshes) Object.Destroy(mesh); combinedMeshes.Clear();
+        }
+        public Material FacadeMaterial(string colour)
+        {
+            string key = "Facade:" + colour;
+            if (materials.TryGetValue(key, out Material existing)) return existing;
+            Material material = new Material(modules.Plaster) { name = "Street masonry " + colour };
+            ColorUtility.TryParseHtmlString("#" + colour, out Color tint); material.color = tint;
+            material.mainTextureScale = new Vector2(3, 2); material.SetFloat("_Glossiness", .12f);
+            materials.Add(key, material); return material;
+        }
+        /// <summary>Combine each original static detail chunk by material, retaining text as its own renderer.</summary>
+        public void CombineVisuals(Transform group)
+        {
+            var buckets = new Dictionary<Material, List<CombineInstance>>();
+            var originals = new List<GameObject>();
+            foreach (MeshFilter filter in group.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Renderer renderer = filter.GetComponent<Renderer>();
+                if (renderer == null || !renderer.enabled || filter.sharedMesh == null || filter.GetComponent<Collider>() != null) continue;
+                if (filter.transform == group || filter.GetComponentInParent<LODGroup>() != null) continue;
+                Material material = renderer.sharedMaterial; if (material == null) continue;
+                if (!buckets.TryGetValue(material, out List<CombineInstance> instances))
+                { instances = new List<CombineInstance>(); buckets.Add(material, instances); }
+                instances.Add(new CombineInstance { mesh = filter.sharedMesh, transform = group.worldToLocalMatrix * filter.transform.localToWorldMatrix });
+                originals.Add(filter.gameObject);
+            }
+            foreach (KeyValuePair<Material, List<CombineInstance>> entry in buckets)
+            {
+                Mesh mesh = new Mesh { name = group.name + " / " + entry.Key.name, indexFormat = IndexFormat.UInt32 };
+                mesh.CombineMeshes(entry.Value.ToArray(), true, true); mesh.RecalculateBounds(); combinedMeshes.Add(mesh);
+                GameObject chunk = new GameObject("Combined " + entry.Key.name, typeof(MeshFilter), typeof(MeshRenderer)); chunk.transform.SetParent(group, false);
+                chunk.GetComponent<MeshFilter>().sharedMesh = mesh; chunk.GetComponent<MeshRenderer>().sharedMaterial = entry.Key;
+            }
+            foreach (GameObject original in originals) { original.SetActive(false); Object.Destroy(original); }
+        }
+        public void AddVisualLod(Transform group, float cullHeight)
+        {
+            LODGroup lod = group.gameObject.AddComponent<LODGroup>();
+            lod.SetLODs(new[] { new LOD(cullHeight, group.GetComponentsInChildren<Renderer>()) }); lod.RecalculateBounds();
         }
         public Renderer VisualRounded(Transform parent, string name, Vector3 position, Vector3 size, string color, float radius = .07f, float smoothness = .18f)
         {
@@ -43,6 +87,12 @@ namespace StreetCrossing.Presentation
             { mesh = StreetDetailMesh.RoundedBox(size, radius); detailMeshes.Add(key, mesh); }
             GameObject go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer)); go.transform.SetParent(parent, false); go.transform.localPosition = position;
             go.GetComponent<MeshFilter>().sharedMesh = mesh; Renderer renderer = go.GetComponent<Renderer>(); renderer.sharedMaterial = Material(color, smoothness); return renderer;
+        }
+        public Mesh CornerMesh(Vector3 size, float cut)
+        {
+            string key = "Corner:" + size.ToString("F3") + ":" + cut.ToString("F3", System.Globalization.CultureInfo.InvariantCulture);
+            if (!detailMeshes.TryGetValue(key, out Mesh mesh)) { mesh = StreetDetailMesh.ChamferedCorner(size, cut); detailMeshes.Add(key, mesh); }
+            return mesh;
         }
         private GameObject Shape(PrimitiveType type, string name, Transform parent, Vector3 p, Vector3 scale, string color, bool collider = true)
         {
@@ -70,7 +120,7 @@ namespace StreetCrossing.Presentation
             RenderSettings.ambientSkyColor = new Color(0.78f, 0.82f, 0.83f);
             RenderSettings.ambientEquatorColor = new Color(0.64f, 0.61f, 0.53f);
             RenderSettings.ambientGroundColor = new Color(0.36f, 0.36f, 0.31f);
-            RenderSettings.fog = true; RenderSettings.fogColor = new Color(0.77f, 0.84f, 0.85f); RenderSettings.fogMode = FogMode.Linear; RenderSettings.fogStartDistance = 65; RenderSettings.fogEndDistance = 135;
+            RenderSettings.fog = true; RenderSettings.fogColor = new Color(0.77f, 0.84f, 0.85f); RenderSettings.fogMode = FogMode.Linear; RenderSettings.fogStartDistance = 85; RenderSettings.fogEndDistance = 150;
             GameObject sun = new GameObject("Soft morning sunlight"); sun.transform.SetParent(root, false); sun.transform.rotation = Quaternion.Euler(43, -32, 0);
             Light light = sun.AddComponent<Light>(); light.type = LightType.Directional; light.color = new Color(1, 0.92f, 0.79f); light.intensity = 1.05f; light.shadows = LightShadows.Soft; light.shadowStrength = 0.55f;
             float width = s.roadHalfWidth;
@@ -101,8 +151,8 @@ namespace StreetCrossing.Presentation
                     Building(new Vector3(b * 13, 0, side * 11.3f), side, 6.8f + ((b + 3) % 3) * 0.9f, (b + 3) % 2 == 0 ? "D9CBB7" : "D5BA9A");
                 }
                 for (int x = -26; x <= 26; x += 13) if (Mathf.Abs(x) > 4 && (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6)) { Tree(new Vector3(x, 0, side * 5.5f)); Lamp(new Vector3(x + 3.5f, 0, side * 4.7f)); }
-                Box("Street end pedestrian barrier", new Vector3(39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D");
-                Box("Street end pedestrian barrier", new Vector3(-39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D");
+                Box("Street end pedestrian barrier", new Vector3(39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
+                Box("Street end pedestrian barrier", new Vector3(-39, 0.65f, side * 6.3f), new Vector3(0.3f, 1.3f, 6), "807D6D").GetComponent<Renderer>().enabled = false;
             }
             for (int n = -4; n <= 4; n++) Box("Crosswalk stripe", new Vector3(0, 0.002f, n * 0.7f), new Vector3(s.crosswalkHalfWidth * 2, 0.003f, 0.35f), "ECE9DA", false);
             for (int n = -13; n <= 13; n++) if (Mathf.Abs(n) > 1) Box("Centre line dash", new Vector3(n * 3, 0.004f, 0), new Vector3(1.6f, 0.018f, 0.1f), "E6C16C", false);
@@ -132,7 +182,12 @@ namespace StreetCrossing.Presentation
             Shop(); BusStop(new Vector3(7, 0, width + 2));
             VisualDetailsRoot = new GameObject("Visual details - " + profile.identity).transform; VisualDetailsRoot.SetParent(root, false);
             StreetVisualDetails.Build(VisualDetailsRoot, this, s);
-            Box("Start notice", new Vector3(-2.8f, 1.2f, -7.7f), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA");
+            StreetDistrictBuilder.BuildExtensions(VisualDetailsRoot, this, profile, width);
+            StreetFurnitureBuilder.Build(VisualDetailsRoot, this, s);
+            BuildFurnitureBounds(s);
+            StreetBackgroundPopulation population = new GameObject("Background population").AddComponent<StreetBackgroundPopulation>();
+            population.transform.SetParent(VisualDetailsRoot, false); population.Initialize(root.GetComponentInParent<Core.StreetGameManager>(), this, s);
+            Inspectable(Box("Start notice", new Vector3(-2.8f, 1.2f, -7.7f), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA"), "过街练习", "沿人行道到路沿，观察左右来车和行人信号。确认车流停稳、行人绿灯后，从斑马线前往对面便利店。");
             Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, -7.79f), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
             Label("目的地", new Vector3(0, 2.7f, 9.48f), 0.07f, "2A6D50");
             Box("Destination welcome mat", s.destination + new Vector3(0, 0.008f, 0), new Vector3(2.7f, 0.02f, 1.2f), "80946F", false);
@@ -159,6 +214,7 @@ namespace StreetCrossing.Presentation
                 Box("Turn approach yield line", new Vector3(x + side * 1.65f, 0.027f, -side * 9), new Vector3(3, 0.02f, 0.22f), "F0ECDC", false);
                 Zone(CrossingRegion.RoadwayHazard, new Vector3(x, 0.9f, side * 21), new Vector3(6.6f, 3, 36));
             }
+            Inspectable(Box("Turning traffic notice", new Vector3(x + 4.5f, 1.8f, -5.42f), new Vector3(2.35f, .85f, .10f), "E9DFCA"), "转弯车辆让行", "本情境包含侧路转弯和视线遮挡。请留在人行道内调整站位，确认转弯车辆已停稳，行人绿灯时再从指定横道过街。");
             Label("转弯车辆让行", new Vector3(x + 4.5f, 1.8f, -5.5f), 0.06f, "32483D", null, 0, 2.2f, 0.5f);
         }
         private void Zone(CrossingRegion type, Vector3 centre, Vector3 size)
@@ -168,12 +224,46 @@ namespace StreetCrossing.Presentation
         }
         private void Building(Vector3 p, int side, float height, string color)
         {
-            modules.CreateBuilding(root, p, side, height);
+            int bay = Mathf.RoundToInt(p.x / 13);
+            int type = (bay + 2 + (side > 0 ? 0 : 3)) % 6;
+            Transform block = StreetDistrictBuilder.Building(root, this, profile, p, side, height, profile.FacadeAt(type));
+            BoxCollider collider = block.gameObject.AddComponent<BoxCollider>(); collider.center = Vector3.up * (height * .5f); collider.size = new Vector3(10.3f, height, 4);
+        }
+        private static void Inspectable(GameObject target, string title, string description)
+        { Player.StreetInspectable sign = target.AddComponent<Player.StreetInspectable>(); sign.title = title; sign.description = description; }
+        private void PhysicalBounds(string name, Vector3 centre, Vector3 size)
+        {
+            Transform geometry = root.Find("Additional world geometry");
+            if (geometry == null) { geometry = new GameObject("Additional world geometry").transform; geometry.SetParent(root, false); }
+            GameObject obstacle = new GameObject(name); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = centre;
+            obstacle.AddComponent<BoxCollider>().size = size;
+        }
+        private void BuildFurnitureBounds(StreetScenarioDefinition s)
+        {
+            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, -7.5f), new Vector3(2.25f, 1, .65f));
+            for (int side = -1; side <= 1; side += 2)
+            {
+                PhysicalBounds("Cycle stand bounds", new Vector3((side > 0 ? 19 : 17) + .8f, .44f, side * 8.4f), new Vector3(2.3f, .88f, .72f));
+                PhysicalBounds("Litter bin bounds", new Vector3(25, .52f, side * 7.8f), new Vector3(.62f, 1.04f, .62f));
+                for (int slot = -2; slot <= 2; slot++)
+                {
+                    float x = slot * profile.furnishingSpacing;
+                    if (slot != 0 && Mathf.Abs(x) < 37 && (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6))
+                        PhysicalBounds("Kerb bollard bounds", new Vector3(x, .46f, side * 3.85f), new Vector3(.13f, .92f, .13f));
+                }
+                float height = s.turningTraffic ? (side > 0 ? 10.2f : 8.8f) : 9.8f;
+                Vector3 corner = new Vector3(s.turningTraffic ? (-9 - 8.4f) * s.DirectionForLane(0) : 36, height * .5f, side * (s.turningTraffic ? 12 : 11.3f));
+                Transform geometry = root.Find("Additional world geometry");
+                GameObject obstacle = new GameObject("Corner building bounds"); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = corner;
+                obstacle.transform.localRotation = Quaternion.Euler(0, side > 0 ? 0 : 180, 0);
+                // Match the visible cut corner rather than leaving an invisible rectangular obstruction outside its doorway.
+                obstacle.AddComponent<MeshCollider>().sharedMesh = CornerMesh(new Vector3(s.turningTraffic ? 6.6f : 7.1f, height, 4), side > 0 ? 1.15f : .7f);
+            }
         }
         private void Shop()
         {
             Box("Convenience shop", new Vector3(0, 2.1f, 12), new Vector3(10.5f, 4.2f, 4.3f), profile.facade);
-            Box("Shop sign backing", new Vector3(0, 3.25f, 9.79f), new Vector3(10.7f, 1, 0.2f), profile.accent);
+            Inspectable(Box("Shop sign backing", new Vector3(0, 3.25f, 9.79f), new Vector3(10.7f, 1, 0.2f), profile.accent), "街角便利店", "本次目的地是便利店门前的绿色地垫。安全走完斑马线后，继续沿人行道前往门口。");
             Label("街 角 便 利 店", new Vector3(0, 3.25f, 9.65f), 0.16f, "FAF1D9", null, 0, 9.5f, 0.68f);
             for (int n = -1; n <= 1; n++)
             {
@@ -193,7 +283,7 @@ namespace StreetCrossing.Presentation
             Box("Shelter back panel", p + new Vector3(0, 1.5f, 0.7f), new Vector3(3.2f, 1.7f, 0.07f), "B5C4B6");
             Box("Bus seat", p + new Vector3(0, 0.55f, 0.3f), new Vector3(2.8f, 0.16f, 0.5f), "8E7656");
             Box("Bus sign pole", p + new Vector3(-2.2f, 1.4f, -0.3f), new Vector3(0.07f, 2.8f, 0.07f), "717B6A");
-            Box("Bus stop board", p + new Vector3(-2.2f, 2.25f, -0.3f), new Vector3(0.95f, 1, 0.1f), "F4EBD6");
+            Inspectable(Box("Bus stop board", p + new Vector3(-2.2f, 2.25f, -0.3f), new Vector3(0.95f, 1, 0.1f), "F4EBD6"), "街心公交站", "候车区位于人行道内。请保留斑马线入口和盲道通道，过街时以行人信号和实际车流为准。");
             Label("公交\n街心站", p + new Vector3(-2.2f, 2.25f, -0.37f), 0.06f, "32483D", null, 0, 0.8f, 0.8f);
         }
         private void Tree(Vector3 p)
@@ -214,9 +304,12 @@ namespace StreetCrossing.Presentation
         }
         public void DetailVehicle(GameObject vehicle, int variant = 0)
         {
-            Transform existing = vehicle.transform.Find("Reusable vehicle model");
-            if (existing != null) { existing.gameObject.SetActive(false); Object.Destroy(existing.gameObject); }
+            variant = Mathf.Clamp(variant, 0, 2);
+            StreetVehicleVisualCache cache = vehicle.GetComponent<StreetVehicleVisualCache>();
+            if (cache == null) cache = vehicle.AddComponent<StreetVehicleVisualCache>();
+            if (cache.Get(variant) != null) { cache.Select(variant); return; }
             Transform model = modules.CreateVehicle(vehicle.transform, variant);
+            model.name = "Reusable vehicle model " + variant;
             // Actual lamps and mirrors remain separate readable modules on all three original body meshes.
             float length = variant == 2 ? 4.8f : variant == 1 ? 3.7f : 4.2f;
             for (int side = -1; side <= 1; side += 2)
@@ -224,13 +317,27 @@ namespace StreetCrossing.Presentation
                 Shape(PrimitiveType.Cube, "Headlamp", model, new Vector3(side * 0.55f, 0.66f, length * 0.5f), new Vector3(0.32f, 0.17f, 0.05f), "F5EBC6", false);
                 Shape(PrimitiveType.Cube, "Tail lamp", model, new Vector3(side * 0.55f, 0.66f, -length * 0.5f), new Vector3(0.29f, 0.17f, 0.05f), "A74435", false);
                 Shape(PrimitiveType.Cube, "Mirror", model, new Vector3(side * 0.94f, 1.01f, 0.8f), new Vector3(0.19f, 0.14f, 0.2f), "5E6256", false);
+                for (int end = -1; end <= 1; end += 2)
+                    Shape(PrimitiveType.Cube, side < 0 ? "Turn indicator left" : "Turn indicator right", model,
+                        new Vector3(side * .82f, .66f, end * (length * .5f + .015f)), new Vector3(.12f, .11f, .04f), "AC702D", false);
             }
+            // Property blocks animate emission without creating a material per lamp or per vehicle.
+            foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>())
+                if (renderer.name == "Tail lamp" || renderer.name.StartsWith("Turn indicator"))
+                {
+                    string key = renderer.name == "Tail lamp" ? "Vehicle brake lens" : "Vehicle amber lens";
+                    if (!materials.TryGetValue(key, out Material lens))
+                    { lens = new Material(source) { name = key }; lens.EnableKeyword("_EMISSION"); materials.Add(key, lens); }
+                    renderer.sharedMaterial = lens;
+                }
+            model.gameObject.AddComponent<StreetVehiclePresentation>().ResetVisuals();
+            AddVisualLod(model, .008f); cache.Store(variant, model); cache.Select(variant);
         }
         public void ColorVehicle(GameObject car, int index)
         {
             string[] colors = { "A55F4B", "C3B18E", "687D70", "C3C3B4" };
-            foreach (Renderer renderer in car.GetComponentsInChildren<Renderer>())
-                if (renderer.gameObject.name == "Painted body" || renderer.gameObject.name == "Cabin") renderer.sharedMaterial = Material(colors[index % colors.Length], 0.45f);
+            ColorUtility.TryParseHtmlString("#" + colors[index % colors.Length], out Color colour);
+            car.GetComponent<StreetVehicleVisualCache>().SetPaint(colour);
         }
     }
 }

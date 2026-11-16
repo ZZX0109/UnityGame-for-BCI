@@ -9,12 +9,14 @@ namespace StreetCrossing.Presentation
         private readonly GameObject residential;
         public Material Asphalt { get; }
         public Material Paving { get; }
+        public Material Plaster { get; }
         public StreetAssetLibrary()
         {
             vehicles = new[] { Load("SedanModule"), Load("HatchbackModule"), Load("VanModule") };
             residential = Load("ResidentialModule");
             Asphalt = Resources.Load<Material>("StreetCrossing/Modules/Asphalt"); Paving = Resources.Load<Material>("StreetCrossing/Modules/Paving");
-            if (Asphalt == null || Paving == null) throw new System.InvalidOperationException("Street textured materials are missing.");
+            Plaster = Resources.Load<Material>("StreetCrossing/Modules/Plaster");
+            if (Asphalt == null || Paving == null || Plaster == null) throw new System.InvalidOperationException("Street textured materials are missing.");
         }
         private static GameObject Load(string name)
         {

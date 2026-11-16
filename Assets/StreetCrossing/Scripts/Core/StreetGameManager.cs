@@ -26,6 +26,7 @@ namespace StreetCrossing.Core
         private float accumulator;
         private int attempt;
         private CrossingRegion region;
+        private readonly StreetNoticeBoard notices = new StreetNoticeBoard();
         public IntersectionController Intersection { get; private set; }
         public CrossingEvaluator Evaluation { get; private set; }
         public StreetGameState State { get; private set; } = StreetGameState.Menu;
@@ -43,7 +44,7 @@ namespace StreetCrossing.Core
         public IReadOnlyList<CrossingZone> Zones => world.Zones;
         public Vector3[] LeftRoadTargets => world.LeftRoadTargets;
         public Vector3[] RightRoadTargets => world.RightRoadTargets;
-        public string Notice { get; private set; } = "";
+        public string Notice => notices.Resolve(WorldTime);
         public string LogPath => log?.Path;
         public string LogError => log?.Error;
         public event System.Action<string, string> GameEvent;
@@ -64,7 +65,7 @@ namespace StreetCrossing.Core
         {
             if (index < 0 || index >= scenarios.Length || IsPlaying) return;
             Record("ScenarioChanged", scenarios[index].scenarioId); SelectedScenarioIndex = index; scenario = scenarios[index];
-            State = StreetGameState.Menu; Notice = ""; attempt = 0; WorldTime = accumulator = 0; RebuildScenario(); SetCursor(false);
+            State = StreetGameState.Menu; notices.Reset(); attempt = 0; WorldTime = accumulator = 0; RebuildScenario(); SetCursor(false);
         }
         private void RebuildScenario()
         {
@@ -94,7 +95,7 @@ namespace StreetCrossing.Core
         public void StartPractice()
         {
             if (!isActiveAndEnabled) return; ui?.CloseModal();
-            attempt++; WorldTime = accumulator = 0; region = CrossingRegion.None; Notice = "";
+            attempt++; WorldTime = accumulator = 0; region = CrossingRegion.None; notices.Reset();
             ResetEvaluation(); player.ResetPose(); Intersection.Reset(); traffic.Reset();
             State = StreetGameState.Playing; SetCursor(true); Physics.SyncTransforms(); Record("AttemptStarted", "seed=" + scenario.seed);
         }
@@ -130,10 +131,14 @@ namespace StreetCrossing.Core
             // Roadway hazard is used by evaluation/local vehicle sensing only. Signal priority is confined to the protected crossing.
             Intersection.Tick(dt, traffic.HasUnclearedVehicles, protectedOccupied);
             traffic.Tick(dt, WorldTime, protectedOccupied);
-            if (Intersection.IsClearanceHeld && !Notice.StartsWith("清空等待")) Notice = "受保护横道正在清空，冲突车辆继续等待。";
-            else if (Notice.StartsWith("受保护横道")) Notice = "";
+            if (Intersection.IsClearanceHeld) notices.Set(StreetNoticeKind.Clearance, "受保护横道正在清空，冲突车辆继续等待。");
+            else { notices.Clear(StreetNoticeKind.Clearance); notices.Clear(StreetNoticeKind.ClearanceWatchdog); }
             if (!roadway && IsAtKerb && scenario.kerbOcclusion && !evidence.leftTargetVisible && !Evaluation.LeftObserved)
-                Notice = "左侧视线可能被遮挡。请在人行道内调整站位，确认能看到驶近道路。";
+                notices.Set(StreetNoticeKind.Occlusion, "左侧视线可能被遮挡。请在人行道内调整站位，确认能看到驶近道路。");
+            else notices.Clear(StreetNoticeKind.Occlusion);
+            if (IsAtKerb && Evaluation.MayRecordPreEntryObservation && observation.NeedsRefresh(10))
+                notices.Set(StreetNoticeKind.ObservationRefresh, "距离上次观察已超过10秒。出发前请再次确认左右来车；观察记录不代表当前道路仍然安全。");
+            else notices.Clear(StreetNoticeKind.ObservationRefresh);
         }
         public bool DirectionVisible(bool left)
         {
@@ -144,7 +149,7 @@ namespace StreetCrossing.Core
                 float dx = car.transform.position.x - player.transform.position.x;
                 if ((left && dx > -2) || (!left && dx < 2)) continue;
                 Vector3 point = car.transform.position + Vector3.up * 0.9f;
-                if (RoadObservationVisibility.TargetVisible(player.View, new[] { point }, player.transform, car.transform)) return true;
+                if (RoadObservationVisibility.PointVisible(player.View, point, player.transform, car.transform)) return true;
             }
             return false;
         }
@@ -165,10 +170,31 @@ namespace StreetCrossing.Core
         public void Resume() { if (!isActiveAndEnabled || State != StreetGameState.Paused) return; State = StreetGameState.Playing; SetCursor(true); Record("Resumed", ""); }
         public void RequestRestart() { if (State == StreetGameState.Playing) Pause(); ui?.ShowRestartConfirmation(); }
         public void ReturnToMenu() { if (IsPlaying) Pause(); State = StreetGameState.Menu; SetCursor(false); Record("ReturnedToMenu", ""); }
-        public void Inspect(string objectName) { Notice = "查看道路标识与目的地，确认视线清晰后再进入横道。"; Record("Inspect", objectName); }
+        public void Inspect(StreetInspectable sign)
+        {
+            if (!IsPlaying || sign == null) return;
+            notices.Set(StreetNoticeKind.Inspection, sign.Content, WorldTime + 5);
+            Record("Inspect", sign.title);
+        }
         private void PhaseChanged(TrafficPhase phase) { Record("TrafficPhase", phase.ToString()); }
-        private void ClearanceBlocked(string message) { Notice = "清空等待较长，保持全红；可暂停检查或重新开始。"; Record("ClearanceWatchdog", message); }
-        private void OnEvaluation(string name, string detail) { Record(name, detail); GameEvent?.Invoke(name, detail); }
+        private void ClearanceBlocked(string message) { notices.Set(StreetNoticeKind.ClearanceWatchdog, "清空等待较长，保持全红；可暂停检查或重新开始。"); Record("ClearanceWatchdog", message); }
+        private void OnEvaluation(string name, string detail)
+        {
+            switch (name)
+            {
+                case "SignalViolation": notices.Set(StreetNoticeKind.Violation, "当前不是行人绿灯，本次进入已记录违规。请安全返回人行道后重新练习。"); break;
+                case "RouteViolation": notices.Set(StreetNoticeKind.Violation, "已离开合法过街路线。请安全返回人行道后重新练习。"); break;
+                case "VehicleConflictAtEntry": notices.Set(StreetNoticeKind.Violation, "已有车辆尚未清空。请与车辆保持距离，本次进入存在冲突。"); break;
+                case "ObservationRequirementMissing": notices.Set(StreetNoticeKind.Violation, "进入前未完成左右道路观察。请安全完成当前动作后重新练习。"); break;
+                case "StationaryContact": notices.Set(StreetNoticeKind.Safety, "接触到已停稳车辆，请保持距离。静止接触与移动碰撞分别记录。", WorldTime + 4); break;
+                case "NearMiss": notices.Set(StreetNoticeKind.Safety, "车辆正在危险接近，请注意来车并保持安全距离。", WorldTime + 3); break;
+                case "CrossingEnd":
+                    if (!Evaluation.Finished) { notices.Clear(StreetNoticeKind.Violation); notices.Clear(StreetNoticeKind.Safety); }
+                    break;
+                case "Collision": case "Timeout": notices.Set(StreetNoticeKind.Result, Evaluation.Feedback); break;
+            }
+            Record(name, detail); GameEvent?.Invoke(name, detail);
+        }
         public void Record(string name, string detail) { log?.Write(name, detail, WorldTime, attempt, Intersection == null ? "" : Intersection.Phase.ToString(), PlayerPosition); }
         private static void SetCursor(bool locked) { Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None; Cursor.visible = !locked; }
         private void OnApplicationFocus(bool focus) { if (AutoPauseOnFocusLoss && !focus && State == StreetGameState.Playing) Pause(); }

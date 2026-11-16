@@ -93,7 +93,7 @@ namespace StreetCrossing.Traffic
                 foreach (VehicleController car in active)
                 {
                     if (car.Lane.Index != laneIndex) continue;
-                    Vector3 old = car.transform.position; float oldSpeed = car.Motion.Speed;
+                    car.CaptureMotion();
                     float obstacleRear = leaderRear;
                     foreach (VehicleController other in active)
                     {
@@ -113,16 +113,7 @@ namespace StreetCrossing.Traffic
                     float curveSpeed = car.Lane.IsTurning && car.Motion.Distance >= car.Lane.StopDistance - 2 && car.Motion.Distance < car.Lane.JunctionExit + 2 ? 3.1f : -1;
                     car.Motion.Step(dt, car.Lane.StopDistance, mayEnter, obstacleRear, scenario.queueGap,
                         scenario.acceleration * car.AccelerationMultiplier, scenario.comfortableBraking, scenario.reactionTime, curveSpeed);
-                    car.ApplyPosition(); Physics.SyncTransforms(); leaderRear = car.Motion.Rear;
-                    if (car.SweptContact(player, old)) { game.RegisterContact(car.EncounterId, Mathf.Max(oldSpeed, car.Motion.Speed)); if (!game.IsPlaying) return; }
-                    Vector3 delta = player.transform.position - car.transform.position;
-                    Vector3 forward = car.transform.forward;
-                    float closing = Vector3.Dot(new Vector3(delta.x, 0, delta.z), forward);
-                    float edgeDistance = Mathf.Max(0, delta.magnitude - car.Motion.BodyHalfLength);
-                    bool inRoad = game.IsPlayerInRoadwayHazard;
-                    if (inRoad && car.Motion.Speed > 1 && closing > 0 && lateral < car.HalfWidth + 0.8f
-                        && edgeDistance < scenario.nearMissDistance && edgeDistance / car.Motion.Speed < 1.1f)
-                        game.Evaluation.NearMiss(car.EncounterId);
+                    car.ApplyPosition(); car.UpdateVisuals(time); leaderRear = car.Motion.Rear;
                 }
                 if (time >= nextSpawn[laneIndex])
                 {
@@ -131,6 +122,22 @@ namespace StreetCrossing.Traffic
                     { Spawn(laneIndex, 0); nextSpawn[laneIndex] = time + SpawnInterval(laneIndex); }
                     else nextSpawn[laneIndex] = time + 0.25f;
                 }
+            }
+            // Following uses explicit transforms/kinematics. Synchronize once after every pose is written,
+            // then query both swept and resting contact before recycling any vehicle.
+            Physics.SyncTransforms();
+            foreach (VehicleController car in active)
+            {
+                if (car.SweptContact(player, car.PreviousPosition))
+                { game.RegisterContact(car.EncounterId, car.ContactSpeed); if (!game.IsPlaying) return; }
+                Vector3 delta = player.transform.position - car.transform.position;
+                float closing = Vector3.Dot(new Vector3(delta.x, 0, delta.z), car.transform.forward);
+                float edgeDistance = Mathf.Max(0, delta.magnitude - car.Motion.BodyHalfLength);
+                float playerDistance = car.Lane.NearestDistance(player.transform.position);
+                float lateral = Vector3.Distance(car.Lane.Position(playerDistance), new Vector3(player.transform.position.x, 0, player.transform.position.z));
+                if (game.IsPlayerInRoadwayHazard && car.Motion.Speed > 1 && closing > 0 && lateral < car.HalfWidth + 0.8f
+                    && edgeDistance < scenario.nearMissDistance && edgeDistance / car.Motion.Speed < 1.1f)
+                    game.Evaluation.NearMiss(car.EncounterId);
             }
             for (int i = active.Count - 1; i >= 0; i--)
                 if (active[i].Motion.Rear > active[i].Lane.Length)

@@ -21,3 +21,6 @@ MonoBehaviour:
   foliage: 6C8263
   shopCaption: CORNER MARKET
   districtCaption: CROSSING SQUARE
+  backgroundPeople: 8
+  facadeSequence: 040000000300000001000000050000000200000000000000
+  furnishingSpacing: 17

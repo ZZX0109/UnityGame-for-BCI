@@ -29,7 +29,7 @@ class GameEvidenceChecks(unittest.TestCase):
         self.temp.cleanup()
 
     def write(self, text):
-        self.xml.write_text(text, encoding="utf-8")
+        self.xml.write_text(text, encoding="utf-8", newline="\n")
         return self.xml
 
     def test_all_actual_scoped_scenario_cases_required(self):
@@ -66,16 +66,16 @@ class GameEvidenceChecks(unittest.TestCase):
 
     def test_editor_version_must_be_actual_not_only_requested(self):
         log = self.root / "editor.log"
-        log.write_text("Initialize engine version: 2022.3.62f3c1 (revision)\n")
+        log.write_text("Initialize engine version: 2022.3.62f3c1 (revision)\n", encoding="utf-8", newline="\n")
         delivery.verify_editor(self.write(xml()), log, "2022.3.62f3c1")
-        log.write_text("Initialize engine version: 2022.3.62f3 (revision)\n")
+        log.write_text("Initialize engine version: 2022.3.62f3 (revision)\n", encoding="utf-8", newline="\n")
         with self.assertRaisesRegex(ValueError, "Exact Editor"):
             delivery.verify_editor(self.xml, log, "2022.3.62f3c1")
 
     def test_wrong_xml_editor_overrides_plausible_log(self):
         text = xml().replace("<test-suite>", '<environment unity-version="2022.3.62f3"/><test-suite>', 1)
         log = self.root / "editor.log"
-        log.write_text("Initialize engine version: 2022.3.62f3c1 (revision)\n")
+        log.write_text("Initialize engine version: 2022.3.62f3c1 (revision)\n", encoding="utf-8", newline="\n")
         with self.assertRaisesRegex(ValueError, "differs"):
             delivery.verify_editor(self.write(text), log, "2022.3.62f3c1")
 
@@ -93,18 +93,18 @@ class GameEvidenceChecks(unittest.TestCase):
 
     def test_missing_editor_records_blocked_and_creates_no_unity_evidence(self):
         (self.root / "ProjectSettings").mkdir()
-        (self.root / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 2022.3.62f3c1\n")
+        (self.root / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 2022.3.62f3c1\n", encoding="utf-8", newline="\n")
         game = delivery.GAMES["claw"]
         for path in (game["scene"], game["static"]):
             file = self.root / path
             file.parent.mkdir(parents=True, exist_ok=True)
-            file.write_text("" if file.suffix == ".unity" else "print('static fixture only')\n")
+            file.write_text("" if file.suffix == ".unity" else "print('static fixture only')\n", encoding="utf-8", newline="\n")
         output = self.root / "BuildOutput/test"
         with patch.object(delivery, "ROOT", self.root), patch.object(delivery, "check_project", return_value=[]), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             code = delivery.main(["--game", "claw", "--unity", str(self.root / "missing-editor"), "--commit", "fixture-only", "--output", str(output)])
         self.assertEqual(1, code)
         evidence = output / "Evidence"
-        result = json.loads((evidence / "game-validation-summary.json").read_text())
+        result = json.loads((evidence / "game-validation-summary.json").read_text(encoding="utf-8"))
         self.assertEqual("blocked", result["status"])
         self.assertEqual("not_run", result["build"])
         self.assertEqual(64, len(result["sourceBeforeImport"]))

@@ -215,6 +215,7 @@ namespace StreetCrossing.UI
             SliderRow(content, "鼠标灵敏度", 0.3f, 5, StreetPreferences.Sensitivity, value => StreetPreferences.Sensitivity = value, "F1");
             SliderRow(content, "视野 FOV", 75, 85, StreetPreferences.FieldOfView, value => StreetPreferences.FieldOfView = value, "F0");
             SliderRow(content, "提示音音量", 0, 1, StreetPreferences.Volume, value => StreetPreferences.Volume = value, "F2");
+            SliderRow(content, "街道环境音", 0, 1, StreetPreferences.AmbientVolume, value => StreetPreferences.AmbientVolume = value, "F2");
             ToggleRow(content, "慢速舒适模式", StreetPreferences.ComfortMode, value => StreetPreferences.ComfortMode = value);
             ToggleRow(content, "允许 Shift 快步走", StreetPreferences.FastWalkEnabled, value => StreetPreferences.FastWalkEnabled = value);
             ToggleRow(content, "放大辅助文字", StreetPreferences.LargeText, value => { StreetPreferences.LargeText = value; redraw = true; });

@@ -30,7 +30,7 @@ class Mesh:
   out += ['v %.6f %.6f %.6f'%v for v in self.v]
   out += ['vt %.6f %.6f'%(v[0]*.35+v[2]*.2,v[1]*.35+v[2]*.2) for v in self.v]
   out += ['s 1']
-  out += ['f '+' '.join(f'{i}/{i}' for i in f) for f in self.f];p.write_text('\n'.join(out)+'\n');return p
+  out += ['f '+' '.join(f'{i}/{i}' for i in f) for f in self.f];p.write_text('\n'.join(out)+'\n', encoding="utf-8", newline="\n");return p
 meshes={}
 for kind,L,W,H in [('Sedan',4.2,1.75,1.5),('Hatchback',3.7,1.65,1.42),('Van',4.8,1.9,2.02)]:
  m=Mesh();m.loft([(-L/2,W*.38,.35,.68,W*.43),(-L*.38,W*.49,.3,.86,W*.47),(L*.3,W*.49,.3,.84,W*.46),(L/2,W*.37,.36,.62,W*.4)]);meshes[kind+'Body']=m.save(kind+'Body')
@@ -101,13 +101,13 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
 '''.replace('NAME',name).replace('ALBEDO',texture_ref(name+'Albedo.png')).replace('NORMAL',texture_ref(name+'Normal.png')).replace('GLOSS',str(1-roughness))
- (RES/(name+'.mat')).write_text(text)
+ (RES/(name+'.mat')).write_text(text, encoding="utf-8", newline="\n")
 def material(name,color,metal=0,gloss=.25):
- text=(GAME/'Materials/StreetSurface.mat').read_text().replace('m_Name: StreetSurface','m_Name: '+name)
+ text=(GAME/'Materials/StreetSurface.mat').read_text(encoding="utf-8").replace('m_Name: StreetSurface','m_Name: '+name)
  import re
  text=re.sub(r'- _Color: .*', '- _Color: {r: %.4f, g: %.4f, b: %.4f, a: 1}'%color,text)
  text=re.sub(r'- _Metallic: .*','- _Metallic: '+str(metal),text);text=re.sub(r'- _Glossiness: .*','- _Glossiness: '+str(gloss),text)
- p=RES/(name+'.mat');p.write_text(text);return p
+ p=RES/(name+'.mat');p.write_text(text, encoding="utf-8", newline="\n");return p
 paint=material('VehiclePaint',(.52,.34,.25),.5,.62);glazing=material('Glazing',(.28,.36,.35),.22,.78);rubber=material('TyreRubber',(.075,.083,.073),0,.16);metal=material('WheelAlloy',(.53,.55,.51),.75,.5);frame=material('FacadeTrim',(.72,.64,.50),.02,.22)
 def prefab(name,children):
  p=RES/(name+'.prefab');out=['%YAML 1.1','%TAG !u! tag:unity3d.com,2011:']
@@ -118,7 +118,7 @@ def prefab(name,children):
  for i,(label,mesh,mat,position,scale) in enumerate(children):
   gid=200010+i*100;tid=gid+10;mf=gid+20;mr=gid+30;go(gid,tid,label,[mf,mr])
   out.extend([f'--- !u!4 &{tid}','Transform:',f'  m_GameObject: {{fileID: {gid}}}','  serializedVersion: 2','  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}','  m_LocalPosition: {x: %s, y: %s, z: %s}'%position,'  m_LocalScale: {x: %s, y: %s, z: %s}'%scale,'  m_Children: []','  m_Father: {fileID: 100020}',f'--- !u!33 &{mf}','MeshFilter:',f'  m_GameObject: {{fileID: {gid}}}','  m_Mesh: {fileID: 4300000, guid: '+guid(mesh)+', type: 3}',f'--- !u!23 &{mr}','MeshRenderer:',f'  m_GameObject: {{fileID: {gid}}}','  m_Enabled: 1','  m_CastShadows: 1','  m_ReceiveShadows: 1','  m_Materials:','  - {fileID: 2100000, guid: '+guid(mat)+', type: 2}','  m_SortingLayerID: 0','  m_SortingOrder: 0'])
- p.write_text('\n'.join(out)+'\n')
+ p.write_text('\n'.join(out)+'\n', encoding="utf-8", newline="\n")
 for kind,L in [('Sedan',4.2),('Hatchback',3.7),('Van',4.8)]:
  children=[('Painted body',meshes[kind+'Body'],paint,(0,0,0),(1,1,1)),('Cabin',meshes[kind+'Roof'],paint,(0,0,0),(1,1,1)),('Glazed cabin',meshes[kind+'Glass'],glazing,(0,0,0),(1,1,1))]
  for side in [-1,1]:

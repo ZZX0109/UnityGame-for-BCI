@@ -8,7 +8,7 @@ def main():
   if subprocess.run(command,cwd=ROOT).returncode:errors.append('Dependent integrity check failed.')
  scenarios={}
  for sid in ['S01','S02','S03']:
-  text=(GAME/'Scenarios'/f'{sid}.asset').read_text();table=(GAME/'Scenarios'/f'{sid}PhaseTable.asset').read_text()
+  text=(GAME/'Scenarios'/f'{sid}.asset').read_text(encoding="utf-8");table=(GAME/'Scenarios'/f'{sid}PhaseTable.asset').read_text(encoding="utf-8")
   def number(name):return float(re.search(r'^  '+re.escape(name)+r': ([0-9.]+)$',text,re.M).group(1))
   times=[float(v) for v in re.findall(r'^    duration: ([0-9.]+)$',table,re.M)]
   if len(times)!=6 or min(times)<=0 or times[3]<number('roadHalfWidth')*2/number('comfortableSpeed')+2:errors.append(sid+' has no configured comfortable-speed Walk window.')
@@ -16,7 +16,7 @@ def main():
   profile=GAME/'Scenarios'/f'{sid}Visual.asset'
   if not profile.is_file():errors.append('Missing explicit visual profile: '+sid)
   else:
-   profile_text=profile.read_text();guid=re.search(r'^guid: ([0-9a-f]+)$',Path(str(profile)+'.meta').read_text(),re.M).group(1)
+   profile_text=profile.read_text(encoding="utf-8");guid=re.search(r'^guid: ([0-9a-f]+)$',Path(str(profile)+'.meta').read_text(encoding="utf-8"),re.M).group(1)
    if f'  profileId: {sid}' not in profile_text or f'  identity: {int(sid[1:])-1}' not in profile_text:errors.append('Visual identity mismatch: '+sid)
    if f'visualProfile: {{fileID: 11400000, guid: {guid}, type: 2}}' not in text:errors.append('Scenario visual profile is not explicitly referenced: '+sid)
   if number('requireLeftObservation')!=1 or number('requireRightObservation')!=1:errors.append(sid+' acceptance baseline requires both observations.')
@@ -24,7 +24,7 @@ def main():
  if not scenarios['S02']['maximum']>scenarios['S01']['maximum'] or not scenarios['S02']['interval']<scenarios['S01']['interval']:errors.append('S02 must have meaningfully denser traffic.')
  if scenarios['S03']['turning']!=1 or scenarios['S03']['occlusion']!=1:errors.append('S03 needs real turns and kerb occlusion.')
  for path in (GAME/'Scripts').rglob('*.cs'):
-  text=path.read_text()
+  text=path.read_text(encoding="utf-8")
   if 'FirstPersonSokoban' in text or 'ClawMachine' in text or 'RuntimeInitializeOnLoadMethod' in text:errors.append('Cross-game/global bootstrap dependency: '+str(path))
   if path.parent.name=='UI' and ('OnGUI' in text or 'GUILayout.' in text):errors.append('IMGUI remains: '+str(path))
   stripped=re.sub(r'//[^\n]*|/\*.*?\*/|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'','',text,flags=re.S)
@@ -34,9 +34,9 @@ def main():
    elif c in ')]}':
     if not stack or stack.pop()!=pairs[c]:errors.append('Delimiter mismatch: '+str(path));break
   if stack:errors.append('Unclosed delimiter: '+str(path))
- refs=json.loads((GAME/'Scripts/StreetCrossing.Runtime.asmdef').read_text())['references']
+ refs=json.loads((GAME/'Scripts/StreetCrossing.Runtime.asmdef').read_text(encoding="utf-8"))['references']
  if set(refs)!={'Unity.TextMeshPro','Unity.ugui'}:errors.append('Unexpected runtime assembly dependency.')
- manifest=json.loads((ROOT/'Packages/manifest.json').read_text());lock=json.loads((ROOT/'Packages/packages-lock.json').read_text())
+ manifest=json.loads((ROOT/'Packages/manifest.json').read_text(encoding="utf-8"));lock=json.loads((ROOT/'Packages/packages-lock.json').read_text(encoding="utf-8"))
  if manifest['dependencies'].get('com.unity.textmeshpro')!='3.0.6' or lock['dependencies']['com.unity.textmeshpro']['version']!='3.0.6':errors.append('TMP must be pinned consistently at3.0.6.')
  settings=list((ROOT/'Assets').rglob('TMP Settings.asset'))
  if len(settings)!=1 or settings[0].relative_to(ROOT).as_posix()!='Assets/BCIShared/TMP/Resources/TMP Settings.asset':errors.append('Exactly one shared canonical TMP Settings asset is required.')
@@ -45,8 +45,8 @@ def main():
  for name in ['Asphalt','Paving','Plaster']:
   for suffix in ['Albedo','Normal']:
    if not (GAME/'Art'/f'{name}{suffix}.png').is_file():errors.append('Missing original texture '+name+suffix)
- entry=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text()
- if entry.index('FirstPersonSokoban/Scenes/PuzzleScene.unity')>entry.index('StreetCrossing/Scenes/StreetCrossingScene.unity'):errors.append('Existing default scene order changed.')
+ entry=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text(encoding="utf-8")
+ if entry.index('StreetCrossing/Scenes/StreetCrossingScene.unity')>entry.index('FirstPersonSokoban/Scenes/PuzzleScene.unity'):errors.append('Street scene must be the default entry on the street game branch.')
  for error in errors:print('[FAIL]',error)
  if errors:return 1
  print('[OK] S01/S02/S03 data/windows, explicit regions, isolated Canvas/TMP source, reusable art and canonical resources checks passed.')

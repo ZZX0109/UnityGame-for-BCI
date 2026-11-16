@@ -21,3 +21,6 @@ MonoBehaviour:
   foliage: 5E7B63
   shopCaption: CITY MARKET
   districtCaption: MARKET STREET
+  backgroundPeople: 10
+  facadeSequence: 030000000400000005000000020000000100000000000000
+  furnishingSpacing: 13.6

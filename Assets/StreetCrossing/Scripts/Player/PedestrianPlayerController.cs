@@ -53,7 +53,10 @@ namespace StreetCrossing.Player
             displacement.y = gravity; body.Move(displacement * Mathf.Min(Time.deltaTime, 0.1f));
             if (transform.position.y < -2) game.RequestRestart();
             if (input.InteractPressed && Physics.Raycast(View.transform.position, View.transform.forward, out RaycastHit hit, 3))
-                game.Inspect(hit.collider.gameObject.name);
+            {
+                StreetInspectable sign = hit.collider.GetComponentInParent<StreetInspectable>();
+                if (sign != null) game.Inspect(sign);
+            }
         }
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {

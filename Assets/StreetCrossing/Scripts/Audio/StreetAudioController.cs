@@ -65,7 +65,7 @@ namespace StreetCrossing.Audio
         {
             if (game == null) return;
             bool playing = game.IsPlaying;
-            ambience.volume = StreetPreferences.Volume * .18f;
+            ambience.volume = StreetPreferences.AmbientVolume * .18f;
             if (playing) { ambience.UnPause(); cues.UnPause(); if (!ambience.isPlaying) ambience.Play(); }
             else ambience.Pause();
             foreach (VehicleController vehicle in game.Traffic.Active)

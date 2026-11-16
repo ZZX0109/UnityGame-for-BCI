@@ -16,7 +16,6 @@ namespace StreetCrossing.Presentation
             Shelter(root, world, p, new Vector3(7, 0, scenario.roadHalfWidth + 2));
             Bench(root, world, p, new Vector3(6.8f, 0, -7.5f));
             KerbDetails(root, world, scenario.roadHalfWidth);
-            DistrictFacades(root, world, scenario);
             if (p.identity == StreetVisualIdentity.Residential) GardenEntrance(root, world, p);
             else if (p.identity == StreetVisualIdentity.Commercial) MarketArcade(root, world, p);
             else CornerLandmark(root, world, p);

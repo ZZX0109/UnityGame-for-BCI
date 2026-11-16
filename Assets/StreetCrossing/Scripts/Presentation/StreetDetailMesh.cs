@@ -6,6 +6,32 @@ namespace StreetCrossing.Presentation
     /// <summary>Original metre-scale rounded silhouette, separate front/side normals; no physics components.</summary>
     public static class StreetDetailMesh
     {
+        /// <summary>A true five-sided corner footprint, not a rectangular shell hidden by a diagonal door.</summary>
+        public static Mesh ChamferedCorner(Vector3 size, float cut)
+        {
+            cut = Mathf.Clamp(cut, .1f, Mathf.Min(size.x, size.z) * .45f);
+            Vector2[] outline = { new Vector2(-size.x * .5f, size.z * .5f), new Vector2(size.x * .5f, size.z * .5f),
+                new Vector2(size.x * .5f, -size.z * .5f), new Vector2(-size.x * .5f + cut, -size.z * .5f), new Vector2(-size.x * .5f, -size.z * .5f + cut) };
+            var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var triangles = new List<int>();
+            for (int side = 0; side < outline.Length; side++)
+            {
+                Vector2 a = outline[side], b = outline[(side + 1) % outline.Length]; int first = vertices.Count;
+                vertices.Add(new Vector3(a.x, -size.y * .5f, a.y)); vertices.Add(new Vector3(b.x, -size.y * .5f, b.y));
+                vertices.Add(new Vector3(b.x, size.y * .5f, b.y)); vertices.Add(new Vector3(a.x, size.y * .5f, a.y));
+                uv.Add(Vector2.zero); uv.Add(Vector2.right); uv.Add(Vector2.one); uv.Add(Vector2.up);
+                triangles.AddRange(new[] { first, first + 1, first + 2, first, first + 2, first + 3 });
+            }
+            for (int face = 0; face < 2; face++)
+            {
+                int first = vertices.Count; float y = (face == 0 ? -1 : 1) * size.y * .5f;
+                vertices.Add(new Vector3(0, y, 0)); uv.Add(Vector2.one * .5f);
+                foreach (Vector2 p in outline) { vertices.Add(new Vector3(p.x, y, p.y)); uv.Add(new Vector2(p.x / size.x + .5f, p.y / size.z + .5f)); }
+                for (int i = 0; i < outline.Length; i++)
+                { int a = first + i + 1, b = first + (i + 1) % outline.Length + 1; triangles.Add(first); triangles.Add(face == 0 ? b : a); triangles.Add(face == 0 ? a : b); }
+            }
+            Mesh mesh = new Mesh { name = "Original chamfered street corner" }; mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); return mesh;
+        }
         public static Mesh RoundedBox(Vector3 size, float radius)
         {
             radius = Mathf.Clamp(radius, 0.001f, Mathf.Min(size.x, size.y) * 0.49f);
@@ -44,7 +70,7 @@ namespace StreetCrossing.Presentation
                 uv.Add(Vector2.zero); uv.Add(Vector2.right); uv.Add(Vector2.one); uv.Add(Vector2.up);
                 triangles.AddRange(new[] { start, start + 1, start + 2, start, start + 2, start + 3 });
             }
-            var mesh = new Mesh { name = "Original rounded street detail" }; mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds(); return mesh;
+            var mesh = new Mesh { name = "Original rounded street detail" }; mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); return mesh;
         }
     }
 }

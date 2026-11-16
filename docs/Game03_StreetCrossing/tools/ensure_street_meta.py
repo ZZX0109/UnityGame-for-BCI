@@ -76,5 +76,5 @@ for p in [GAME]+sorted(GAME.rglob('*')):
   imp={'.asmdef':'AssemblyDefinitionImporter','.prefab':'PrefabImporter','.mat':'NativeFormatImporter','.asset':'NativeFormatImporter','.txt':'TextScriptImporter','.json':'TextScriptImporter','.shader':'ShaderImporter'}.get(p.suffix,'DefaultImporter')
   text+=imp+':\n  externalObjects: {}\n'
   if p.suffix in ('.mat','.asset'):text+='  mainObjectFileID: '+('2100000' if p.suffix=='.mat' else '11400000')+'\n'
- text+='  userData:\n  assetBundleName:\n  assetBundleVariant:\n';meta.write_text(text)
+ text+='  userData:\n  assetBundleName:\n  assetBundleVariant:\n';meta.write_text(text, encoding="utf-8", newline="\n")
 print('Street metadata present; existing GUIDs retained.')

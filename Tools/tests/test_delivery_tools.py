@@ -35,13 +35,13 @@ def fixture(root):
     for name, content in files.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        path.write_text(content, encoding="utf-8", newline="\n")
     for path in sorted((root / "Assets").rglob("*")):
         importer = "DefaultImporter" if path.is_dir() else IMPORTERS[path.suffix]
         folder = "folderAsset: yes\n" if path.is_dir() else ""
         Path(str(path) + ".meta").write_text(
             f"fileFormatVersion: 2\nguid: {guid(path.relative_to(root).as_posix())}\n{folder}{importer}:\n  externalObjects: {{}}\n",
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
 
 
 class ProjectChecks(unittest.TestCase):
@@ -71,21 +71,21 @@ class ProjectChecks(unittest.TestCase):
     def test_duplicate_guid_fails(self):
         meta = Path(str(self.prefab) + ".meta")
         other = self.root / "Assets/FirstPersonSokoban/Resources/Prefabs/Floor.prefab.meta"
-        meta.write_text(other.read_text(encoding="utf-8"), encoding="utf-8")
+        meta.write_text(other.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
         self.assertTrue(any("Duplicate GUID" in e for e in check_project(self.root)))
 
     def test_unresolved_reference_fails(self):
-        self.prefab.write_text("guid: abcdefabcdefabcdefabcdefabcdefab", encoding="utf-8")
+        self.prefab.write_text("guid: abcdefabcdefabcdefabcdefabcdefab", encoding="utf-8", newline="\n")
         self.assertTrue(any("Unresolved GUID" in e for e in check_project(self.root)))
 
     def test_wrong_asmdef_importer_fails(self):
         meta = self.root / "Assets/FirstPersonSokoban/Scripts/Runtime.asmdef.meta"
-        meta.write_text(meta.read_text(encoding="utf-8").replace("AssemblyDefinitionImporter", "TextScriptImporter"), encoding="utf-8")
+        meta.write_text(meta.read_text(encoding="utf-8").replace("AssemblyDefinitionImporter", "TextScriptImporter"), encoding="utf-8", newline="\n")
         self.assertTrue(any("Wrong importer" in e for e in check_project(self.root)))
 
     def test_catalog_missing_map_fails(self):
         path = self.root / "Assets/FirstPersonSokoban/Resources/LevelCatalog.json"
-        path.write_text(path.read_text(encoding="utf-8").replace("Level01", "Level02"), encoding="utf-8")
+        path.write_text(path.read_text(encoding="utf-8").replace("Level01", "Level02"), encoding="utf-8", newline="\n")
         self.assertTrue(any("Missing catalog level" in e for e in check_project(self.root)))
 
     def test_invalid_map_revisions_fail(self):
@@ -94,18 +94,18 @@ class ProjectChecks(unittest.TestCase):
         for revision in (0, -1, 1.5, True, "2"):
             with self.subTest(revision=revision):
                 document["levels"][0]["revision"] = revision
-                path.write_text(json.dumps(document), encoding="utf-8")
+                path.write_text(json.dumps(document), encoding="utf-8", newline="\n")
                 self.assertTrue(any("Invalid map revision" in e for e in check_project(self.root)))
 
     def test_build_scene_path_guid_mismatch_fails(self):
         path = self.root / "ProjectSettings/EditorBuildSettings.asset"
         text = path.read_text(encoding="utf-8")
-        path.write_text(text.replace(guid("Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity"), "0" * 32), encoding="utf-8")
+        path.write_text(text.replace(guid("Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity"), "0" * 32), encoding="utf-8", newline="\n")
         self.assertTrue(any("GUID/path mismatch" in e for e in check_project(self.root)))
 
     def test_fingerprint_changes_with_source(self):
         before = source_fingerprint(self.root)
-        self.prefab.write_text("changed source", encoding="utf-8")
+        self.prefab.write_text("changed source", encoding="utf-8", newline="\n")
         self.assertNotEqual(before, source_fingerprint(self.root))
 
 
@@ -113,7 +113,7 @@ class TestEvidenceChecks(unittest.TestCase):
     def result(self, text):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "results.xml"
-            path.write_text(text, encoding="utf-8")
+            path.write_text(text, encoding="utf-8", newline="\n")
             return read_test_result(path)
 
     def test_zero_tests_does_not_count_as_passed(self):
@@ -156,7 +156,7 @@ class LevelParserChecks(unittest.TestCase):
     def map(self, text, callback):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "Level01.txt"
-            path.write_text(text, encoding="utf-8")
+            path.write_text(text, encoding="utf-8", newline="\n")
             return callback(path)
 
     def test_box_on_goal_and_player_on_goal_are_supported(self):

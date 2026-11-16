@@ -18,6 +18,10 @@ namespace StreetCrossing.Presentation
         public string foliage = "708C60";
         public string shopCaption = "CORNER MARKET";
         public string districtCaption = "GARDEN WALK";
+        [Range(0, 16)] public int backgroundPeople = 6;
+        public StreetFacadeKind[] facadeSequence = { StreetFacadeKind.Residence, StreetFacadeKind.Apartment, StreetFacadeKind.Convenience, StreetFacadeKind.Cafe, StreetFacadeKind.Pharmacy, StreetFacadeKind.Bookshop };
+        [Range(12, 24)] public float furnishingSpacing = 17;
+        public StreetFacadeKind FacadeAt(int index) => facadeSequence[index % facadeSequence.Length];
 
         public void Validate(string scenarioId)
         {
@@ -28,6 +32,12 @@ namespace StreetCrossing.Presentation
                     throw new ArgumentException("Visual profile contains an invalid colour.");
             if (string.IsNullOrWhiteSpace(shopCaption) || string.IsNullOrWhiteSpace(districtCaption))
                 throw new ArgumentException("Visual profile needs readable district and shop labels.");
+            if (backgroundPeople < 0 || backgroundPeople > 16) throw new ArgumentException("Background population must be bounded.");
+            if (facadeSequence == null || facadeSequence.Length != 6 || float.IsNaN(furnishingSpacing) || furnishingSpacing < 12 || furnishingSpacing > 24)
+                throw new ArgumentException("Visual profile requires six facade slots and bounded furniture spacing.");
+            bool[] kinds = new bool[6];
+            foreach (StreetFacadeKind kind in facadeSequence)
+            { if ((int)kind < 0 || (int)kind >= kinds.Length || kinds[(int)kind]) throw new ArgumentException("Facade sequence must contain each original facade exactly once."); kinds[(int)kind] = true; }
         }
     }
 }

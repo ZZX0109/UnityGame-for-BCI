@@ -132,7 +132,7 @@ def visual_factory(text: str) -> str:
 
 
 def git_text(root: Path, commit: str, path: str) -> str:
-    run = subprocess.run(["git", "show", commit + ":" + path], cwd=root, capture_output=True, text=True)
+    run = subprocess.run(["git", "show", commit + ":" + path], cwd=root, capture_output=True, text=True, encoding="utf-8")
     if run.returncode:
         raise ValueError("Baseline file is unavailable locally: " + path)
     return run.stdout
@@ -140,7 +140,7 @@ def git_text(root: Path, commit: str, path: str) -> str:
 
 def verify(root: Path, baseline: str) -> list[str]:
     resolved = subprocess.run(["git", "rev-parse", "--verify", "--end-of-options", baseline + "^{commit}"],
-                              cwd=root, capture_output=True, text=True)
+                              cwd=root, capture_output=True, text=True, encoding="utf-8")
     if resolved.returncode:
         raise ValueError("Baseline commit is unavailable locally. Provide an existing explicit commit; this verifier never fetches.")
     commit = resolved.stdout.strip()
