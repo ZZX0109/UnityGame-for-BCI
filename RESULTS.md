@@ -23,7 +23,7 @@
 - 脚本：`Tools/db8_export.py`
 - 输入：`D:/SoftwareManagement/datasets/NinaproDB8/S1_E1_A3.mat`（18 通道 Cyberglove II 校准信号，100Hz 采样）
 - 通道映射假设（记录于脚本头与 provenance）：DIP 与 PIP 耦合、拇指 DIP 无独立传感、spread 取辅助通道均值；传感器值鲁棒归一化为 [0,1]，不是角度。
-- 输出（`Assets/StreamingAssets/Replays/`）：rest/thumb/index/cylindrical_grip/lateral_grip/tripod_grip 六剪辑 JSONL + `db8_provenance.json`。标签仅用于切剪辑，回归目标为手套信号本身。
+- 输出（`Assets/StreamingAssets/Replays/db8/`）：rest/thumb/index/cylindrical_grip/lateral_grip/tripod_grip 六剪辑 JSONL + `db8_provenance.json`。标签仅用于切剪辑，回归目标为手套信号本身。
 - 命令：
   ```
   D:/SoftwareManagement/venv/bci/Scripts/python.exe -I Tools/db8_export.py --mat D:/SoftwareManagement/datasets/NinaproDB8/S1_E1_A3.mat --outdir Assets/StreamingAssets/Replays --fps 30
@@ -32,7 +32,7 @@
 ### 3. EEG 真实解码（CSP+LDA）
 - 脚本：`Tools/eeg_decode.py`，依赖：mne/numpy/scipy/scikit-learn（venv bci 均已具备）。
 - 按约定：S001-S003，runs 04+06 训练 / 08+10 验证 / 12+14 �出测试；因果 8-30Hz 带通、共平均参考、0.5-2.5s epochs、CSP(6)+shrinkage LDA、seed 42。变换仅用训练集拟合，无测试调参、无泄漏切分。
-- 产出：`eeg_metrics.json`（平衡准确率/固定序混淆矩阵/0.6 置信覆盖）+ 每人 `eeg_S00X_predictions.jsonl`（source="prediction"）与 `eeg_S00X_truth.jsonl`（真值单独文件，预测模式不读）。错误预测保留。
+- 产出（`Assets/StreamingAssets/Replays/eeg/`）：`eeg_metrics.json` + 每人 `eeg_S00X_predictions.jsonl`（source="prediction"，首帧 t=窗长即预测不早于分析窗结束）与 `eeg_S00X_truth.jsonl`（真值单独文件，预测模式不读）。错误预测保留。
 - S001 测试集平衡准确率 0.32（原始 EEG 正常水平，约定不设最低准确率门槛）。
 - 命令：
   ```

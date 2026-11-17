@@ -141,14 +141,39 @@ def build_armature(side, tips):
 
 # ---------------------------------------------------------------- skinning
 def skin(obj, arm):
-    for o in bpy.context.selected_objects:
-        o.select_set(False)
-    obj.select_set(True); arm.select_set(True)
-    bpy.context.view_layer.objects.active = obj  # mesh active so we can paint weights
-    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
-    bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-    bpy.ops.object.vertex_group_smooth(group_select_mode="ALL", factor=0.5, repeat=3)
-    bpy.ops.object.mode_set(mode="OBJECT")
+    """Deterministic programmatic skinning: object parent + distance-based
+    vertex groups + armature modifier. (ops ARMATURE_AUTO is unreliable headless.)"""
+    import numpy as _np
+    obj.parent = arm
+    obj.matrix_parent_inverse = arm.matrix_world.inverted()
+    bones = [(b.name, Vector(b.head_local), Vector(b.tail_local)) for b in arm.data.bones]
+    n_v = len(obj.data.vertices)
+    names = [b[0] for b in bones]
+    wmat = _np.zeros((n_v, len(bones)), dtype=_np.float64)
+    for vi, v in enumerate(obj.data.vertices):
+        p = Vector(v.co)
+        ds = []
+        for bi, (bn, h, t) in enumerate(bones):
+            ab = t - h; ap = p - h
+            tt = max(0.0, min(1.0, ap.dot(ab) / max(ab.length_squared, 1e-9)))
+            d = (ap - ab * tt).length
+            ds.append((d, bi))
+        ds.sort()
+        top = ds[:3]
+        total = sum((1.0 / max(d, 0.015)) ** 4 for d, _ in top)
+        for d, bi in top:
+            wmat[vi, bi] = ((1.0 / max(d, 0.015)) ** 4) / total
+    for bi, bn in enumerate(names):
+        g = obj.vertex_groups.new(name=bn)
+        idx = [vi for vi in range(n_v) if wmat[vi, bi] > 1e-4]
+        if idx:
+            g.add(idx, 1.0, "REPLACE")  # temp 1.0 then set real values
+            for vi in idx:
+                g.add([vi], float(wmat[vi, bi]), "REPLACE")
+    mod = obj.modifiers.new("Armature", "ARMATURE")
+    mod.object = arm
+    mod.use_vertex_groups = True
+    log("skinned", obj.name, "bones", len(bones))
 
 # ---------------------------------------------------------------- material + bake
 SKIN_BASE = (0.86, 0.62, 0.50)
@@ -205,24 +230,28 @@ def bake_textures(obj, side, nt, bsdf, size=2048):
         nt.links.new(rtex.outputs["Color"], bsdf.inputs["Roughness"])
 
 # ---------------------------------------------------------------- poses
+POSE_ANGLES = {}  # (side, name) -> {bone: (x,y,z) degrees}
+
+def apply_pose(arm, side, name):
+    sfx = "." + side
+    for bn, (x, y, z) in POSE_ANGLES[(side, name)].items():
+        pb = arm.pose.bones.get(bn + sfx)
+        if pb is None: continue
+        pb.rotation_mode = "XYZ"
+        pb.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
+    bpy.context.view_layer.update()
+
+def clear_pose(arm):
+    for pb in arm.pose.bones:
+        pb.rotation_euler = (0, 0, 0)
+    bpy.context.view_layer.update()
+
+# ---------------------------------------------------------------- poses
 def pose_actions(arm, side):
     sfx = "." + side
     F = ["Index", "Middle", "Ring", "Little"]
     def act(name, angles):
-        a = bpy.data.actions.new(f"pose_{name}_{side}")
-        arm.animation_data_create()
-        arm.animation_data.action = a
-        slot = a.slots[0] if a.slots else None
-        for bn, (x, y, z) in angles.items():
-            pb = arm.pose.bones.get(bn + sfx)
-            if pb is None: continue
-            pb.rotation_mode = "XYZ"
-            pb.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
-            if slot:
-                pb.keyframe_insert("rotation_euler", frame=1, channelbag=slot)
-            else:
-                pb.keyframe_insert("rotation_euler", frame=1)
-        arm.animation_data.action = None
+        POSE_ANGLES[(side, name)] = dict(angles)
     a = {}
     for f in F:
         a[f+"1"] = (85,0,0); a[f+"2"] = (105,0,0); a[f+"3"] = (60,0,0)
@@ -276,16 +305,13 @@ def render_at(filepath, focus, direction, dist=6.5, lens=85, res=(1280, 960)):
     bpy.data.objects.remove(co)
     log("rendered", os.path.basename(filepath))
 
-def set_action(arm, name):
-    a = bpy.data.actions.get(name)
-    if a:
-        arm.animation_data_create()
-        arm.animation_data.action = a
-        if a.slots: arm.animation_data.action_slot = a.slots[0]
-        bpy.context.view_layer.update()
+def set_action(arm, pose_name_and_side):
+    side = pose_name_and_side.rsplit("_", 1)[1]
+    name = pose_name_and_side.rsplit("_", 1)[0]
+    apply_pose(arm, side, name)
 
 def clear_action(arm):
-    if arm.animation_data: arm.animation_data.action = None
+    clear_pose(arm)
 
 def reset_pose(arm):
     """Zero all pose rotations so saved blend/FBX are at rest."""
@@ -351,19 +377,23 @@ def main():
             object_types={"ARMATURE", "MESH"}, add_leaf_bones=False,
             bake_anim=False, mesh_smooth_type="OFF", path_mode="ABSOLUTE")
         log("exported FBX", side)
-    # ---- two-hand composites (post-export): move ONLY the armature parent ----
+    # ---- two-hand composites (post-export): rotate L about its own wrist pivot ----
     for side in ("R", "L"):
         o, arm = hands[side]
         wrist = Vector(mirror(JOINTS_R["wrist"]) if side == "L" else JOINTS_R["wrist"])
         target = Vector((-1.05, 0, 2.4)) if side == "R" else Vector((1.05, 0, 2.4))
-        arm.location += (target - wrist)
+        T = Matrix.Translation(target)
         if side == "L":
-            arm.rotation_euler.z += math.pi
+            Rz = Matrix.Rotation(math.pi, 4, 'Z')
+            T = T @ Rz @ Matrix.Translation(-wrist)
+        else:
+            T = T @ Matrix.Translation(-wrist)
+        arm.matrix_world = T @ arm.matrix_world
     bpy.context.view_layer.update()
-    mid = Vector((0, 0, 2.4))
-    render_at("hand_two_open", mid, (0, -1, 0.12), dist=7.5, lens=60)
+    mid = Vector((0, 0, 2.9))
+    render_at("hand_two_open", mid, (0.35, -1, 0.5), dist=7.5, lens=60)
     for side in ("R", "L"):
         set_action(hands[side][1], f"pose_fist_{side}")
-    render_at("hand_two_fist", mid, (0, -1, 0.12), dist=7.5, lens=60)
+    render_at("hand_two_fist", mid, (0.35, -1, 0.5), dist=7.5, lens=60)
 
 main()
