@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import run_game_delivery as delivery
 
 
-def xml(namespace="ClawMachine.Tests.PlayMode", categories=("Acceptance_C01", "Acceptance_C02", "Acceptance_C03")):
+def xml(namespace="ClawMachine.Tests.PlayMode", categories=("Acceptance_C01", "Acceptance_C02", "Acceptance_C03", "Acceptance_C04")):
     cases = "".join('<test-case fullname="' + namespace + '.Case' + str(i) + '" result="Passed">'
                     '<properties><property name="category" value="' + category + '"/></properties></test-case>'
                     for i, category in enumerate(categories))
@@ -34,8 +34,8 @@ class GameEvidenceChecks(unittest.TestCase):
 
     def test_all_actual_scoped_scenario_cases_required(self):
         result = delivery.read_scoped_tests(self.write(xml()), "ClawMachine.Tests", delivery.GAMES["claw"]["categories"])
-        self.assertEqual(3, result["passed"])
-        self.assertEqual(3, len(result["cases"]))
+        self.assertEqual(4, result["passed"])
+        self.assertEqual(4, len(result["cases"]))
 
     def test_optional_capture_cases_cannot_count_as_delivery_evidence(self):
         with self.assertRaisesRegex(ValueError, "Optional VisualCapture"):

@@ -2,11 +2,30 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using ClawMachine.Tests.Shared;
 
 namespace ClawMachine.Tests.EditMode
 {
     public sealed class CoreAuditTests
     {
+        [Test]
+        public void InactivePrize_KeepsItsCompoundBindingAndRejectsAnotherBody()
+        {
+            using (var fixture = new GeometryFixture())
+            {
+                Assert.IsTrue(fixture.Prize.IsConfigured);
+                fixture.Prize.gameObject.SetActive(false);
+                Assert.IsTrue(fixture.Prize.IsConfigured, "A hidden challenge prize must remain selectable/configurable.");
+                var other = new GameObject("Unrelated body"); other.transform.SetParent(fixture.Root.transform);
+                try
+                {
+                    Set(fixture.Prize, "body", other.AddComponent<Rigidbody>());
+                    Assert.IsFalse(fixture.Prize.IsConfigured, "Inactive support must not accept a collider owned by a different body.");
+                }
+                finally { Set(fixture.Prize, "body", fixture.Body); Object.DestroyImmediate(other); }
+            }
+        }
+
         [Test]
         public void EmptyClosing_ReturnsVerticallyThenHomeWithoutReleaseOrExtraAttempt()
         {

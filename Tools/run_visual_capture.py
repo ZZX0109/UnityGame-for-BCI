@@ -23,17 +23,11 @@ from validate_project import ROOT, check_project
 
 
 GAMES = {
-    "sokoban": {"namespace": "FirstPersonSokoban.Tests.PlayMode.VisualCaptureTests",
-                "scenarios": [f"L{i:02}" for i in range(1, 9)], "views": ["initial", "top"],
-                "scene": "Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity"},
     "claw": {"namespace": "ClawMachine.Tests.PlayMode.VisualCaptureTests",
-             "scenarios": ["C01", "C02", "C03"], "views": ["front", "left", "right", "pip"],
+             "scenarios": ["C01", "C02", "C03", "C04"], "views": ["front", "left", "right", "pip"],
              "scene": "Assets/ClawMachine/Scenes/ClawMachineScene.unity",
              "prepare": "ClawMachine.Editor.ClawSceneBuilder.PrepareForValidation"},
-    "street": {"namespace": "StreetCrossing.Tests.PlayMode.VisualCaptureTests",
-               "scenarios": ["S01", "S02", "S03"], "views": ["start", "kerb-left", "kerb-right", "crosswalk", "destination"],
-               "scene": "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity",
-               "prepare": "StreetCrossing.Editor.StreetSceneBuilder.PrepareForValidation"},
+
 }
 VERSION = "2022.3.62f3c1"
 

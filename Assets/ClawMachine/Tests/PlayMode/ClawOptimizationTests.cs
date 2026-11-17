@@ -43,15 +43,15 @@ namespace ClawMachine.Tests.PlayMode
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) Assert.Ignore("PIP pointer exclusion needs a graphics device.");
             yield return Load();
             RectTransform panel = Field<RectTransform>(ui, "panel");
-            int distance = game.Cameras.ObservationDistance;
+            float distance = game.Cameras.DistanceScale;
             Assert.IsFalse(game.ZoomObservation(1, ScreenCenter(panel)));
-            Assert.AreEqual(distance, game.Cameras.ObservationDistance);
+            Assert.AreEqual(distance, game.Cameras.DistanceScale);
             game.Cameras.SetPipEnabled(true); yield return null;
             Assert.IsTrue(game.Cameras.PipEnabled);
             Assert.IsFalse(game.ZoomObservation(1, ScreenCenter(Field<RectTransform>(ui, "pipFrame"))));
-            Assert.AreEqual(distance, game.Cameras.ObservationDistance);
+            Assert.AreEqual(distance, game.Cameras.DistanceScale);
             Assert.IsTrue(game.ZoomObservation(1, new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)));
-            Assert.AreEqual(distance - 1, game.Cameras.ObservationDistance);
+            Assert.Less(game.Cameras.DistanceScale, distance);
             Assert.IsFalse(game.ZoomObservation(-1, new Vector2(-10, -10)));
         }
 
@@ -147,6 +147,27 @@ namespace ClawMachine.Tests.PlayMode
             Assert.IsFalse(ui.PositionMarkersVisible); Assert.IsTrue(ui.MassMarkerVisible);
             game.SetCenterOfMassAssist(false); yield return null; yield return null;
             Assert.IsFalse(ui.MassMarkerVisible); Assert.AreEqual(0, game.Task.Session.AttemptId);
+        }
+
+        [UnityTest]
+        public IEnumerator ReleaseSleepingHeldPrize_WakesTheOriginalBodyForGravity()
+        {
+            yield return Load(); game.StartGame();
+            GraspTaskController task = game.Task;
+            yield return new WaitForFixedUpdate();
+            Vector3 aligned = task.TaskSpace.ToLocal(task.Prize.Body.worldCenterOfMass); aligned.y = task.TaskSpace.LocalBounds.max.y;
+            Assert.IsTrue(task.Driver.TryReset(new Pose(task.TaskSpace.ToWorld(aligned), task.TaskSpace.Orientation)));
+            Physics.SyncTransforms(); Assert.IsTrue(task.StartGrab());
+            float deadline = Time.realtimeSinceStartup + 30;
+            while (!task.Gripper.IsHolding && task.Session.State != GraspState.Error && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.IsTrue(task.Gripper.IsHolding, task.Diagnostic);
+            PrizePhysics held = task.Gripper.HeldPrize;
+            game.Pause(true); held.Body.Sleep(); Assert.IsTrue(held.Body.IsSleeping());
+            task.Gripper.Release(true);
+            Assert.IsTrue(held.Released); Assert.IsFalse(held.Body.IsSleeping());
+            Assert.IsFalse(task.Gripper.IsHolding);
+            game.ReturnToMenu(); yield return null;
+            Assert.AreEqual(0, task.Gripper.GetComponents<FixedJoint>().Length);
         }
 
         [UnityTest]

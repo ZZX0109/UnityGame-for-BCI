@@ -22,7 +22,10 @@ namespace ClawMachine
         public bool Released { get; private set; }
         public int SessionId { get; private set; }
         public int AttemptId { get; private set; }
-        public bool IsConfigured => body && mainCollider && machineRoot && mainCollider.attachedRigidbody == body;
+        // Challenge selection must validate prizes that are inactive in C01.
+        // attachedRigidbody can be null before their colliders join PhysX; the
+        // nearest authored Rigidbody is still the authoritative compound owner.
+        public bool IsConfigured => body && mainCollider && machineRoot && mainCollider.GetComponentInParent<Rigidbody>(true) == body;
         public Bounds CaptureBounds => mainCollider.bounds;
         public Bounds AllBounds
         {

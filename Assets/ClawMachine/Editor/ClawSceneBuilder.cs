@@ -31,8 +31,7 @@ namespace ClawMachine.Editor
         [MenuItem("Claw Machine/Add scene to Build Settings")]
         public static void AddToBuildSettings()
         {
-            if (EditorBuildSettings.scenes.Any(s => s.path == ScenePath)) return;
-            EditorBuildSettings.scenes = EditorBuildSettings.scenes.Concat(new[] { new EditorBuildSettingsScene(ScenePath, true) }).ToArray();
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
         }
         [MenuItem("Claw Machine/Prepare and validate resources")]
         public static void PrepareForValidation()

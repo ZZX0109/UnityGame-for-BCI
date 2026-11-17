@@ -3,20 +3,32 @@ using UnityEngine;
 
 namespace ClawMachine
 {
-    public enum ClawModuleShape { RoundedBox, Ellipsoid, PlushBody, CurvedTail }
+    public enum ClawModuleShape { RoundedBox, Ellipsoid, PlushBody, CurvedTail, RibbonLoop, PointedEar }
     [RequireComponent(typeof(MeshFilter))]
     public sealed class ClawMeshModule : MonoBehaviour
     {
         [SerializeField] private ClawModuleShape shape;
         [SerializeField, Range(0.01f, 0.25f)] private float bevel = 0.08f;
         private Mesh owned, original;
+        public ClawModuleShape Shape => shape;
+        public float Bevel => bevel;
+        // Editor subscribers only request work; OnValidate may run off the main thread.
+        public static event System.Action<ClawMeshModule> VisualDefinitionChanged;
+        private void OnValidate() { VisualDefinitionChanged?.Invoke(this); }
         private void OnEnable()
         {
             MeshFilter filter = GetComponent<MeshFilter>(); original = filter.sharedMesh;
-            owned = shape == ClawModuleShape.CurvedTail ? CurvedTail(28, 16) :
+            owned = CreateVisualMesh(); filter.sharedMesh = owned;
+        }
+        public Mesh CreateVisualMesh()
+        {
+            Mesh mesh = shape == ClawModuleShape.PointedEar ? PointedEar(24, 8) :
+                shape == ClawModuleShape.RibbonLoop ? RibbonLoop(40, 12) :
+                shape == ClawModuleShape.CurvedTail ? CurvedTail(28, 16) :
                 shape == ClawModuleShape.PlushBody ? PlushBody(32, 24) :
                 shape == ClawModuleShape.Ellipsoid ? Ellipsoid(24, 16) : RoundedBox(6, Mathf.Clamp(bevel, 0.01f, 0.25f));
-            owned.name = "Claw original modular " + shape; filter.sharedMesh = owned;
+            mesh.name = "Claw original modular " + shape;
+            return mesh;
         }
         private void OnDisable()
         {
@@ -77,6 +89,49 @@ namespace ClawMachine
                 points[i] = new Vector3(points[i].x * width, points[i].y, points[i].z * (0.94f + 0.06f * width));
             }
             mesh.vertices = points; mesh.RecalculateNormals(); mesh.RecalculateBounds(); mesh.RecalculateTangents(); return mesh;
+        }
+        public static Mesh PointedEar(int sides, int rings)
+        {
+            var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var triangles = new List<int>();
+            sides = Mathf.Clamp(sides, 12, 48); rings = Mathf.Clamp(rings, 4, 16);
+            for (int ring = 0; ring <= rings; ring++) for (int side = 0; side <= sides; side++)
+            {
+                float t = ring / (float)rings, angle = side * Mathf.PI * 2 / sides;
+                float radius = 0.5f * Mathf.Pow(1 - t, 0.8f);
+                vertices.Add(new Vector3(radius * Mathf.Cos(angle), t - 0.5f, radius * Mathf.Sin(angle) * 0.7f));
+                uv.Add(new Vector2(side / (float)sides, t));
+            }
+            for (int ring = 0; ring < rings; ring++) for (int side = 0; side < sides; side++)
+            {
+                int a = ring * (sides + 1) + side, b = a + 1, c = a + sides + 1, d = c + 1;
+                triangles.Add(a); triangles.Add(c); triangles.Add(b); triangles.Add(b); triangles.Add(c); triangles.Add(d);
+            }
+            int center = vertices.Count; vertices.Add(Vector3.down * 0.5f); uv.Add(Vector2.one * 0.5f);
+            for (int side = 0; side < sides; side++) { triangles.Add(center); triangles.Add(side); triangles.Add(side + 1); }
+            var mesh = new Mesh(); mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds(); mesh.RecalculateTangents(); return mesh;
+        }
+        // A real open loop for the parcel's bow, instead of an intersecting solid blob.
+        public static Mesh RibbonLoop(int rings, int sides)
+        {
+            var vertices = new List<Vector3>(); var normals = new List<Vector3>();
+            var uv = new List<Vector2>(); var triangles = new List<int>();
+            rings = Mathf.Clamp(rings, 12, 64); sides = Mathf.Clamp(sides, 6, 24);
+            for (int ring = 0; ring <= rings; ring++) for (int side = 0; side <= sides; side++)
+            {
+                float u = ring * Mathf.PI * 2 / rings, v = side * Mathf.PI * 2 / sides;
+                Vector3 radial = new Vector3(Mathf.Cos(u), 0, Mathf.Sin(u));
+                Vector3 normal = radial * Mathf.Cos(v) + Vector3.up * Mathf.Sin(v);
+                vertices.Add(radial * 0.32f + normal * 0.14f); normals.Add(normal);
+                uv.Add(new Vector2(ring / (float)rings, side / (float)sides));
+            }
+            for (int ring = 0; ring < rings; ring++) for (int side = 0; side < sides; side++)
+            {
+                int a = ring * (sides + 1) + side, b = a + 1, c = a + sides + 1, d = c + 1;
+                triangles.Add(a); triangles.Add(b); triangles.Add(c); triangles.Add(b); triangles.Add(d); triangles.Add(c);
+            }
+            var mesh = new Mesh(); mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetUVs(0, uv);
+            mesh.SetTriangles(triangles, 0); mesh.RecalculateBounds(); mesh.RecalculateTangents(); return mesh;
         }
         // A closed curved tube with a plump base and tapered tip, used for the small
         // curled fox tail. No MeshCollider is generated from this decorative surface.

@@ -2,6 +2,8 @@
   "name": "ClawMachine.EditModeTests",
   "references": [
     "ClawMachine.Runtime",
+    "ClawMachine.Editor",
+    "ClawMachine.TestDrivers",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
     "Unity.TextMeshPro",

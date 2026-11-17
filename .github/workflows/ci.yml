@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   source-checks:
-    name: Static integrity and eight-level solvability
+    name: Claw asset integrity and tool regression
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,14 +19,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: python Tools/validate_project.py
-      - run: python Tools/validate_levels.py --mechanics
+      - run: python docs/Game02_ClawMachine/validate_prototype.py
       - run: python Tools/build_ui_font.py --check
       - run: python -m unittest discover -s Tools/tests -v
       - name: State the verification boundary
         shell: bash
         run: |
           echo '### Source checks passed' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Static/GUID checks and Python BFS do not prove Unity compilation, player tests, Windows build or GUI acceptance.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Static/GUID and Claw source checks do not prove Unity compilation, player tests, Windows build or GUI acceptance.' >> "$GITHUB_STEP_SUMMARY"
 
   unity-delivery:
     name: Unity tests then Windows build (exact local Editor)
@@ -50,7 +50,7 @@ jobs:
           if (-not $env:UNITY_EDITOR_PATH -or -not (Test-Path $env:UNITY_EDITOR_PATH)) {
             throw 'UNITY_EDITOR_PATH must point to the exact installed and licensed Editor on this runner.'
           }
-      - name: EditMode, PlayMode, level validation, Windows build and ZIP
+      - name: Claw EditMode, PlayMode, Windows build and ZIP
         shell: pwsh
         # The script stops before building when either XML reports failure or
         # zero tests, and binds the manifest to the tested source fingerprint.
@@ -77,7 +77,7 @@ jobs:
           UNITY_RESULT: ${{ needs.unity-delivery.result }}
         run: |
           echo '### Verification status' >> "$GITHUB_STEP_SUMMARY"
-          echo "Source integrity / Python levels: $SOURCE_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          echo "Claw source integrity / tools: $SOURCE_RESULT" >> "$GITHUB_STEP_SUMMARY"
           if [ "$UNITY_RESULT" = 'success' ]; then
             echo 'Unity EditMode + PlayMode and Windows ZIP: passed; real XML/logs are in artifacts.' >> "$GITHUB_STEP_SUMMARY"
           else

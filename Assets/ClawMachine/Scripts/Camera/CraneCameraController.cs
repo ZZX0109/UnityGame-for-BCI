@@ -8,6 +8,7 @@ namespace ClawMachine
     {
         [SerializeField] private UnityEngine.Camera[] views;
         [SerializeField] private Transform lookTarget;
+        [SerializeField] private ClawGameManager game;
         [SerializeField, Min(0.5f)] private float minimumOrbitRadius = 1.75f;
         [SerializeField, Min(0.01f)] private float obstructionProbeRadius = 0.08f;
         [SerializeField] private LayerMask obstructionLayers = ~0;
@@ -17,27 +18,28 @@ namespace ClawMachine
         [SerializeField, Range(20, 40)] private float pipFieldOfView = 30;
         [SerializeField, Range(0, 0.4f)] private float pipTargetLift = 0.18f;
         private Vector3[] presetOffsets;
-        private readonly Vector2[] orbitAngles = new Vector2[3];
+        private Vector2 orbitAngles;
         private readonly RaycastHit[] obstructionHits = new RaycastHit[24];
         private UnityEngine.Camera pipCamera;
         private RenderTexture pipTexture;
         private bool dragging;
         private Vector3 lastMousePosition;
-        private int selected, distance = 1;
+        private float distanceScale = 1;
         private Rect observationViewport = new Rect(0, 0, 1, 1);
         public event Action Changed;
         public bool Smooth { get; set; } = true;
-        public UnityEngine.Camera CurrentCamera => IsConfigured ? views[selected] : null;
+        public UnityEngine.Camera CurrentCamera => IsConfigured ? views[0] : null;
         public RenderTexture PipTexture => pipTexture;
         public bool PipEnabled => pipEnabled && isActiveAndEnabled && pipCamera && pipTexture;
         public bool PipLowQuality => pipLowQuality;
-        public Vector2 OrbitAngles => orbitAngles[selected];
-        public int SelectedView => selected + 1;
-        public int ObservationDistance => distance;
+        public Vector2 OrbitAngles => orbitAngles;
+        public int SelectedView => 1;
+        public float DistanceScale => distanceScale;
+        public int ObservationDistance => Mathf.RoundToInt(distanceScale * 100);
         public Rect ObservationViewport => observationViewport;
-        public string PipViewName => selected == 0 ? "左侧 Left" : "正面 Front";
-        public string ViewName => selected == 0 ? "正面 Front" : selected == 1 ? "左侧 Left" : "右侧 Right";
-        public string DistanceName => distance == 0 ? "近" : distance == 1 ? "标准" : "远";
+        public string PipViewName => "侧面辅助";
+        public string ViewName => "右键环绕";
+        public string DistanceName => ObservationDistance + "%";
         public bool IsConfigured => views != null && views.Length == 3 && views[0] && views[1] && views[2] && lookTarget;
         private void Awake()
         {
@@ -54,7 +56,7 @@ namespace ClawMachine
         {
             if (!IsConfigured) return;
             if (Input.GetMouseButtonDown(1) && CurrentCamera.pixelRect.Contains(Input.mousePosition) &&
-                (!EventSystem.current || !EventSystem.current.IsPointerOverGameObject()))
+                AllowsOrbitPointer(Input.mousePosition))
             {
                 dragging = true;
                 lastMousePosition = Input.mousePosition;
@@ -67,11 +69,18 @@ namespace ClawMachine
             OrbitBy(new Vector2(delta.x, delta.y) * dragDegreesPerPixel);
         }
 
+        private bool AllowsOrbitPointer(Vector2 point)
+        {
+            return game ? game.AllowsObservationPointer(point) : !EventSystem.current || !EventSystem.current.IsPointerOverGameObject();
+        }
+
         public void Select(int number)
         {
             if (!EnsurePresets() || number < 1 || number > 3) return;
-            selected = number - 1;
-            for (int i = 0; i < views.Length; i++) views[i].enabled = i == selected;
+            // Kept for automated capture callers. There is one orbit camera;
+            // serialized side cameras are reference poses for the optional PIP.
+            orbitAngles = new Vector2(number == 2 ? 90 : number == 3 ? -90 : 0, 0);
+            for (int i = 0; i < views.Length; i++) views[i].enabled = i == 0;
             dragging = false;
             UpdatePipPose();
             Changed?.Invoke();
@@ -88,29 +97,29 @@ namespace ClawMachine
         }
         public void CycleDistance()
         {
-            distance = (distance + 1) % 3;
+            distanceScale = distanceScale < 0.95f ? 1 : distanceScale < 1.15f ? 1.35f : 0.7f;
             Changed?.Invoke();
         }
         public void Zoom(float amount)
         {
             if (!ClawCameraOrbit.IsFinite(amount) || amount == 0) return;
-            int next = Mathf.Clamp(distance - (amount > 0 ? 1 : -1), 0, 2);
-            if (next == distance) return;
-            distance = next;
+            float next = Mathf.Clamp(distanceScale * Mathf.Exp(-Mathf.Clamp(amount, -10, 10) * 0.12f), 0.7f, 1.35f);
+            if (Mathf.Approximately(next, distanceScale)) return;
+            distanceScale = next;
             Changed?.Invoke();
         }
         public void OrbitBy(Vector2 deltaDegrees)
         {
             if (!ClawCameraOrbit.IsFinite(deltaDegrees.x) || !ClawCameraOrbit.IsFinite(deltaDegrees.y)) return;
-            Vector2 next = ClawCameraOrbit.ClampAngles(orbitAngles[selected] + new Vector2(
+            Vector2 next = ClawCameraOrbit.ClampAngles(orbitAngles + new Vector2(
                 Mathf.Clamp(deltaDegrees.x, -360, 360), Mathf.Clamp(deltaDegrees.y, -360, 360)));
-            if (next == orbitAngles[selected]) return;
-            orbitAngles[selected] = next;
+            if (next == orbitAngles) return;
+            orbitAngles = next;
             Changed?.Invoke();
         }
         public void ResetOrbit()
         {
-            orbitAngles[selected] = Vector2.zero;
+            orbitAngles = Vector2.zero;
             Changed?.Invoke();
         }
         public void TogglePip() => SetPipEnabled(!pipEnabled);
@@ -133,10 +142,15 @@ namespace ClawMachine
         private void LateUpdate()
         {
             if (!EnsurePresets()) { ReleasePipResources(); return; }
-            UnityEngine.Camera camera = views[selected];
-            Vector3 wanted = DesiredPosition(selected);
-            Vector3 next = Smooth ? Vector3.Lerp(camera.transform.position, wanted, 1 - Mathf.Exp(-10 * Time.unscaledDeltaTime)) : wanted;
-            camera.transform.position = ResolveObstruction(KeepOutsideCabinet(next), selected);
+            UnityEngine.Camera camera = views[0];
+            Vector3 wanted = DesiredPosition(0);
+            // Interpolate around the cabinet, never straight through it after
+            // a large drag or angle wrap at the back of the machine.
+            Vector3 previousOffset = camera.transform.position - lookTarget.position;
+            Vector3 wantedOffset = wanted - lookTarget.position;
+            Vector3 next = Smooth ? lookTarget.position + Vector3.Slerp(previousOffset, wantedOffset,
+                1 - Mathf.Exp(-10 * Time.unscaledDeltaTime)) : wanted;
+            camera.transform.position = ResolveObstruction(KeepOutsideCabinet(next), 0);
             camera.transform.LookAt(lookTarget.position, transform.up);
             if (pipEnabled && !pipCamera) CreatePipResources();
             UpdatePipPose();
@@ -158,15 +172,15 @@ namespace ClawMachine
         private float SafeRadius => ClawCameraOrbit.IsFinite(minimumOrbitRadius) ? Mathf.Clamp(minimumOrbitRadius, 0.5f, 10) : 1.75f;
         private Vector3 DesiredPosition(int index)
         {
-            float scale = distance == 0 ? 0.85f : distance == 1 ? 1 : 1.2f;
             Vector3 basis = transform.TransformVector(presetOffsets[index]);
-            Vector3 offset = ClawCameraOrbit.Offset(basis, orbitAngles[index], scale, SafeRadius, transform.up);
+            Vector3 offset = ClawCameraOrbit.Offset(basis, index == 0 ? orbitAngles : Vector2.zero,
+                index == 0 ? distanceScale : 1, SafeRadius, transform.up);
             return ResolveObstruction(lookTarget.position + offset, index);
         }
         private Vector3 KeepOutsideCabinet(Vector3 position)
         {
             Vector3 offset = position - lookTarget.position;
-            if (!ClawCameraOrbit.IsFinite(offset) || offset.sqrMagnitude < 0.01f) offset = transform.TransformVector(presetOffsets[selected]);
+            if (!ClawCameraOrbit.IsFinite(offset) || offset.sqrMagnitude < 0.01f) offset = transform.TransformVector(presetOffsets[0]);
             return lookTarget.position + offset.normalized * Mathf.Max(SafeRadius, offset.magnitude);
         }
         private Vector3 ResolveObstruction(Vector3 desired, int index)
@@ -216,7 +230,7 @@ namespace ClawMachine
         private void UpdatePipPose()
         {
             if (!pipCamera || !pipTexture || !IsConfigured || presetOffsets == null) return;
-            int side = selected == 0 ? 1 : 0;
+            const int side = 1;
             pipCamera.CopyFrom(views[side]);
             pipCamera.targetTexture = pipTexture;
             pipCamera.rect = new Rect(0, 0, 1, 1);

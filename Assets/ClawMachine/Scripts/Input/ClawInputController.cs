@@ -6,7 +6,6 @@ namespace ClawMachine
     {
         public Vector2 Move;
         public bool Grab, Pause, Reset, Pip;
-        public int View;
         public float Zoom;
     }
     public interface IClawInputSource { ClawInputFrame Read(); }
@@ -20,7 +19,6 @@ namespace ClawMachine
                     (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)),
                 Grab = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space),
                 Pause = Input.GetKeyDown(KeyCode.Escape), Reset = Input.GetKeyDown(KeyCode.R), Pip = Input.GetKeyDown(KeyCode.C),
-                View = Input.GetKeyDown(KeyCode.Alpha1) ? 1 : Input.GetKeyDown(KeyCode.Alpha2) ? 2 : Input.GetKeyDown(KeyCode.Alpha3) ? 3 : 0,
                 Zoom = Input.mouseScrollDelta.y
             };
         }

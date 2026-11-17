@@ -60,7 +60,6 @@ namespace ClawMachine
             {
                 if (SettingsOpen) CloseSettings(); else if (ResetConfirmation) DeclineReset(); else if (!InMenu) Pause(!IsPaused);
             }
-            if (frame.View != 0) cameras.Select(frame.View);
             if (frame.Pip) cameras.TogglePip();
             ZoomObservation(frame.Zoom, Input.mousePosition);
             if (frame.Reset && !InMenu && !ResetConfirmation) RequestReset();

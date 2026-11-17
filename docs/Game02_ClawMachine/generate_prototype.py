@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import re
+import struct
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / 'Assets/ClawMachine'
@@ -50,6 +51,58 @@ def quat(euler):
 
 def output(path, text):
     outputs[asset(path)] = '\n'.join(line.rstrip() for line in text.splitlines())+'\n'
+
+
+def seeded_position(position, seed, prize_id):
+    """Match Unity Mono System.Random and C# floats for default scene preview.
+
+    The EditMode scene test compares this authored pose with PositionForSeed.
+    Runtime challenge configuration and physics remain authoritative.
+    """
+    def signed32(value):
+        return (value + 2**31) % 2**32 - 2**31
+
+    def single(value):
+        return struct.unpack('<f', struct.pack('<f', value))[0]
+
+    stable_hash = 17
+    for character in prize_id:
+        stable_hash = signed32(stable_hash * 31 + ord(character))
+    mixed = signed32(seed + stable_hash)
+    largest = 2147483647
+    subtraction = largest if mixed == -2147483648 else abs(mixed)
+    values = [0] * 56
+    previous, next_value = 161803398 - subtraction, 1
+    values[55] = previous
+    for index in range(1, 55):
+        slot = (21 * index) % 55
+        values[slot] = next_value
+        next_value = previous - next_value
+        if next_value < 0:
+            next_value += largest
+        previous = values[slot]
+    for unused in range(4):
+        for index in range(1, 56):
+            values[index] -= values[1 + (index + 30) % 55]
+            if values[index] < 0:
+                values[index] += largest
+    first, second = 0, 21
+
+    def sample():
+        nonlocal first, second
+        first = first + 1 if first < 55 else 1
+        second = second + 1 if second < 55 else 1
+        value = values[first] - values[second]
+        if value == largest:
+            value -= 1
+        if value < 0:
+            value += largest
+        values[first] = value
+        return value / largest
+
+    x = single(single(position[0]) + single(single(sample() - 0.5) * single(0.02)))
+    z = single(single(position[2]) + single(single(sample() - 0.5) * single(0.02)))
+    return (x, single(position[1]), z)
 
 
 class Scene:
@@ -97,7 +150,7 @@ class Scene:
         for n in nodes:
             text+='--- !u!1 &%d\nGameObject:\n  serializedVersion: 6\n  m_Component:\n  - component: %s\n' % (n['id'],ref(n['t']))
             text+=''.join('  - component: %s\n' % ref(c['id']) for c in n['components'])
-            text+='  m_Layer: 0\n  m_Name: %s\n  m_TagString: Untagged\n  m_IsActive: 1\n' % json.dumps(n['name'],ensure_ascii=False)
+            text+='  m_Layer: 0\n  m_Name: %s\n  m_TagString: Untagged\n  m_IsActive: %d\n' % (json.dumps(n['name'],ensure_ascii=False),n.get('active',True))
             text+='--- !u!4 &%d\nTransform:\n  m_GameObject: %s\n  serializedVersion: 2\n  m_LocalRotation: %s\n  m_LocalPosition: %s\n  m_LocalScale: %s\n  m_ConstrainProportionsScale: 0\n' % (n['t'],ref(n['id']),vec(n['rotation']),vec(n['position']),vec(n['scale']))
             text+='  m_Children:' + ('\n'+''.join('  - %s\n'%ref(c['t']) for c in n['children'] if c['id'] in selected) if n['children'] else ' []\n')
             text+='  m_Father: %s\n'%ref(n['parent']['t'] if n['parent'] and n['parent']['id'] in selected else 0)
@@ -120,11 +173,12 @@ def descendants(node):
 
 
 def build():
-    materials={'Ivory':((.91,.88,.80,1),.15,.37), 'Silver':((.65,.68,.67,1),.8,.62),
-        'Graphite':((.17,.20,.20,1),.6,.38), 'Mint':((.37,.68,.55,1),.08,.35),
-        'Ribbon':((.94,.82,.48,1),.1,.32), 'Floor':((.74,.65,.53,1),.02,.25),
-        'Backdrop':((.84,.78,.66,1),.03,.3), 'Light':((.96,.97,.91,1),.1,.55),
-        'Plush':((.90,.78,.72,1),.0,.22), 'Amber':((.84,.43,.20,1),.0,.22), 'Rose':((.73,.45,.39,1),.08,.3), 'Glass':((.88,.95,.93,.07),.0,.82)}
+    materials={'Ivory':((.73,.76,.74,1),.12,.43), 'Silver':((.46,.53,.56,1),.72,.68),
+        'Graphite':((.045,.075,.09,1),.45,.42), 'Mint':((.095,.38,.33,1),.12,.44),
+        'Ribbon':((.76,.53,.22,1),.5,.52), 'Floor':((.20,.25,.26,1),.05,.29),
+        'Backdrop':((.26,.32,.33,1),.02,.3), 'Light':((.8,.94,.9,1),.0,.5),
+        'Plush':((.76,.64,.57,1),.0,.15), 'Amber':((.61,.235,.085,1),.0,.18),
+        'Rose':((.58,.22,.19,1),.05,.32), 'Glass':((.65,.81,.82,.035),.0,.85)}
     for name,(color,metal,smooth) in materials.items():
         glass=name=='Glass'
         floats={'_Metallic':metal,'_Glossiness':smooth,'_Mode':3 if glass else 0,'_SrcBlend':1,'_DstBlend':10 if glass else 0,'_ZWrite':0 if glass else 1}
@@ -139,6 +193,11 @@ def build():
             env+='    - _BumpMap:\n        m_Texture: '+external('Textures/FabricNormal.png',2800000,3)+'\n        m_Scale: {x: 5, y: 5}\n        m_Offset: {x: 0, y: 0}\n'
             outputs[path]=outputs[path].replace('m_ValidKeywords: []','m_ValidKeywords: [_NORMALMAP]').replace('    - _Glossiness:', '    - _BumpScale: 0.24\n    - _Glossiness:')
         outputs[path]=outputs[path].replace('    m_TexEnvs: []\n',env)
+    # Original typography is an authored texture, not placeholder floating cubes.
+    art=outputs[asset('Materials/Graphite.mat')].replace('m_Name: Graphite','m_Name: CabinetMarquee')
+    art=art.replace('    m_TexEnvs: []\n','    m_TexEnvs:\n    - _MainTex:\n        m_Texture: '+external('Textures/CabinetMarquee.png',2800000,3)+'\n        m_Scale: {x: 1, y: 1}\n        m_Offset: {x: 0, y: 0}\n')
+    art=re.sub(r'    - _Color:.*', '    - _Color: {r: 1, g: 1, b: 1, a: 1}', art)
+    output('Materials/CabinetMarquee.mat',art)
     output('Materials/PrizeFriction.physicMaterial',HEADER+'--- !u!134 &13400000\nPhysicMaterial:\n  m_Name: PrizeFriction\n  dynamicFriction: 0.6\n  staticFriction: 0.7\n  bounciness: 0\n  frictionCombine: 0\n  bounceCombine: 2\n')
     profiles=[
         ('C01Profile','中心抓取，规则侧面形成稳定三点接触。',.30,(0,0,0),.050,.09,24,1.2),
@@ -152,17 +211,20 @@ def build():
         output('Challenges/'+name+'.asset',data)
     slots=[('mint-parcel','薄荷礼盒','C01Profile'),('cloud-bunny','云朵兔','PlushProfile'),('amber-fox','偏心狐狸','WeightedProfile')]
     layouts=[
-        ('C01','C01 · 三轴定位教学','对准薄荷礼盒。先看正面左右，再看侧面深度。','礼盒稳定，先练习安全接近与慢速接触。','mint-parcel',5,[(0,(.10,.92,.12))]),
+        ('C01','C01 · 三轴定位教学','按住右键环绕观察礼盒，滚轮缩放，再移动爪子对准。','礼盒稳定，先练习安全接近与慢速接触。','mint-parcel',5,[(0,(.10,.92,.12))]),
         ('C02','C02 · 云朵兔的邀请','三个物品中只有云朵兔是目标，抓错物体不会得分。','观察头部与躯干，选择躯干抓持带。','cloud-bunny',4,[(0,(-.28,.92,.20)),(1,(.08,.94,.25)),(2,(.30,.90,-.10))]),
-        ('C03','C03 · 偏心小狐狸','狐狸的右侧有铜色配重。居中外形不等于居中重心。','对准右侧配重点，偏心力矩过大会真实滑落。','amber-fox',4,[(0,(.29,.92,.30)),(1,(-.22,.94,.25)),(2,(.10,.90,-.08))])]
+        ('C03','C03 · 偏心小狐狸','狐狸的右侧有铜色配重。居中外形不等于居中重心。','对准右侧配重点，偏心力矩过大会真实滑落。','amber-fox',4,[(0,(.29,.92,.30)),(1,(-.22,.94,.25)),(2,(.10,.90,-.08))]),
+        ('C04','C04 · 旋转玩偶圆盘','目标是云朵兔。圆盘缓慢旋转，观察玩偶的位置，移动爪子对准目标。按 Enter 后圆盘刹停，再下爪抓取；抓错玩偶不会得分。','按住右键环绕观察，等待云朵兔进入容易抓取的位置。','cloud-bunny',5,[(0,(.20,.94,.33)),(1,(.38,.95,.015)),(2,(.018,.91,.015))])]
     for index,(identifier,title,instructions,hint,target,attempts,spawns) in enumerate(layouts):
         targetProfile=next(profile for key,display,profile in slots if key==target)
         data=HEADER+'--- !u!114 &11400000\nMonoBehaviour:\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_Script: '+external('Scripts/Core/ClawChallengeDefinition.cs')+'\n  m_Name: '+identifier+'\n  m_EditorClassIdentifier:\n'
         for key,value in dict(challengeId=identifier,title=title,instructions=instructions,gripHint=hint,prizeId=target,targetId=target).items():data+='  '+key+': '+json.dumps(value,ensure_ascii=False)+'\n'
-        data+='  seed: '+str(20261113+index)+'\n  attemptLimit: '+str(attempts)+'\n  failedAttemptResetPolicy: 0\n  cameraPolicy: FrontSidePipAndBoundedOrbit\n  successRule: ReleasedTargetFullyInsideChuteAndStable\n  graspProfile: '+external('Challenges/'+targetProfile+'.asset',11400000,2)+'\n  spawns:\n'
+        data+='  seed: '+str(20261113+index)+'\n  attemptLimit: '+str(attempts)+'\n  failedAttemptResetPolicy: 0\n  cameraPolicy: RightDragContinuousOrbit\n  successRule: ReleasedTargetFullyInsideChuteAndStable\n  graspProfile: '+external('Challenges/'+targetProfile+'.asset',11400000,2)+'\n  spawns:\n'
         for slot,position in spawns:
             key,display,profile=slots[slot]
             data+='  - prizeId: '+key+'\n    displayName: '+json.dumps(display,ensure_ascii=False)+'\n    spawnPosition: '+vec(position)+'\n    spawnEuler: '+vec((0,0,0))+'\n    graspProfile: '+external('Challenges/'+profile+'.asset',11400000,2)+'\n'
+        if identifier=='C04':
+            data+='  carouselEnabled: 1\n  carouselCenter: '+vec((.20,.80,.12))+'\n  carouselRadius: 0.21\n  carouselDegreesPerSecond: 14\n  carouselStartDegrees: 0\n'
         output('Challenges/'+identifier+'.asset',data)
     s=Scene()
     root=s.node('Claw Atelier - three challenge simulator')
@@ -179,7 +241,6 @@ def build():
     s.mesh('Rear glass',cabinet,(0,1.4,.58),(1.24,1.15,.008),'Glass',collide=True)
     s.mesh('Front glass',cabinet,(0,1.43,-.58),(1.24,1.10,.008),'Glass',collide=True)
     s.mesh('Marquee - no ceiling mesh',cabinet,(0,2.14,-.58),(1.42,.23,.10),'Ivory')
-    s.mesh('Mint marquee stripe',cabinet,(0,2.14,-.638),(.82,.065,.012),'Mint')
     for z in (-.58,.58):
         s.mesh('Top cross rail',cabinet,(0,2.02,z),(1.36,.065,.07),'Silver')
     for x in (-.625,.625):
@@ -190,6 +251,15 @@ def build():
     s.mesh('Bay front right floor',bay,(.26,.77,-.325),(.72,.06,.45),'Ivory',collide=True)
     s.mesh('Bay front left strip',bay,(-.60,.77,-.325),(.04,.06,.45),'Ivory',collide=True)
     s.mesh('Bay front edge strip',bay,(-.34,.77,-.535),(.48,.06,.03),'Ivory',collide=True)
+    carouselPlatform=s.node('C04 rotating toy platform',root,(.20,.80,.12))
+    carouselPlatform['active']=False
+    carouselBody=s.body(carouselPlatform,True)
+    turntable=s.mesh('Circular enamel turntable',carouselPlatform,(0,0,0),(.68,.02,.68),'Mint',mesh=10206)
+    carouselCollider=s.component(turntable,64,'MeshCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  serializedVersion: 4\n  m_Convex: 1\n  m_CookingOptions: 30\n  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}\n')
+    s.mesh('Turntable spindle base',carouselPlatform,(0,-.025,0),(.20,.018,.20),'Graphite',mesh=10206)
+    for tick in range(12):
+        angle=math.radians(tick*30)
+        s.mesh('Turntable perimeter index',carouselPlatform,(math.sin(angle)*.31,.0208,math.cos(angle)*.31),(.007,.001,.027),'Ribbon',euler=(0,tick*30,0))
     # Four-sided lower chute; no collider crosses its falling path.
     chuteRoot=s.node('PrizeChute',root)
     s.mesh('Collection tray',chuteRoot,(-.34,.245,-.31),(.48,.03,.42),'Mint',collide=True)
@@ -204,47 +274,71 @@ def build():
     s.mesh('Joystick stem',cabinet,(.02,.91,-.73),(.015,.055,.015),'Graphite',mesh=10206)
     s.mesh('Joystick ball',cabinet,(.02,.97,-.73),(.05,.05,.05),'Mint',mesh=10207)
     trim=s.node('VisualRoot - cabinet joinery',cabinet)
+    # Continuous side skins close the old open plinth. All new detailing is
+    # render-only: the existing prize bay/chute collision geometry stays intact.
+    for x in (-.665,.665):
+        skin=s.mesh('Continuous lower side skin',trim,(x,.40,0),(.045,.73,1.17),'Mint')
+        s.mono(skin,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.06\n')
+        for z in (-.57,.57):
+            s.mesh('Side brass reveal',trim,(x*1.04,.40,z),(.012,.65,.012),'Ribbon')
+    kick=s.mesh('Continuous graphite toe kick',trim,(0,.065,0),(1.32,.10,1.16),'Graphite')
+    s.mono(kick,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.08\n')
+    for x in (-.64,.64):
+        s.mesh('Glass perimeter inner seal',trim,(x,1.43,-.586),(.018,1.08,.016),'Graphite')
+    for y in (.88,1.99):
+        s.mesh('Front glass horizontal seal',trim,(0,y,-.586),(1.27,.015,.016),'Graphite')
+    for x in (-.52,.52):
+        s.mesh('Roof side cover',trim,(x,2.08,0),(.27,.10,1.16),'Ivory')
+    s.mesh('Roof rear cover',trim,(0,2.08,.51),(.78,.10,.14),'Ivory')
+    s.mesh('Marquee inset dark face',trim,(0,2.14,-.637),(1.28,.15,.012),'Graphite')
+    s.mesh('CLAW ATELIER printed marquee',trim,(0,2.14,-.646),(1.27,.159,1),'CabinetMarquee',mesh=10210)
     themePanels=[]
     themePanels.append(s.mesh('Challenge rear display card',trim,(0,1.13,.598),(1.20,.56,.012),'Mint'))
     for x in (-.44,-.35,-.26):
         s.mesh('Rear card cloud emboss',trim,(x,1.32,.588),(.11,.07,.005),'Ivory',mesh=10207)
     for x in (-.66,.66):
         for z in (-.58,.58):
-            foot=s.mesh('Brushed adjustable foot',trim,(x,.018,z),(.12,.035,.12),'Graphite')
+            foot=s.mesh('Brushed adjustable foot',trim,(x,-.0075,z),(.12,.035,.12),'Graphite')
             s.mono(foot,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.15\n')
-        themePanels.append(s.mesh('Side inset mint band',trim,(x*1.012,.49,.18),(.012,.32,.60),'Mint'))
+        themePanels.append(s.mesh('Side inset mint band',trim,(x*1.05,.49,.18),(.012,.32,.60),'Graphite'))
         for y in (.40,.44,.48,.52):
-            s.mesh('Side panel ventilation slot',trim,(x*1.025,y,.28),(.008,.008,.20),'Graphite')
+            s.mesh('Side panel ventilation slot',trim,(x*1.065,y,.28),(.008,.008,.20),'Graphite')
     face=s.mesh('Inset porcelain control fascia',trim,(.22,.888,-.73),(.72,.014,.15),'Mint')
     s.mono(face,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.14\n')
     for x in (-.17,.60):
         s.mesh('Console countersunk screw',trim,(x,.892,-.80),(.011,.004,.011),'Silver',mesh=10206)
     for z in (-.80,-.65):
         s.mesh('Console brass edge',trim,(.22,.89,z),(.72,.005,.004),'Ribbon')
-    for x in (-.49,-.40,-.31):
-        s.mesh('Marquee cloud emblem',trim,(x,2.14,-.64),(.10,.065,.012),'Rose',mesh=10207)
-    for x in (-.52,-.30,-.08,.14,.36,.58):
+    for x in (.02,.14,.26,.38,.50,.60):
         s.mesh('Front plinth recessed flute',trim,(x,.29,-.646),(.009,.24,.005),'Mint')
     s.mesh('Collection opening brass brow',trim,(-.34,.74,-.55),(.45,.012,.014),'Ribbon')
     gantryRoot=s.node('GantryRoot',root)
     bridge=s.mesh('X bridge',gantryRoot,(0,1.92,0),(1.08,.055,.06),'Silver')
-    trolley=s.mesh('XZ trolley',gantryRoot,(0,1.92,0),(.20,.10,.16),'Graphite')
+    trolley=s.mesh('XZ trolley',gantryRoot,(0,1.92,0),(.20,.04,.16),'Graphite')
     cable=s.mesh('Y cable',gantryRoot,(0,1.86,0),(.012,.06,.012),'Graphite',mesh=10206)
     tool=s.node('Tool - grip origin',gantryRoot,(0,1.56,0))
     body=s.body(tool,True)
-    s.mesh('Gripper hub',tool,(0,.30,0),(.13,.025,.13),'Silver',mesh=10206)
+    s.mesh('Gripper hub',tool,(0,.285,0),(.14,.027,.14),'Silver',mesh=10206)
+    s.mesh('Gripper graphite actuator',tool,(0,.312,0),(.10,.009,.10),'Graphite',mesh=10206)
+    s.mesh('Gripper lower brass collar',tool,(0,.252,0),(.105,.008,.105),'Ribbon',mesh=10206)
+    s.mesh('Gripper cable gland',tool,(0,.324,0),(.035,.003,.035),'Silver',mesh=10206)
     palm=s.box(tool,(.14,.05,.14),(0,.30,0))
-    fingers=[];pads=[];padColliders=[];physical=[palm]
+    fingers=[];pads=[];padColliders=[];physical=[palm];links=[]
     for i in range(3):
         angle=math.radians(90+i*120)
         finger=s.node('Finger %d'%i,tool,(math.cos(angle)*.205,.13,math.sin(angle)*.205))
         s.mesh('Silver finger',finger,(0,0,0),(.024,.14,.024),'Silver',mesh=10208)
         s.mesh('Contact pad',finger,(0,-.13,0),(.036,.036,.036),'Mint',mesh=10207)
+        s.mesh('Finger hinge pin',finger,(0,.10,0),(.043,.018,.043),'Graphite',mesh=10207)
+        s.mesh('Finger bearing cap',finger,(0,.10,0),(.028,.024,.028),'Ribbon',mesh=10207)
+        link=s.mesh('Articulated radial link %d'%i,tool,(0,.28,0),(.018,.08,.018),'Silver',mesh=10206)
+        links.append(link)
         shaft=s.component(finger,136,'CapsuleCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.012\n  m_Height: 0.28\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n')
         probe=s.node('Physical contact probe',finger,(0,-.13,0))
         pad=s.component(probe,135,'SphereCollider','  m_Material: '+external('Materials/PrizeFriction.physicMaterial',13400000,2)+'\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.018\n  m_Center: '+vec((0,0,0))+'\n')
         fingers.append(finger);pads.append(probe);padColliders.append(pad);physical.extend([shaft,pad])
-    environment=[c for c in s.components if c['type']==65 and 'm_IsTrigger: 0' in c['fields']]
+    s.mono(tool,'Presentation/ClawGripperLinkage',transform_field('hubOrigin',tool)+'  fingers:\n'+''.join('  - '+ref(n['t'])+'\n' for n in fingers)+'  links:\n'+''.join('  - '+ref(n['t'])+'\n' for n in links))
+    environment=[c for c in s.components if c['type'] in (65,64) and 'm_IsTrigger: 0' in c['fields']]
     grip=s.mono(tool,'Gripper/GripperController',field('toolBody',body)+'  fingers:\n'+''.join('  - '+ref(n['t'])+'\n' for n in fingers)+'  contactPads:\n'+''.join('  - '+ref(n['t'])+'\n' for n in pads)+'  contactColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in padColliders)+'  physicalColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in physical)+'  environmentColliders:\n'+''.join('  - '+ref(c['id'])+'\n' for c in environment if c!=palm)+'  openRadius: 0.205\n  closedRadius: 0.065\n')
     workspace=s.box(root,(.86,.66,.68),(0,1.23,0),trigger=True,enabled=False)
     taskSpace=s.mono(root,'Drivers/ClawTaskSpace',transform_field('machineFrame',root)+field('workspaceVolume',workspace)+transform_field('releasePoint',drop))
@@ -279,6 +373,11 @@ def build():
             colliders.append(s.component(head,135,'SphereCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Center: '+vec((0,0,0))+'\n'))
             for x in (-.045,.045):
                 ear=s.mesh('Fox ear',prize,(x,.205,0),(.045,.035,.045),'Amber',mesh=10208)
+                # Keep the original compound collider's pose and scale, replace
+                # only its old capsule renderer with a pointed fabric shell.
+                next(c for c in ear['components'] if c['type']==23)['fields']=next(c for c in ear['components'] if c['type']==23)['fields'].replace('m_Enabled: 1','m_Enabled: 0')
+                outer=s.mesh('Fox pointed fabric ear',ear,(0,0,0),(1,2,1),'Amber')
+                s.mono(outer,'Presentation/ClawMeshModule','  shape: 5\n  bevel: 0.08\n')
                 colliders.append(s.component(ear,136,'CapsuleCollider','  m_Material: {fileID: 0}\n  m_IsTrigger: 0\n  m_Enabled: 1\n  m_Radius: 0.5\n  m_Height: 2\n  m_Direction: 1\n  m_Center: '+vec((0,0,0))+'\n'))
             s.mesh('Visible offset brass weight',prize,(.055,.095,-.04),(.065,.035,.065),'Ribbon',mesh=10206)
             for x in (-.03,.03):s.mesh('Fox eye',prize,(x,.14,-.060),(.012,.013,.008),'Graphite',mesh=10207)
@@ -288,7 +387,12 @@ def build():
             for x in (-.07,.07):
                 s.mesh('Parcel foil corner',decor,(x,.123,-.06),(.018,.003,.045),'Silver')
             for x in (-.032,.032):
-                loop=s.mesh('Ribbon bow loop',decor,(x,.135,0),(.065,.027,.045),'Ribbon',mesh=10207)
+                loop=s.mesh('Ribbon bow loop',decor,(x,.136,0),(.073,.045,.048),'Ribbon',euler=(0,0,25 if x<0 else -25))
+                s.mono(loop,'Presentation/ClawMeshModule','  shape: 4\n  bevel: 0.08\n')
+            s.mesh('Ribbon central knot',decor,(0,.137,0),(.026,.020,.026),'Ribbon',mesh=10207)
+            for z in (-.104,.104):
+                s.mesh('Parcel stitched lid seam',decor,(0,.095,z),(.21,.003,.002),'Graphite')
+            s.mesh('Parcel recessed lid rim',decor,(0,.110,0),(.226,.012,.206),'Mint')
         elif slot==1:
             for x in (-.025,.025):
                 s.mesh('Bunny stitched muzzle',decor,(x,.137,-.064),(.044,.034,.025),'Ivory',mesh=10207)
@@ -305,7 +409,10 @@ def build():
             s.mesh('Fox cream chest',decor,(0,-.008,-.078),(.112,.11,.022),'Ivory',mesh=10207)
             s.mesh('Fox embroidered nose',decor,(0,.118,-.086),(.023,.017,.012),'Graphite',mesh=10207)
             for x in (-.047,.047):
-                s.mesh('Fox inner ear patch',decor,(x,.206,-.015),(.025,.031,.009),'Rose',mesh=10207)
+                inner=s.mesh('Fox inner ear patch',decor,(x,.206,-.015),(.026,.046,.009),'Rose')
+                s.mono(inner,'Presentation/ClawMeshModule','  shape: 5\n  bevel: 0.08\n')
+            for x in (-.04,.04):
+                s.mesh('Fox cream cheek',decor,(x,.12,-.048),(.058,.063,.025),'Ivory',mesh=10207,euler=(0,0,25 if x<0 else -25))
             for x in (-.06,.06):
                 s.mesh('Fox small paw',decor,(x,-.061,-.04),(.062,.05,.055),'Amber',mesh=10207)
             for y in range(7):
@@ -325,11 +432,14 @@ def build():
     s.component(cameras,81,'AudioListener','  m_Enabled: 1\n')
     cameraController=s.mono(cameras,'Camera/CraneCameraController','  views:\n'+''.join('  - '+ref(c['id'])+'\n' for c in cameraComps)+transform_field('lookTarget',look))
     managers=s.node('Managers',root)
+    carousel=s.mono(managers,'Core/ClawCarousel',field('platform',carouselBody))
     inputController=s.mono(managers,'Input/ClawInputController')
     task=s.mono(managers,'Core/GraspTaskController',field('driverComponent',driver)+field('taskSpace',taskSpace)+field('gripper',grip)+'  prizes:\n'+''.join('  - '+ref(p['id'])+'\n' for p in prizePhysics)+field('chute',detector)+'  challenge: '+external('Challenges/C01.asset',11400000,2)+'\n  aimSpeed: 0.35\n  lowerSpeed: 0.25\n  liftSpeed: 0.32\n  closeDuration: 0.85\n')
+    task['fields']+=field('carousel',carousel)
     audio=s.component(managers,82,'AudioSource','  m_Enabled: 1\n  serializedVersion: 4\n  OutputAudioMixerGroup: {fileID: 0}\n  m_audioClip: {fileID: 0}\n  m_PlayOnAwake: 0\n  m_Volume: 1\n  m_Pitch: 1\n  Loop: 0\n  Mute: 0\n  Spatialize: 0\n  SpatializePostEffects: 0\n  Priority: 128\n  DopplerLevel: 0\n  MinDistance: 1\n  MaxDistance: 10\n  Pan2D: 0\n  rolloffMode: 0\n  BypassEffects: 0\n  BypassListenerEffects: 0\n  BypassReverbZones: 0\n')
     audioController=s.mono(managers,'Audio/ClawAudioController')
-    manager=s.mono(managers,'Core/ClawGameManager',field('task',task)+field('keyboard',inputController)+field('cameras',cameraController)+field('audioSource',audio)+field('audioController',audioController)+'  challenges:\n'+''.join('  - '+external('Challenges/C0'+str(i)+'.asset',11400000,2)+'\n' for i in (1,2,3)))
+    manager=s.mono(managers,'Core/ClawGameManager',field('task',task)+field('keyboard',inputController)+field('cameras',cameraController)+field('audioSource',audio)+field('audioController',audioController)+'  challenges:\n'+''.join('  - '+external('Challenges/C0'+str(i)+'.asset',11400000,2)+'\n' for i in (1,2,3,4)))
+    cameraController['fields'] += field('game',manager)
     shaderRoot=ROOT/'Assets/BCIShared/TMP/Resources/BCIShared/TMP'
     primaryGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmap.shader.meta').read_text(encoding="utf-8")).group(1)
     compatGuid=re.search(r'guid: ([a-f0-9]{32})',(shaderRoot/'BCITMPBitmapCompatibility.shader.meta').read_text(encoding="utf-8")).group(1)
@@ -342,7 +452,7 @@ def build():
             s.mono(node,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.055\n')
     # Snapshot prefabs are self-contained, references stay typed and local.
     output('Prefabs/Machine/ClawMachine.prefab',s.render(descendants(root)))
-    for name,node in [('Cabinet',cabinet),('Gantry',gantryRoot),('PrizeChute',chuteRoot),('PrizeBay',bay),('XBridge',bridge),('Trolley',trolley),('Cable',cable),('Gripper',tool)]:
+    for name,node in [('Cabinet',cabinet),('Gantry',gantryRoot),('PrizeChute',chuteRoot),('PrizeBay',bay),('Carousel',carouselPlatform),('XBridge',bridge),('Trolley',trolley),('Cable',cable),('Gripper',tool)]:
         savedFields=grip['fields']
         if name in ('Gantry','Gripper'):
             grip['fields']=re.sub(r'  environmentColliders:\n(?:  - \{fileID: \d+\}\n)*','  environmentColliders: []\n',grip['fields'])
@@ -355,36 +465,43 @@ def build():
         output('Prefabs/Prize/'+name+'.prefab',s.render(descendants(prize)))
         prize['position']=oldPos;prize['components'].append(behaviour);s.components.append(behaviour)
     room=s.node('ArcadeShell - open top')
-    s.mesh('Warm gallery floor',room,(0,-.075,0),(10,.1,10),'Floor',collide=True)
-    s.mesh('Rear gallery wall',room,(0,1.8,2.7),(10,3.8,.12),'Backdrop')
-    for x in (-2.0,2.0):
-        s.mesh('Distant arcade plinth',room,(x,.6,1.8),(.8,1.2,.7),'Rose' if x<0 else 'Mint')
-        s.mesh('Distant arcade display',room,(x,1.4,1.8),(.8,.5,.7),'Ivory')
-    for x in (-2.0,2.0):
+    s.mesh('Warm gallery floor',room,(0,-.075,0),(14,.1,14),'Floor',collide=True)
+    s.mesh('Rear gallery wall',room,(0,1.8,5.2),(14,3.8,.12),'Backdrop')
+    for x in (-3.8,3.8):
+        s.mesh('Distant arcade plinth',room,(x,.6,4.5),(.8,1.2,.7),'Rose' if x<0 else 'Mint')
+        s.mesh('Distant arcade display',room,(x,1.4,4.5),(.8,.5,.7),'Ivory')
+    for x in (-3.8,3.8):
         for side in (-.37,.37):
-            post=s.mesh('Background machine frame',room,(x+side,1.27,1.43),(.055,1.35,.055),'Mint' if x<0 else 'Rose')
+            post=s.mesh('Background machine frame',room,(x+side,1.27,4.13),(.055,1.35,.055),'Mint' if x<0 else 'Rose')
             s.mono(post,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.12\n')
-        s.mesh('Background machine top',room,(x,1.92,1.70),(.86,.15,.76),'Ivory')
-        s.mesh('Background machine glass',room,(x,1.34,1.43),(.68,1.04,.012),'Glass')
+        s.mesh('Background machine top',room,(x,1.92,4.40),(.86,.15,.76),'Ivory')
+        s.mesh('Background machine glass',room,(x,1.34,4.13),(.68,1.04,.012),'Glass')
         for offset in (-.18,0,.18):
-            s.mesh('Display pastel toy',room,(x+offset,1.12,1.65),(.14,.21,.14),'Plush' if offset==0 else 'Amber',mesh=10207)
+            s.mesh('Display pastel toy',room,(x+offset,1.12,4.35),(.14,.21,.14),'Plush' if offset==0 else 'Amber',mesh=10207)
     for x in (-4,-3,-2,-1,0,1,2,3,4):
         s.mesh('Floor parquet seam',room,(x,-.023,0),(.007,.001,10),'Backdrop')
     for z in (-4,-2,0,2,4):
         s.mesh('Floor cross seam',room,(0,-.022,z),(10,.001,.007),'Backdrop')
-    shelf=s.mesh('Rear showroom display shelf',room,(0,1.10,2.48),(1.65,.06,.32),'Ivory')
+    shelf=s.mesh('Rear showroom display shelf',room,(0,1.10,5.00),(1.65,.06,.32),'Ivory')
     s.mono(shelf,'Presentation/ClawMeshModule','  shape: 0\n  bevel: 0.14\n')
     for x in (-.58,-.28,.02,.32,.62):
-        s.mesh('Shelf pastel parcel',room,(x,1.28,2.48),(.21,.30,.19),'Mint' if x<0 else 'Rose')
+        s.mesh('Shelf pastel parcel',room,(x,1.28,5.00),(.21,.30,.19),'Mint' if x<0 else 'Rose')
     s.mono(room,'Presentation/ClawShowroomLighting')
     light=s.node('Soft key light',room,(0,3,-2),euler=(38,-28,0))
-    s.component(light,108,'Light','  m_Enabled: 1\n  serializedVersion: 10\n  m_Type: 1\n  m_Shape: 0\n  m_Color: {r: 1, g: 0.94, b: 0.82, a: 1}\n  m_Intensity: 1.05\n  m_Range: 10\n  m_SpotAngle: 30\n  m_InnerSpotAngle: 21.8\n  m_CookieSize: 10\n  m_Shadows:\n    m_Type: 2\n    m_Resolution: -1\n    m_CustomResolution: -1\n    m_Strength: 0.65\n    m_Bias: 0.05\n    m_NormalBias: 0.4\n    m_NearPlane: 0.2\n  m_Cookie: {fileID: 0}\n  m_DrawHalo: 0\n  m_Flare: {fileID: 0}\n  m_RenderMode: 0\n  m_CullingMask:\n    serializedVersion: 2\n    m_Bits: 4294967295\n  m_RenderingLayerMask: 1\n  m_Lightmapping: 4\n  m_BounceIntensity: 1\n  m_ColorTemperature: 5500\n  m_UseColorTemperature: 0\n')
-    settings='--- !u!29 &1\nOcclusionCullingSettings:\n  serializedVersion: 2\n  m_OcclusionBakeSettings:\n    smallestOccluder: 5\n    smallestHole: 0.25\n    backfaceThreshold: 100\n  m_SceneGUID: 00000000000000000000000000000000\n  m_OcclusionCullingData: {fileID: 0}\n--- !u!104 &2\nRenderSettings:\n  serializedVersion: 9\n  m_Fog: 0\n  m_AmbientSkyColor: {r: 0.78, g: 0.75, b: 0.67, a: 1}\n  m_AmbientEquatorColor: {r: 0.65, g: 0.64, b: 0.58, a: 1}\n  m_AmbientGroundColor: {r: 0.38, g: 0.37, b: 0.33, a: 1}\n  m_AmbientIntensity: 0.85\n  m_AmbientMode: 3\n  m_SkyboxMaterial: {fileID: 0}\n--- !u!157 &3\nLightmapSettings:\n  serializedVersion: 12\n  m_GIWorkflowMode: 1\n  m_LightmapsMode: 1\n  m_LightingSettings: {fileID: 0}\n--- !u!196 &4\nNavMeshSettings:\n  serializedVersion: 2\n  m_NavMeshData: {fileID: 0}\n'
+    s.component(light,108,'Light','  m_Enabled: 1\n  serializedVersion: 10\n  m_Type: 1\n  m_Shape: 0\n  m_Color: {r: 1, g: 0.98, b: 0.95, a: 1}\n  m_Intensity: 1.05\n  m_Range: 10\n  m_SpotAngle: 30\n  m_InnerSpotAngle: 21.8\n  m_CookieSize: 10\n  m_Shadows:\n    m_Type: 2\n    m_Resolution: -1\n    m_CustomResolution: -1\n    m_Strength: 0.4\n    m_Bias: 0.015\n    m_NormalBias: 0.08\n    m_NearPlane: 0.2\n  m_Cookie: {fileID: 0}\n  m_DrawHalo: 0\n  m_Flare: {fileID: 0}\n  m_RenderMode: 0\n  m_CullingMask:\n    serializedVersion: 2\n    m_Bits: 4294967295\n  m_RenderingLayerMask: 1\n  m_Lightmapping: 4\n  m_BounceIntensity: 1\n  m_ColorTemperature: 5500\n  m_UseColorTemperature: 0\n')
+    settings='--- !u!29 &1\nOcclusionCullingSettings:\n  serializedVersion: 2\n  m_OcclusionBakeSettings:\n    smallestOccluder: 5\n    smallestHole: 0.25\n    backfaceThreshold: 100\n  m_SceneGUID: 00000000000000000000000000000000\n  m_OcclusionCullingData: {fileID: 0}\n--- !u!104 &2\nRenderSettings:\n  serializedVersion: 9\n  m_Fog: 0\n  m_AmbientSkyColor: {r: 0.46, g: 0.50, b: 0.53, a: 1}\n  m_AmbientEquatorColor: {r: 0.36, g: 0.40, b: 0.42, a: 1}\n  m_AmbientGroundColor: {r: 0.23, g: 0.26, b: 0.28, a: 1}\n  m_AmbientIntensity: 1\n  m_AmbientMode: 1\n  m_SkyboxMaterial: {fileID: 0}\n--- !u!157 &3\nLightmapSettings:\n  serializedVersion: 12\n  m_GIWorkflowMode: 1\n  m_LightmapsMode: 1\n  m_LightingSettings: {fileID: 0}\n--- !u!196 &4\nNavMeshSettings:\n  serializedVersion: 2\n  m_NavMeshData: {fileID: 0}\n'
+    # Prefab templates above retain all prizes. Only the scene's initial display
+    # follows C01, preventing overlapping inactive-challenge placeholders before Play.
+    default_spawns = dict(layouts[0][-1])
+    for slot, node in enumerate(prizeNodes):
+        node['active'] = slot in default_spawns
+        if node['active']:
+            node['position'] = seeded_position(default_spawns[slot], 20261113, slots[slot][0])
     output('Scenes/ClawMachineScene.unity',HEADER+settings+s.render()[len(HEADER):])
     assemblies={
         'Scripts/ClawMachine.Runtime.asmdef':dict(name='ClawMachine.Runtime',rootNamespace='ClawMachine',references=['Unity.TextMeshPro','Unity.ugui'],autoReferenced=True),
         'Editor/ClawMachine.Editor.asmdef':dict(name='ClawMachine.Editor',rootNamespace='ClawMachine.Editor',references=['ClawMachine.Runtime','Unity.TextMeshPro','Unity.ugui','BCIShared.TMP.Editor'],includePlatforms=['Editor']),
-        'Tests/EditMode/ClawMachine.EditModeTests.asmdef':dict(name='ClawMachine.EditModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner','Unity.TextMeshPro','Unity.ugui'],includePlatforms=['Editor'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS']),
+        'Tests/EditMode/ClawMachine.EditModeTests.asmdef':dict(name='ClawMachine.EditModeTests',references=['ClawMachine.Runtime','ClawMachine.Editor','ClawMachine.TestDrivers','UnityEngine.TestRunner','UnityEditor.TestRunner','Unity.TextMeshPro','Unity.ugui'],includePlatforms=['Editor'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS']),
         'Tests/PlayMode/ClawMachine.PlayModeTests.asmdef':dict(name='ClawMachine.PlayModeTests',references=['ClawMachine.Runtime','UnityEngine.TestRunner','UnityEditor.TestRunner','Unity.TextMeshPro','Unity.ugui'],overrideReferences=True,precompiledReferences=['nunit.framework.dll'],autoReferenced=False,defineConstraints=['UNITY_INCLUDE_TESTS'])}
     for path,data in assemblies.items():output(path,json.dumps(data,indent=2)+'\n')
 

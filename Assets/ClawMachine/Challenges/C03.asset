@@ -16,7 +16,7 @@ MonoBehaviour:
   seed: 20261115
   attemptLimit: 4
   failedAttemptResetPolicy: 0
-  cameraPolicy: FrontSidePipAndBoundedOrbit
+  cameraPolicy: RightDragContinuousOrbit
   successRule: ReleasedTargetFullyInsideChuteAndStable
   graspProfile: {fileID: 11400000, guid: 780c974b742b34de7cbf3099a0eb45ef, type: 2}
   spawns:

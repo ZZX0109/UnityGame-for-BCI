@@ -20,12 +20,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Metallic: 0.8
-    - _Glossiness: 0.62
+    - _Metallic: 0.72
+    - _Glossiness: 0.68
     - _Mode: 0
     - _SrcBlend: 1
     - _DstBlend: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.65, g: 0.68, b: 0.67, a: 1}
+    - _Color: {r: 0.46, g: 0.53, b: 0.56, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

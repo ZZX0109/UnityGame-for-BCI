@@ -19,7 +19,7 @@ def main():
     if not output.is_relative_to((ROOT / 'BuildOutput').resolve()) or output.exists():
         parser.error('Use a new directory inside BuildOutput.')
     output.mkdir(parents=True)
-    commands = [ ['Tools/validate_project.py'], ['Tools/validate_levels.py', '--mechanics'],
+    commands = [ ['Tools/validate_project.py'],
                  ['Tools/build_ui_font.py', '--check'], ['-m', 'unittest', 'discover', '-s', 'Tools/tests', '-v'] ]
     if (ROOT / 'Assets/ClawMachine').exists(): commands.append(['docs/Game02_ClawMachine/validate_prototype.py'])
     if (ROOT / 'Assets/StreetCrossing').exists(): commands.append(['docs/Game03_StreetCrossing/tools/validate_street.py'])

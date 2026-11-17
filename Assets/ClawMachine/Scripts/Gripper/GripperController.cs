@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ClawMachine
@@ -18,6 +19,13 @@ namespace ClawMachine
         private PrizePhysics held;
         private Vector3 initialGripOffset;
         private float openness = 1;
+        private struct CollisionPairState
+        {
+            public Collider A, B;
+            public bool PreviouslyIgnored;
+        }
+        private readonly List<CollisionPairState> heldCollisionPairs = new List<CollisionPairState>();
+        private bool restoringReleasedPairs;
         public event Action SlippedEvent;
         public bool IsConfigured => toolBody && fingers != null && fingers.Length == 3 && fingers[0] && fingers[1] && fingers[2] && contactColliders != null && contactColliders.Length == 3 &&
             contactColliders[0] && contactColliders[1] && contactColliders[2] && PhysicalGeometryReady;
@@ -36,6 +44,11 @@ namespace ClawMachine
         public SphereCollider[] ContactColliders => contactColliders;
         public int LastContacts { get; private set; }
         public bool Slipped { get; private set; }
+        public bool LastJointBroke { get; private set; }
+        public float LastGripTorque { get; private set; }
+        public float LastGripDrift { get; private set; }
+        public float PeakConstraintForce { get; private set; }
+        public float PeakConstraintTorque { get; private set; }
         public float LowestPointOffset => -0.025f;
         private Vector3 ToolPhysicsOffset => toolBody ? toolBody.position - toolBody.transform.position : Vector3.zero;
         private static Vector3 SurfacePhysicsPosition(Collider collider) => collider.transform.position + (collider.attachedRigidbody ? collider.attachedRigidbody.position - collider.attachedRigidbody.transform.position : Vector3.zero);
@@ -100,7 +113,7 @@ namespace ClawMachine
             }
             if (environmentColliders != null) foreach (Collider physical in physicalColliders)
                 if (physical && physical.transform.IsChildOf(fingers[index])) foreach (Collider surface in environmentColliders)
-                    if (surface && surface.enabled && !surface.isTrigger && Physics.ComputePenetration(physical, physical.transform.position + ToolPhysicsOffset, physical.transform.rotation,
+                    if (surface && surface.enabled && surface.gameObject.activeInHierarchy && !surface.isTrigger && Physics.ComputePenetration(physical, physical.transform.position + ToolPhysicsOffset, physical.transform.rotation,
                         surface, SurfacePhysicsPosition(surface), surface.transform.rotation, out _, out float depth) && depth > allowed) return true;
             return false;
         }
@@ -117,13 +130,14 @@ namespace ClawMachine
                 }
             if (environmentColliders != null) foreach (Collider physical in physicalColliders)
                 if (physical) foreach (Collider surface in environmentColliders)
-                    if (surface && surface.enabled && !surface.isTrigger && Physics.ComputePenetration(physical, physical.transform.position + ToolPhysicsOffset + delta, physical.transform.rotation,
+                    if (surface && surface.enabled && surface.gameObject.activeInHierarchy && !surface.isTrigger && Physics.ComputePenetration(physical, physical.transform.position + ToolPhysicsOffset + delta, physical.transform.rotation,
                         surface, SurfacePhysicsPosition(surface), surface.transform.rotation, out _, out float depth) && depth > 0.001f) return false;
             return true;
         }
         public GraspFailure TryGrip(PrizePhysics prize)
         {
             Release(false); Slipped = false;
+            LastJointBroke = false; LastGripTorque = LastGripDrift = PeakConstraintForce = PeakConstraintTorque = 0;
             if (!IsConfigured) return GraspFailure.Configuration;
             GraspFailure result = GraspContactEvaluator.Evaluate(toolBody.position, prize, contactColliders, out int contacts);
             LastContacts = contacts;
@@ -132,7 +146,64 @@ namespace ClawMachine
             grip.connectedBody = prize.Body; grip.autoConfigureConnectedAnchor = false; grip.anchor = Vector3.zero;
             grip.connectedAnchor = Quaternion.Inverse(prize.Body.rotation) * (toolBody.position - prize.Body.position);
             grip.breakForce = prize.Profile.breakForce; grip.breakTorque = prize.Profile.breakTorque; grip.enableCollision = false;
-            held = prize; initialGripOffset = Quaternion.Inverse(toolBody.rotation) * (prize.Body.worldCenterOfMass - toolBody.position); return GraspFailure.None;
+            held = prize; initialGripOffset = Quaternion.Inverse(toolBody.rotation) * (prize.Body.worldCenterOfMass - toolBody.position);
+            SuppressHeldCollisionPairs(prize);
+            return GraspFailure.None;
+        }
+        private void SuppressHeldCollisionPairs(PrizePhysics prize)
+        {
+            restoringReleasedPairs = false;
+            foreach (Collider physical in physicalColliders) foreach (Collider surface in prize.ContactColliders)
+            {
+                if (!ActivePair(physical, surface)) continue;
+                bool recorded = false;
+                foreach (CollisionPairState previous in heldCollisionPairs)
+                    if (previous.A == physical && previous.B == surface) { recorded = true; break; }
+                if (recorded) continue;
+                heldCollisionPairs.Add(new CollisionPairState {
+                    A = physical, B = surface, PreviouslyIgnored = Physics.GetIgnoreCollision(physical, surface)
+                });
+                // Native joint collision suppression does not reliably remove
+                // existing compound-finger contact constraints in this scene.
+                Physics.IgnoreCollision(physical, surface, true);
+            }
+        }
+        private static bool ActivePair(Collider a, Collider b) =>
+            a && b && a.gameObject.activeInHierarchy && b.gameObject.activeInHierarchy;
+
+        private void RestoreCollisionPairs(bool immediately)
+        {
+            for (int index = heldCollisionPairs.Count - 1; index >= 0; index--)
+            {
+                CollisionPairState pair = heldCollisionPairs[index];
+                if (ActivePair(pair.A, pair.B))
+                {
+                    // Release can occur with closed fingers touching the prize.
+                    // Keep only penetrating pairs suppressed until gravity/opening
+                    // separates them, rather than inject a depenetration impulse.
+                    if (!immediately && !pair.PreviouslyIgnored && pair.A.enabled && pair.B.enabled &&
+                        Physics.ComputePenetration(pair.A, SurfacePhysicsPosition(pair.A), pair.A.transform.rotation,
+                            pair.B, SurfacePhysicsPosition(pair.B), pair.B.transform.rotation, out _, out float depth) && depth > 0.00001f)
+                        continue;
+                    Physics.IgnoreCollision(pair.A, pair.B, pair.PreviouslyIgnored);
+                }
+                // Destroyed/inactive shapes have no live collision pair in PhysX.
+                heldCollisionPairs.RemoveAt(index);
+            }
+            if (heldCollisionPairs.Count == 0) restoringReleasedPairs = false;
+        }
+        private void FixedUpdate()
+        {
+            if (held && !held.gameObject.activeInHierarchy) Release(false);
+            if (held && !grip) CheckGrip();
+            if (!held && grip) Release(false);
+            if (!held && heldCollisionPairs.Count > 0) RestoreCollisionPairs(!restoringReleasedPairs);
+        }
+        private void OnJointBreak(float breakForce)
+        {
+            if (!held) return;
+            LastJointBroke = true; Slipped = true;
+            Release(true); SlippedEvent?.Invoke();
         }
         public void CheckGrip()
         {
@@ -141,6 +212,8 @@ namespace ClawMachine
             Vector3 offset = held.Body.worldCenterOfMass - toolBody.position;
             float torque = Vector3.Cross(offset, Physics.gravity * held.Body.mass).magnitude;
             float drift = Vector3.Distance(Quaternion.Inverse(toolBody.rotation) * (held.Body.worldCenterOfMass - toolBody.position), initialGripOffset);
+            LastJointBroke = broken; LastGripTorque = torque; LastGripDrift = drift;
+            if (grip) { PeakConstraintForce = Mathf.Max(PeakConstraintForce, grip.currentForce.magnitude); PeakConstraintTorque = Mathf.Max(PeakConstraintTorque, grip.currentTorque.magnitude); }
             if (broken || torque > held.Profile.breakTorque || drift > held.Profile.maximumGripDrift)
             {
                 Slipped = true; Release(true); SlippedEvent?.Invoke();
@@ -149,10 +222,25 @@ namespace ClawMachine
         public void Release(bool released)
         {
             if (grip) { grip.connectedBody = null; if (Application.isPlaying) Destroy(grip); else DestroyImmediate(grip); grip = null; }
-            if (held) { if (released) held.MarkReleased(); held = null; }
+            if (held)
+            {
+                if (released)
+                {
+                    held.MarkReleased();
+                    // A jointed prize can fall asleep during the stationary
+                    // release. Removing the joint must wake the original body
+                    // so gravity resumes; never award a suspended sleeping prize.
+                    held.Body.WakeUp();
+                }
+                held = null;
+            }
+            if (released && Application.isPlaying && isActiveAndEnabled)
+                restoringReleasedPairs = heldCollisionPairs.Count > 0;
+            else RestoreCollisionPairs(true);
         }
         public void ResetGrip() { Release(false); Slipped = false; LastContacts = 0; SetOpenness(1); }
-        private void OnDisable() { Release(false); }
+        private void OnDisable() { Release(false); SetOpenness(1); }
+        private void OnDestroy() { Release(false); }
         private void OnApplicationQuit() { Release(false); }
     }
 }

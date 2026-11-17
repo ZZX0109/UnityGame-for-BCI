@@ -12,6 +12,7 @@ namespace ClawMachine
         [SerializeField] private PrizePhysics[] prizes;
         [SerializeField] private PrizeChuteDetector chute;
         [SerializeField] private ClawChallengeDefinition challenge;
+        [SerializeField] private ClawCarousel carousel;
         [SerializeField] private float aimSpeed = 0.35f;
         [SerializeField] private float lowerSpeed = 0.25f;
         [SerializeField] private float liftSpeed = 0.32f;
@@ -28,6 +29,7 @@ namespace ClawMachine
         private int selectedPrize;
         public ClawSession Session { get; } = new ClawSession();
         public ClawChallengeDefinition Challenge => challenge;
+        public ClawCarousel Carousel => carousel;
         public IManipulatorDriver Driver => driver ?? driverComponent as IManipulatorDriver;
         public ClawTaskSpace TaskSpace => taskSpace;
         public IReadOnlyList<PrizePhysics> Prizes => prizes;
@@ -44,6 +46,7 @@ namespace ClawMachine
         public string Diagnostic { get; private set; } = "";
         private bool ChallengeHasBindings()
         {
+            if (challenge.carouselEnabled && (!carousel || !carousel.IsConfigured)) return false;
             if (challenge.spawns == null || challenge.spawns.Length == 0) return false;
             bool target = false;
             foreach (PrizeSpawnDefinition spawn in challenge.spawns)
@@ -83,6 +86,7 @@ namespace ClawMachine
         {
             if (!ready || !IsConfigured || !Session.BeginAttempt()) return false;
             aimInput = Vector2.zero; driver.Stop();
+            if (carousel) carousel.BrakeForGrab();
             foreach (PrizePhysics prize in prizes) if (prize && prize.gameObject.activeSelf) prize.BeginAttempt(Session.SessionId, Session.AttemptId);
             chute.Arm(Session.SessionId, Session.AttemptId);
             plan = GraspPlanner.Plan(taskSpace, driver.CurrentToolPose, prizes);
@@ -103,6 +107,7 @@ namespace ClawMachine
             if (!IsConfigured || !driverComponent.enabled || !gripper.enabled) { Abort(GraspFailure.Configuration, "A required scene reference was lost or disabled."); return; }
             if (driver.Status == ManipulatorStatus.Error) { Abort(GraspFailure.Configuration, "Executor error: " + driver.Error); return; }
             float dt = Time.fixedDeltaTime;
+            if (carousel) carousel.Tick(dt, Session.State == GraspState.Aiming, Session.Paused);
             if (Session.State == GraspState.Aiming) safety.Jog(taskSpace.AimVelocity(aimInput, aimSpeed));
             if ((Session.State == GraspState.ContactDescent || Session.State == GraspState.Approaching) && driver.IsBusy)
             {
@@ -197,6 +202,7 @@ namespace ClawMachine
         }
         private void RestorePrizes()
         {
+            if (carousel) carousel.Deactivate();
             foreach (PrizePhysics prize in prizes)
             {
                 if (!prize) continue;
@@ -207,6 +213,7 @@ namespace ClawMachine
             }
             selectedPrize = 0;
             for (int i = 0; i < prizes.Length; i++) if (prizes[i] && prizes[i].gameObject.activeSelf && prizes[i].PrizeId == challenge.targetId) selectedPrize = i;
+            if (carousel) carousel.Configure(challenge, taskSpace, prizes);
         }
         public void ResetChallenge(bool start)
         {
@@ -221,6 +228,7 @@ namespace ClawMachine
         public void EmergencyStop() { safety?.EmergencyStop(); Abort(GraspFailure.Cancelled, "Simulation stopped by user."); }
         private void Abort(GraspFailure failure, string message)
         {
+            if (carousel) carousel.Deactivate();
             driver?.Stop(); if (gripper) gripper.ResetGrip(); if (chute) chute.Clear();
             if (prizes != null) foreach (var prize in prizes) if (prize && prize.IsConfigured) prize.Restore();
             Diagnostic = message; Session.Fail(failure);
@@ -228,6 +236,7 @@ namespace ClawMachine
         public void SetPaused(bool value) { Session.Pause(value); aimInput = Vector2.zero; }
         private void OnDisable()
         {
+            if (carousel) carousel.Deactivate();
             aimInput = Vector2.zero; driver?.Stop(); if (gripper) gripper.ResetGrip(); if (chute) chute.Clear();
             if (prizes != null) foreach (var prize in prizes) if (prize && prize.IsConfigured) prize.Restore();
             Session.Reset(challenge ? challenge.attemptLimit : 1, false);

@@ -31,6 +31,12 @@ namespace ClawMachine
         public string cameraPolicy = "FrontSidePipAndBoundedOrbit";
         public string successRule = "ReleasedTargetFullyInsideChuteAndStable";
         public PrizeProfile graspProfile;
+        [Header("Optional rotating prize carousel")]
+        public bool carouselEnabled;
+        public Vector3 carouselCenter = new Vector3(0.20f, 0.80f, 0.12f);
+        [Range(0.08f, 0.35f)] public float carouselRadius = 0.21f;
+        [Range(-45, 45)] public float carouselDegreesPerSecond = 14;
+        public float carouselStartDegrees;
         public Vector3 SpawnForSeed() => PositionForSeed(spawnPosition, seed, prizeId);
         public static Vector3 PositionForSeed(Vector3 position, int seed, string id)
         {

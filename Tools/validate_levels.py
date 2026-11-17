@@ -262,6 +262,10 @@ def write_report(directory, paths, results, mechanics):
 
 
 def main(argv=None):
+    if not LEVELS.is_dir() and (ROOT / "Assets/ClawMachine").is_dir():
+        print('[MOVED] Sokoban maps and their full regression suite are archived outside this Claw project.')
+        print('For this game run: python Tools/run_source_checks.py')
+        return 2
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mechanics', action='store_true')
     parser.add_argument('--report', type=Path)

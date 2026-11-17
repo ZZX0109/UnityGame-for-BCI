@@ -142,13 +142,21 @@ namespace ClawMachine.Tests.EditMode
                 }
                 Set(controller, "views", views);
                 Set(controller, "lookTarget", root.transform);
-                for (int view = 1; view <= 3; view++)
+                controller.Select(1);
+                // One main camera now orbits continuously. Camera heading must
+                // never remap manipulator axes, including at the back of a turn.
+                for (int step = 0; step < 16; step++)
                 {
-                    controller.Select(view);
+                    controller.OrbitBy(new Vector2(45, step % 2 == 0 ? 5 : -5));
                     Assert.AreEqual(Vector3.forward, ClawMotion.MachineDirection(Vector2.up));
                     Assert.AreEqual(Vector3.right, ClawMotion.MachineDirection(Vector2.right));
+                    Assert.AreEqual(Vector3.back, ClawMotion.MachineDirection(Vector2.down));
+                    Assert.AreEqual(Vector3.left, ClawMotion.MachineDirection(Vector2.left));
                     Assert.LessOrEqual(ClawMotion.MachineDirection(Vector2.one).magnitude, 1.000001f);
-                    for (int i = 0; i < views.Length; i++) Assert.AreEqual(i == view - 1, views[i].enabled);
+                    Assert.Less(Vector3.Distance(new Vector3(1, 0, 1).normalized,
+                        ClawMotion.MachineDirection(Vector2.one)), 0.000001f);
+                    Assert.AreSame(views[0], controller.CurrentCamera);
+                    for (int i = 0; i < views.Length; i++) Assert.AreEqual(i == 0, views[i].enabled);
                 }
             }
             finally { Object.DestroyImmediate(root); }
@@ -165,87 +173,6 @@ namespace ClawMachine.Tests.EditMode
             Assert.AreEqual(0.03f, velocity.x, 0.000001f);
             Assert.LessOrEqual((ClawMotion.Accelerate(velocity, Vector3.left * 0.35f, 1.5f, 0.02f) - velocity).magnitude, 0.030001f);
             Assert.AreEqual(velocity, ClawMotion.Accelerate(velocity, Vector3.zero, 1.5f, 0));
-        }
-
-        [Test]
-        public void Gantry_RejectsNonFinitePoseSpeedAndAllSixOutsideLimits()
-        {
-            using (var fixture = new DriverFixture())
-            {
-                GantryDriver driver = fixture.Driver;
-                Pose valid = driver.WorldPose(driver.Workspace.center);
-                foreach (float speed in new[] { 0f, -1f, float.NaN, float.PositiveInfinity, float.NegativeInfinity })
-                    Assert.IsFalse(driver.TryMoveTo(valid, speed), "Invalid speed " + speed);
-                Assert.IsFalse(driver.TryMoveTo(new Pose(new Vector3(float.NaN, 1, 0), Quaternion.identity), 0.35f));
-                Assert.IsFalse(driver.TryMoveTo(new Pose(new Vector3(0, float.PositiveInfinity, 0), Quaternion.identity), 0.35f));
-                Assert.IsFalse(driver.TryMoveTo(new Pose(valid.position, new Quaternion(float.NaN, 0, 0, 1)), 0.35f));
-                Assert.IsFalse(driver.TryReset(new Pose(valid.position, new Quaternion(float.NaN, 0, 0, 1))));
-                Assert.IsFalse(driver.TryReset(new Pose(valid.position, new Quaternion(0, 0, 0, 0))));
-                Bounds limits = driver.Workspace;
-                for (int axis = 0; axis < 3; axis++)
-                {
-                    Vector3 below = limits.center; below[axis] = limits.min[axis] - 0.01f;
-                    Vector3 above = limits.center; above[axis] = limits.max[axis] + 0.01f;
-                    Assert.IsFalse(driver.TryMoveTo(driver.WorldPose(below), 0.35f), "Below axis " + axis);
-                    Assert.IsFalse(driver.TryMoveTo(driver.WorldPose(above), 0.35f), "Above axis " + axis);
-                }
-                Assert.IsFalse(driver.IsBusy);
-                driver.ResetPose(Vector3.one * 100);
-                Assert.Less(Vector3.Distance(limits.max, driver.LocalPosition), 0.00001f);
-                driver.ResetPose(Vector3.one * -100);
-                Assert.Less(Vector3.Distance(limits.min, driver.LocalPosition), 0.00001f);
-            }
-        }
-
-        [Test]
-        public void Gantry_Stop_CancelsMotionAndLeavesNoDeferredMovement()
-        {
-            using (var fixture = new DriverFixture())
-            {
-                GantryDriver driver = fixture.Driver;
-                Assert.IsTrue(driver.TryMoveTo(driver.WorldPose(driver.Workspace.center + Vector3.right * 0.2f), 0.35f));
-                driver.Step(0.02f); fixture.Physics.Simulate(0.02f);
-                Assert.IsTrue(driver.IsBusy);
-                Assert.Greater(driver.LocalPosition.x, 0);
-                driver.Stop();
-                Vector3 stopped = driver.CurrentToolPose.position;
-                for (int i = 0; i < 10; i++) { driver.Step(0.02f); fixture.Physics.Simulate(0.02f); }
-                Assert.IsFalse(driver.IsBusy);
-                Assert.Less(Vector3.Distance(stopped, driver.CurrentToolPose.position), 0.000001f);
-            }
-        }
-
-        [Test]
-        public void HeldWorldJog_At144HzCommandsAnd50HzPhysicsMovesContinuously()
-        {
-            float oldFixedDelta = Time.fixedDeltaTime;
-            try
-            {
-                Time.fixedDeltaTime = 0.02f;
-                using (var fixture = new DriverFixture())
-                {
-                    int fixedSteps = 0;
-                    float lastX = fixture.Driver.LocalPosition.x;
-                    for (int render = 1; render <= 288; render++)
-                    {
-                        Assert.IsTrue(fixture.Driver.TryJog(Vector3.right * 0.35f));
-                        float elapsed = render / 144f;
-                        while (fixedSteps < 100 && (fixedSteps + 1) * 0.02f <= elapsed + 0.000001f)
-                        {
-                            fixture.Driver.Tick(0.02f); fixture.Physics.Simulate(0.02f); fixedSteps++;
-                            float x = fixture.Driver.LocalPosition.x;
-                            Assert.Greater(x, lastX, "A held direction must survive render frames without a physics tick.");
-                            lastX = x;
-                        }
-                    }
-                    Assert.AreEqual(100, fixedSteps);
-                    Assert.Greater(fixture.Driver.LocalPosition.x, 0.5f, "The old per-frame tiny-target bug moved too slowly or stopped.");
-                    Assert.LessOrEqual(fixture.Driver.LocalPosition.x, 0.70001f, "The simulator must obey the 0.35m/s speed bound.");
-                    Assert.IsTrue(fixture.Driver.IsBusy);
-                    Assert.LessOrEqual(fixture.Driver.CurrentVelocity.magnitude, 0.35001f);
-                }
-            }
-            finally { Time.fixedDeltaTime = oldFixedDelta; }
         }
 
         [Test]
@@ -356,37 +283,5 @@ namespace ClawMachine.Tests.EditMode
             info.SetValue(owner, value);
         }
 
-        // An isolated physics scene avoids changing global Physics.autoSimulation or
-        // advancing arbitrary objects in the scene currently open in the Editor.
-        private sealed class DriverFixture : System.IDisposable
-        {
-            public readonly GameObject Root;
-            public readonly GantryDriver Driver;
-            public readonly GripperController Gripper;
-            public readonly PhysicsScene Physics;
-            private readonly Scene scene;
-            public DriverFixture()
-            {
-                scene = SceneManager.CreateScene("Claw driver isolated fixture", new CreateSceneParameters(LocalPhysicsMode.Physics3D));
-                Physics = scene.GetPhysicsScene();
-                Root = new GameObject("Machine frame"); SceneManager.MoveGameObjectToScene(Root, scene);
-                var volume = Root.AddComponent<BoxCollider>();
-                volume.center = new Vector3(0, 1.25f, 0); volume.size = new Vector3(4, 0.9f, 4); volume.enabled = false;
-                var tool = new GameObject("Tool"); tool.transform.SetParent(Root.transform);
-                var body = tool.AddComponent<Rigidbody>(); body.isKinematic = true; body.useGravity = false;
-                Gripper = tool.AddComponent<GripperController>();
-                Set(Gripper, "toolBody", body);
-                Driver = Root.AddComponent<GantryDriver>();
-                Set(Driver, "machineRoot", Root.transform); Set(Driver, "workspaceVolume", volume);
-                Set(Driver, "toolBody", body); Set(Driver, "gripper", Gripper);
-                Driver.ResetPose(volume.center);
-                Assert.IsTrue(Driver.IsConfigured);
-            }
-            public void Dispose()
-            {
-                Object.DestroyImmediate(Root);
-                if (scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true);
-            }
-        }
     }
 }

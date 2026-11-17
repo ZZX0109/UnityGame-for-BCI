@@ -30,7 +30,7 @@ def compile_sources(project: Path, editor: Path, source_root: Path,
                "UNITY_2022_3_OR_NEWER", "UNITY_2022_3", "UNITY_2022", "UNITY_5_3_OR_NEWER"}
     # Unity's generated response file records its exact framework profile. It
     # may predate new sources: only references/defines are reused, never sources.
-    candidates = sorted((project / "Library/Bee/artifacts").glob("*/FirstPersonSokoban.Runtime.rsp"))
+    candidates = sorted((project / "Library/Bee/artifacts").glob("*/" + assembly + ".rsp"))
     editor_candidates = [path for path in candidates if path.parent.name.endswith("E.dag")]
     if editor_candidates:
         candidates = editor_candidates
@@ -112,65 +112,12 @@ def compile_sources(project: Path, editor: Path, source_root: Path,
         tests_dll = run(assembly + ".Tests", test_sources, list(test_refs.values()))
         results["testsCompilation"] = str(tests_dll)
         if rules:
-            if assembly != "FirstPersonSokoban.Runtime":
-                raise RuntimeError("--rules currently supports the Sokoban pure rule suite only")
-            catalog = json.loads((source_root.parent / "Resources/LevelCatalog.json").read_text(encoding="utf-8-sig"))["levels"]
-            entries = ",\n".join("new LevelEntry { " + ", ".join(
-                key + "=" + json.dumps(entry[key]) for key in ("id", "resource", "title", "revision")) + " }" for entry in catalog)
-            maps = ",\n".join(json.dumps((source_root.parent / "Resources/Levels" / (entry["resource"] + ".txt")).read_text(encoding="utf-8-sig")) for entry in catalog)
-            harness = output / "PureRules.cs"
-            harness.write_text('''using System;
-using System.Reflection;
-using FirstPersonSokoban.Core;
-using FirstPersonSokoban.Tests.EditMode;
-class PureRules {
-  static void Check(bool ok, string name) { if(!ok) throw new Exception(name); }
-  static int Main() {
-    try {
-      typeof(LevelCatalog).GetField("entries", BindingFlags.NonPublic | BindingFlags.Static)
-        .SetValue(null, new LevelEntry[] { CATALOG_ENTRIES });
-      int passed=0;
-      var core=new CoreRuleTests();
-      foreach(var method in typeof(CoreRuleTests).GetMethods(BindingFlags.Public|BindingFlags.Instance|BindingFlags.DeclaredOnly)) {
-        method.Invoke(core, null); passed++; Console.WriteLine("PURE RULE PASS: "+method.Name);
-      }
-      string[] maps={ MAP_SOURCES };
-      int[] expected={1,7,22,12,4,10,5,32};
-      for(int i=0;i<maps.Length;i++) {
-        var level=LevelValidator.ParseAndValidate(maps[i], "L"+(i+1));
-        var session=new SolverSession(level,level.Boxes,level.PlayerStart,100000);
-        int slices=0;
-        while(!session.IsDone && slices++<100001) session.Step(200,0.000001);
-        Check(session.IsDone && session.Result.Status==SolveStatus.Solved && session.Result.MinimumPushes==expected[i], "sliced L"+(i+1));
-        var full=LevelSolver.Solve(level,100000);
-        Check(full.Status==session.Result.Status && full.MinimumPushes==session.Result.MinimumPushes, "sync/sliced mismatch");
-        passed++; Console.WriteLine("PURE RULE PASS: L"+(i+1)+" minimum="+expected[i]+" slices="+slices);
-      }
-      var optimization=new SessionOptimizationTests();
-      optimization.StateBudgetExhaustion_RemainsUnknownWithTimeSlicing(); passed++;
-      optimization.CompletedCount_UsesCurrentRevisionsInsteadOfLegacyUnlocks(); passed++;
-      Console.WriteLine("PURE MANAGED RULES PASS: "+passed+" checks; Unity native play/tests NOT RUN");
-      return 0;
-    } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
-  }
-}
-'''.replace("CATALOG_ENTRIES", entries).replace("MAP_SOURCES", maps), encoding="utf-8", newline="\n")
-            test_refs[tests_dll.name] = tests_dll
-            exe = run("PureRules", [harness], list(test_refs.values()), executable=True)
-            # Native lifecycle/Physics/UI are deliberately not simulated. These
-            # pure checks use the installed Editor's real managed vector code.
-            for name in ("UnityEngine.dll", "UnityEngine.CoreModule.dll", "UnityEngine.SharedInternalsModule.dll"):
-                shutil.copy2(data / "Managed/UnityEngine" / name, output / name)
-            shutil.copy2(nunit[0], output / "nunit.framework.dll")
-            mono = data / "MonoBleedingEdge/bin/mono.exe"
-            result = subprocess.run([str(mono), str(exe)], cwd=output, capture_output=True,
-                                    text=True, encoding="utf-8", errors="replace")
-            log = result.stdout + result.stderr
-            print(log, end="")
-            (output / "pure-rules.log").write_text(log, encoding="utf-8", newline="\n")
-            if result.returncode:
-                raise RuntimeError("Pure managed rule checks failed")
-            results["pureManagedRules"] = "PASS (19 checks; not Unity Test Runner)"
+            from run_claw_rules import run as run_claw_rules
+            if assembly != "ClawMachine.Runtime":
+                raise RuntimeError("--rules requires the ClawMachine.Runtime assembly")
+            if run_claw_rules(project, editor, output, output / "PureRules"):
+                raise RuntimeError("Claw pure managed rule checks failed")
+            results["pureManagedRules"] = "PASS (Claw rules; not Unity Test Runner)"
     (output / "managed-compilation.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
@@ -180,11 +127,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--unity-editor", type=Path, required=True)
     parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument("--source-root", type=Path, default=Path("Assets/FirstPersonSokoban/Scripts"))
-    parser.add_argument("--assembly", default="FirstPersonSokoban.Runtime")
+    parser.add_argument("--source-root", type=Path, default=Path("Assets/ClawMachine/Scripts"))
+    parser.add_argument("--assembly", default="ClawMachine.Runtime")
     parser.add_argument("--extra-reference", type=Path, action="append", default=[])
     parser.add_argument("--tests", action="store_true")
-    parser.add_argument("--rules", action="store_true", help="run Sokoban pure managed rule checks (also enables --tests)")
+    parser.add_argument("--rules", action="store_true", help="run Claw pure managed rule checks (also enables --tests)")
     parser.add_argument("--player", action="store_true", help="Compile without Editor defines/references; this is not a Player build")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -195,7 +142,7 @@ def main() -> int:
         if args.output:
             compile_sources(project, args.unity_editor, source, args.assembly, args.output.resolve(), args.extra_reference, args.tests or args.rules, args.player, args.rules)
         else:
-            with tempfile.TemporaryDirectory(prefix="sokoban-csharp-") as folder:
+            with tempfile.TemporaryDirectory(prefix="claw-csharp-") as folder:
                 compile_sources(project, args.unity_editor, source, args.assembly, Path(folder), args.extra_reference, args.tests or args.rules, args.player, args.rules)
     except RuntimeError as error:
         print(str(error))

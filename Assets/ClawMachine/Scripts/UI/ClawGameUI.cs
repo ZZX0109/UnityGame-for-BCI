@@ -144,7 +144,7 @@ namespace ClawMachine
             help.anchorMin = new Vector2(0.29f, 0.025f); help.anchorMax = new Vector2(0.715f, 0.14f);
             help.offsetMin = help.offsetMax = Vector2.zero;
             var helpBackground = help.gameObject.AddComponent<Image>(); helpBackground.color = new Color(0.97f, 0.95f, 0.90f, 0.86f); helpBackground.raycastTarget = false;
-            var helpText = Text(help, "A / D 左右 X    W / S 前后 Z\n1 / 2 / 3 视角 · 右键拖动微调 · 滚轮距离 · C 画中画", 16, Muted, 0);
+            var helpText = Text(help, "A / D 左右 X    W / S 前后 Z\n右键拖动环绕 · 滚轮缩放 · C 画中画", 16, Muted, 0);
             Stretch(helpText.rectTransform, new Vector2(12, 8), new Vector2(-12, -8));
             pipFrame = CreateRect("Front and side PIP", safeRoot);
             pipFrame.anchorMin = new Vector2(0.025f, 0.025f); pipFrame.anchorMax = new Vector2(0.265f, 0.35f);
@@ -227,11 +227,7 @@ namespace ClawMachine
             else if (game.InMenu) MenuPanel();
             else PlayPanel();
             Spacer(8);
-            Text(content, "观察方向", 16, Muted, 24);
-            RectTransform views = Row(content, 42);
-            ActionButton(views, "1 正面", () => game.Cameras.Select(1));
-            ActionButton(views, "2 左侧", () => game.Cameras.Select(2));
-            ActionButton(views, "3 右侧", () => game.Cameras.Select(3));
+            Text(content, "按住右键拖动环绕观察，滚轮缩放。", 16, Muted, 48);
             ActionButton(content, "画中画 " + (game.Cameras.PipEnabled ? "关闭" : "开启"), () => { game.Cameras.TogglePip(); InvalidatePanel(); }, false, "camera.pip");
             FinishPanel();
         }
@@ -286,7 +282,7 @@ namespace ClawMachine
                 ActionButton(content, "返回挑战选择", game.ReturnToMenu);
             }
             else Text(content, StateName(session.State), 20, Green, 34);
-            ActionButton(content, "抓持提示 / 观察方向", () => SetDetailsExpanded(true), false);
+            ActionButton(content, "抓持提示 / 操作说明", () => SetDetailsExpanded(true), false);
             ActionButton(content, "暂停 · Esc", () => game.Pause(true), false);
         }
         private void ApplyLayout()
@@ -359,7 +355,7 @@ namespace ClawMachine
         private void PausePanel()
         {
             Text(content, "已暂停", 27, Ink, 42);
-            Text(content, "机构、重力与本轮计时均已冻结。可以继续观察三个方向。", 19, Muted, 100);
+            Text(content, "机构、重力与本轮计时均已冻结。仍可按住右键环绕观察。", 19, Muted, 100);
             ActionButton(content, "继续 · Esc", () => game.Pause(false));
             ActionButton(content, "设置", game.OpenSettings, false);
             ActionButton(content, "重新挑战", game.RequestReset, false);
@@ -599,7 +595,7 @@ namespace ClawMachine
         }
         private static string Hint(ClawSession session)
         {
-            if (session.State == GraspState.Aiming) return "先正面看左右，再侧面看深度。对准对象上方后按 Enter，机构会安全接近并低速寻找抓点。";
+            if (session.State == GraspState.Aiming) return "按住右键环绕，确认左右与深度。对准对象上方后按 Enter，机构会安全接近并低速寻找抓点。";
             if (session.Failure == GraspFailure.None && session.State != GraspState.Result && session.State != GraspState.End) return "请观察接近、接触和抓持过程。只有目标释放后完整进入出口并稳定下来才获奖。";
             if (session.Awarded) return "目标已稳定进入出口！耐心观察和合适的抓点让这次移送成功了。";
             switch (session.Failure)

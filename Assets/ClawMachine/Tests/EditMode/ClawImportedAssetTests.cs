@@ -23,15 +23,20 @@ namespace ClawMachine.Tests.EditMode
         [Test]
         public void FullMachinePrefab_HasTypedPhysicsTaskAndFontShaderBindingsAfterImport()
         {
-            var root = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ClawMachine/Prefabs/Machine/ClawMachine.prefab");
-            Assert.NotNull(root);
+            var asset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ClawMachine/Prefabs/Machine/ClawMachine.prefab");
+            Assert.NotNull(asset);
+            // attachedRigidbody and task-space physics are properties of a live
+            // instance, not of the persistent Prefab asset loaded by AssetDatabase.
+            var root = Object.Instantiate(asset);
+            try
+            {
             var task = root.GetComponentInChildren<GraspTaskController>(true);
             Assert.NotNull(task); Assert.IsTrue(task.IsConfigured);
             Assert.GreaterOrEqual(task.Prizes.Count, 3);
             Assert.IsTrue(task.Gripper.IsConfigured);
             foreach (SphereCollider pad in task.Gripper.ContactColliders) Assert.IsFalse(pad.isTrigger);
             var manager = root.GetComponentInChildren<ClawGameManager>(true);
-            Assert.AreEqual(3, manager.Challenges.Count);
+            Assert.AreEqual(4, manager.Challenges.Count);
             foreach (var challenge in manager.Challenges)
             {
                 Assert.NotNull(challenge);
@@ -44,12 +49,14 @@ namespace ClawMachine.Tests.EditMode
             Assert.NotNull(serialized.FindProperty("uiFont").objectReferenceValue);
             Assert.NotNull(serialized.FindProperty("bitmapShader").objectReferenceValue);
             Assert.NotNull(serialized.FindProperty("bitmapCompatibilityShader").objectReferenceValue);
+            }
+            finally { Object.DestroyImmediate(root); }
         }
         [Test]
         public void OriginalMeshes_HaveUvAndVisibleOutwardTriangles()
         {
             Mesh[] meshes = { ClawMeshModule.RoundedBox(6, 0.08f), ClawMeshModule.Ellipsoid(24, 16),
-                ClawMeshModule.PlushBody(32, 24), ClawMeshModule.CurvedTail(28, 16) };
+                ClawMeshModule.PlushBody(32, 24), ClawMeshModule.CurvedTail(28, 16), ClawMeshModule.RibbonLoop(40, 12), ClawMeshModule.PointedEar(24, 8) };
             try
             {
                 foreach (Mesh mesh in meshes)

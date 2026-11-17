@@ -5,14 +5,17 @@ namespace ClawMachine
     // Pure observation geometry; it never reads or remaps manipulator input.
     public static class ClawCameraOrbit
     {
-        public const float YawLimit = 12;
-        public const float PitchLimit = 10;
+        public const float MinimumPitch = -8;
+        public const float MaximumPitch = 45;
         public static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         public static bool IsFinite(Vector3 value) => IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);
         public static Vector2 ClampAngles(Vector2 value)
         {
             if (!IsFinite(value.x) || !IsFinite(value.y)) return Vector2.zero;
-            return new Vector2(Mathf.Clamp(value.x, -YawLimit, YawLimit), Mathf.Clamp(value.y, -PitchLimit, PitchLimit));
+            // Wrap rather than stop at a preset's edges: the mouse can circle the
+            // cabinet repeatedly without hitting a left/right camera boundary.
+            return new Vector2(Mathf.Repeat(value.x + 180, 360) - 180,
+                Mathf.Clamp(value.y, MinimumPitch, MaximumPitch));
         }
         public static Vector3 Offset(Vector3 basis, Vector2 angles, float scale, float minimumRadius, Vector3 up)
         {

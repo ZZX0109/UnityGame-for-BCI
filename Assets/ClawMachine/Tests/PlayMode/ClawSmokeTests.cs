@@ -49,6 +49,12 @@ namespace ClawMachine.Tests.PlayMode
             yield return RunAcceptance(2, "C03");
         }
 
+        [UnityTest, Category("Acceptance_C04")]
+        public IEnumerator AlignedC04_CarouselBrakesAndTargetReallySettlesInChute()
+        {
+            yield return RunAcceptance(3, "C04");
+        }
+
         private IEnumerator RunAcceptance(int challengeIndex, string challengeId)
         {
             yield return LoadScene();
@@ -62,6 +68,17 @@ namespace ClawMachine.Tests.PlayMode
             yield return WaitForPhysics(0.2f);
             PrizePhysics target = task.Prize;
             Assert.NotNull(target);
+            task.Session.Changed += phase => {
+                if (!task || !target || !target.Body) return;
+                Debug.Log("Claw acceptance " + challengeId + " phase=" + phase + "; failure=" + task.Session.Failure +
+                    "; contacts=" + task.ContactCount + "; held=" + task.Gripper.IsHolding + "; tool=" + task.Driver.CurrentToolPose.position.ToString("F4") +
+                    "; prize=" + target.Body.position.ToString("F4") + "; rotation=" + target.Body.rotation.eulerAngles.ToString("F2"));
+            };
+            task.Gripper.SlippedEvent += () => {
+                if (!task || !target || !target.Body) return;
+                Debug.Log("Claw acceptance " + challengeId + " slip jointBroke=" + task.Gripper.LastJointBroke + "; torque=" + task.Gripper.LastGripTorque +
+                    "; drift=" + task.Gripper.LastGripDrift + "; peakForce=" + task.Gripper.PeakConstraintForce + "; peakTorque=" + task.Gripper.PeakConstraintTorque);
+            };
             Vector3 aligned = task.TaskSpace.ToLocal(target.Body.worldCenterOfMass);
             aligned.y = task.TaskSpace.LocalBounds.max.y;
             Assert.IsTrue(task.Driver.TryReset(new Pose(task.TaskSpace.ToWorld(aligned), task.TaskSpace.Orientation)));
@@ -78,6 +95,11 @@ namespace ClawMachine.Tests.PlayMode
                 yield return null;
             }
             Assert.AreEqual(GraspState.Result, task.Session.State, "Real-time watchdog; timescale=" + Time.timeScale + "; " + task.Diagnostic);
+            PrizeChuteDetector diagnosticChute = Object.FindObjectOfType<PrizeChuteDetector>();
+            Debug.Log("Claw acceptance " + challengeId + " final failure=" + task.Session.Failure + "; awarded=" + task.Session.Awarded +
+                "; contains=" + diagnosticChute.Contains(target.AllBounds) + "; stable=" + target.IsStable + "; dwell=" + diagnosticChute.StableTime +
+                "; boundsMin=" + target.AllBounds.min.ToString("F4") + "; boundsMax=" + target.AllBounds.max.ToString("F4") +
+                "; velocity=" + target.Body.velocity.ToString("F4") + "; angular=" + target.Body.angularVelocity.ToString("F4") + "; sleeping=" + target.Body.IsSleeping());
             Assert.IsTrue(sawContactDescent, "The safe approach must be followed by a distinct slow contact phase.");
             Assert.IsTrue(sawGrip, "An aligned attempt must establish at least two contacts.");
             Assert.IsTrue(sawRelease, "A held prize must be released into gravity.");
@@ -335,6 +357,7 @@ namespace ClawMachine.Tests.PlayMode
                 Assert.IsFalse(task.Gripper.IsHolding);
                 Assert.AreEqual(0, task.Gripper.GetComponents<FixedJoint>().Length);
                 Assert.Less(task.Driver.CurrentVelocity.sqrMagnitude, 0.000001f);
+                Debug.Log("Claw soak: completed physical grab " + (run + 1) + "/30.");
             }
             GraspState[] checkpoints = { GraspState.Approaching, GraspState.ContactDescent, GraspState.Closing,
                 GraspState.Lifting, GraspState.Transporting, GraspState.Releasing, GraspState.Settling };
@@ -372,6 +395,7 @@ namespace ClawMachine.Tests.PlayMode
                 Assert.Less(task.Prize.Body.angularVelocity.sqrMagnitude, 0.000001f);
                 yield return null;
                 Assert.AreEqual(0, task.Gripper.GetComponents<FixedJoint>().Length);
+                Debug.Log("Claw soak: completed interrupted reset " + (reset + 1) + "/20 at " + checkpoint + ".");
             }
             Assert.Less(Time.realtimeSinceStartup, globalDeadline, "The soak exceeded its total real-time budget.");
         }

@@ -69,7 +69,7 @@ def check():
     manifests=json.loads((ROOT/'Packages/manifest.json').read_text(encoding="utf-8"))
     if manifests['dependencies'].get('com.unity.textmeshpro')!='3.0.6':errors.append('TMP must remain pinned3.0.6')
     targets=[];seeds=[]
-    for name in ('C01','C02','C03'):
+    for name in ('C01','C02','C03','C04'):
         path=BASE/'Challenges'/f'{name}.asset'
         if not path.exists():errors.append('Missing challenge '+name);continue
         data=path.read_text(encoding="utf-8");target=re.search(r'^  targetId: (.+)$',data,re.M).group(1).strip('"')
@@ -78,7 +78,10 @@ def check():
         if name!='C01' and len(spawns)<3:errors.append(name+': needs three configured prize choices')
         targets.append(target);seeds.append(re.search(r'^  seed: (.+)$',data,re.M).group(1))
         if 'failedAttemptResetPolicy: 0' not in data:errors.append(name+': failed attempt policy not declared')
-    if len(set(targets))!=3 or len(set(seeds))!=3:errors.append('Challenge targets/seeds must differ across C01-C03')
+    if len(set(targets[:3]))!=3 or len(set(seeds))!=4:errors.append('C01-C03 targets must differ; all four challenge seeds must be distinct')
+    carousel=(BASE/'Challenges/C04.asset').read_text(encoding='utf-8')
+    if 'carouselEnabled: 1' not in carousel or 'carouselRadius: 0.21' not in carousel:
+        errors.append('C04 must enable the reachable rotating target carousel')
     task=(BASE/'Scripts/Core/GraspTaskController.cs').read_text(encoding="utf-8")
     task=re.sub(r'//[^\n]*','',task)
     if re.search(r'\bGantryDriver\b',task):errors.append('Task planning still depends on Gantry implementation')
@@ -94,8 +97,9 @@ def check():
     # The exact Editor and baseline renderer remain unchanged.
     if '2022.3.62f3c1' not in (ROOT/'ProjectSettings/ProjectVersion.txt').read_text(encoding="utf-8"):errors.append('Editor version changed')
     build=(ROOT/'ProjectSettings/EditorBuildSettings.asset').read_text(encoding="utf-8")
-    for path in ('Assets/FirstPersonSokoban/Scenes/PuzzleScene.unity','Assets/ClawMachine/Scenes/ClawMachineScene.unity'):
-        if path not in build:errors.append('Build Settings missing '+path)
+    enabled=re.findall(r'- enabled:\s*1\s+path:\s*([^\n]+)',build)
+    if [path.strip() for path in enabled]!=['Assets/ClawMachine/Scenes/ClawMachineScene.unity']:
+        errors.append('Independent Claw build must enable only ClawMachineScene.')
     for command in ([sys.executable,str(Path(__file__).with_name('generate_prototype.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_ui_font.py')),'--check'],[sys.executable,str(Path(__file__).with_name('build_visual_assets.py')),'--check']):
         result=subprocess.run(command,cwd=ROOT,capture_output=True,text=True, encoding="utf-8")
         print(result.stdout,end='')

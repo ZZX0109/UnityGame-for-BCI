@@ -7,18 +7,22 @@ namespace ClawMachine.Tests.EditMode
     public sealed class ClawCameraTests
     {
         [Test]
-        public void OrbitGeometry_ClampsAnglesAndKeepsAllViewsOutsideCabinet()
+        public void OrbitGeometry_WrapsFullCircleAndKeepsElevatedViewsOutsideCabinet()
         {
-            Assert.AreEqual(new Vector2(12, -10), ClawCameraOrbit.ClampAngles(new Vector2(1000, -1000)));
+            Assert.AreEqual(new Vector2(-80, -8), ClawCameraOrbit.ClampAngles(new Vector2(1000, -1000)));
+            Assert.AreEqual(new Vector2(1, 45), ClawCameraOrbit.ClampAngles(new Vector2(721, 1000)));
             Vector3[] presets = { new Vector3(0, 0.39f, -3.45f), new Vector3(-3.45f, 0.39f, 0), new Vector3(3.45f, 0.39f, 0) };
             foreach (Vector3 preset in presets)
             {
                 foreach (float scale in new[] { 0.85f, 1f, 1.2f })
                 {
-                    Vector3 offset = ClawCameraOrbit.Offset(preset, new Vector2(12, 10), scale, 1.75f, Vector3.up);
-                    Assert.IsTrue(ClawCameraOrbit.IsFinite(offset));
-                    Assert.GreaterOrEqual(offset.magnitude, 1.75f);
-                    Assert.AreEqual(preset.magnitude * scale, offset.magnitude, 0.00001f);
+                    for (int yaw = -360; yaw <= 360; yaw += 15)
+                    {
+                        Vector3 offset = ClawCameraOrbit.Offset(preset, new Vector2(yaw, 45), scale, 1.75f, Vector3.up);
+                        Assert.IsTrue(ClawCameraOrbit.IsFinite(offset));
+                        Assert.GreaterOrEqual(offset.magnitude, 1.75f);
+                        Assert.AreEqual(preset.magnitude * scale, offset.magnitude, 0.00001f);
+                    }
                 }
             }
             Vector3 tooClose = ClawCameraOrbit.Offset(Vector3.back * 0.1f, Vector2.zero, 0.85f, 1.75f, Vector3.up);
@@ -41,29 +45,34 @@ namespace ClawMachine.Tests.EditMode
         }
 
         [Test]
-        public void Presets_KeepIndependentBoundedAnglesAndOneMainCamera()
+        public void Orbit_CrossesFrontSidesAndBackUsingOneMainCameraAndFixedMachineAxes()
         {
             using (var fixture = new CameraFixture())
             {
                 CraneCameraController camera = fixture.Controller;
-                camera.Select(1); camera.OrbitBy(new Vector2(8, 6));
-                camera.Select(2); Assert.AreEqual(Vector2.zero, camera.OrbitAngles);
-                camera.OrbitBy(new Vector2(-100, 100));
-                Assert.AreEqual(new Vector2(-12, 10), camera.OrbitAngles);
-                camera.OrbitBy(new Vector2(float.NaN, 1));
-                Assert.AreEqual(new Vector2(-12, 10), camera.OrbitAngles);
-                camera.Select(1); Assert.AreEqual(new Vector2(8, 6), camera.OrbitAngles);
-                for (int selected = 1; selected <= 3; selected++)
+                camera.Smooth = false;
+                camera.ResetOrbit();
+                for (int quarter = 0; quarter < 8; quarter++)
                 {
-                    camera.Select(selected);
-                    Assert.AreEqual(fixture.Views[selected - 1], camera.CurrentCamera);
+                    camera.OrbitBy(new Vector2(90, 0));
+                    Invoke(camera, "LateUpdate");
+                    Assert.AreSame(fixture.Views[0], camera.CurrentCamera);
+                    Vector3 pose = camera.CurrentCamera.transform.position;
+                    Assert.GreaterOrEqual(pose.magnitude, 1.75f);
+                    float expectedYaw = (quarter + 1) % 4 * 90;
+                    Vector3 expected = ClawCameraOrbit.Offset(new Vector3(0, 0.39f, -3.45f), new Vector2(expectedYaw, 0), 1, 1.75f, Vector3.up);
+                    Assert.Less(Vector3.Distance(expected, pose), 0.0001f);
                     for (int i = 0; i < fixture.Views.Length; i++)
                     {
-                        Assert.AreEqual(i == selected - 1, fixture.Views[i].enabled);
-                        Assert.IsNull(fixture.Views[i].targetTexture, "Observation never redirects a main preset into a PIP target.");
+                        Assert.AreEqual(i == 0, fixture.Views[i].enabled);
+                        Assert.IsNull(fixture.Views[i].targetTexture, "Observation never redirects a main camera into a PIP target.");
                     }
                     Assert.AreEqual(Vector3.forward, ClawMotion.MachineDirection(Vector2.up));
                 }
+                camera.OrbitBy(new Vector2(15, 200));
+                Assert.AreEqual(new Vector2(15, 45), camera.OrbitAngles);
+                camera.OrbitBy(new Vector2(float.NaN, 1));
+                Assert.AreEqual(new Vector2(15, 45), camera.OrbitAngles);
                 camera.ResetOrbit(); Assert.AreEqual(Vector2.zero, camera.OrbitAngles);
             }
         }
@@ -87,19 +96,37 @@ namespace ClawMachine.Tests.EditMode
         }
 
         [Test]
-        public void Distances_CycleThreeOptionsAndIgnoreNonFiniteZoom()
+        public void Wheel_ChangesDistanceContinuouslyWithinSafeRangeAndRejectsNonFiniteZoom()
         {
             using (var fixture = new CameraFixture())
             {
                 CraneCameraController camera = fixture.Controller;
-                Assert.AreEqual(1, camera.ObservationDistance);
-                camera.CycleDistance(); Assert.AreEqual(2, camera.ObservationDistance);
-                camera.CycleDistance(); Assert.AreEqual(0, camera.ObservationDistance);
-                camera.CycleDistance(); Assert.AreEqual(1, camera.ObservationDistance);
+                Assert.AreEqual(1, camera.DistanceScale);
                 camera.Zoom(float.NaN); camera.Zoom(float.PositiveInfinity);
-                Assert.AreEqual(1, camera.ObservationDistance);
-                camera.Zoom(1); camera.Zoom(1); Assert.AreEqual(0, camera.ObservationDistance);
-                camera.Zoom(-1); camera.Zoom(-1); camera.Zoom(-1); Assert.AreEqual(2, camera.ObservationDistance);
+                Assert.AreEqual(1, camera.DistanceScale);
+                camera.Zoom(0.25f); Assert.Less(camera.DistanceScale, 1);
+                Assert.Greater(camera.DistanceScale, 0.95f, "Fractional wheel motion should not jump a whole distance preset.");
+                camera.Zoom(-0.25f); Assert.AreEqual(1, camera.DistanceScale, 0.0001f);
+                for (int i = 0; i < 20; i++) camera.Zoom(1);
+                Assert.AreEqual(0.7f, camera.DistanceScale, 0.0001f);
+                for (int i = 0; i < 20; i++) camera.Zoom(-1);
+                Assert.AreEqual(1.35f, camera.DistanceScale, 0.0001f);
+            }
+        }
+
+        [Test]
+        public void SmoothOrbit_LargeDragNeverCutsThroughTheCabinet()
+        {
+            using (var fixture = new CameraFixture())
+            {
+                CraneCameraController camera = fixture.Controller;
+                camera.Smooth = true;
+                for (int i = 0; i < 80; i++)
+                {
+                    camera.OrbitBy(new Vector2(179, i % 2 == 0 ? 45 : -45));
+                    Invoke(camera, "LateUpdate");
+                    Assert.GreaterOrEqual(camera.CurrentCamera.transform.position.magnitude, 1.75f - 0.00001f);
+                }
             }
         }
 

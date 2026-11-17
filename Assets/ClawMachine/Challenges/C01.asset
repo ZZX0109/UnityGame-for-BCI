@@ -9,14 +9,14 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   challengeId: "C01"
   title: "C01 · 三轴定位教学"
-  instructions: "对准薄荷礼盒。先看正面左右，再看侧面深度。"
+  instructions: "按住右键环绕观察礼盒，滚轮缩放，再移动爪子对准。"
   gripHint: "礼盒稳定，先练习安全接近与慢速接触。"
   prizeId: "mint-parcel"
   targetId: "mint-parcel"
   seed: 20261113
   attemptLimit: 5
   failedAttemptResetPolicy: 0
-  cameraPolicy: FrontSidePipAndBoundedOrbit
+  cameraPolicy: RightDragContinuousOrbit
   successRule: ReleasedTargetFullyInsideChuteAndStable
   graspProfile: {fileID: 11400000, guid: dae489ae8ee4405788fd5ecc70c92ef7, type: 2}
   spawns:

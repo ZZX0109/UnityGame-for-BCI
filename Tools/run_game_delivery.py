@@ -28,16 +28,9 @@ GAMES = {
         "scene": "Assets/ClawMachine/Scenes/ClawMachineScene.unity",
         "static": "docs/Game02_ClawMachine/validate_prototype.py",
         "docs": "docs/Game02_ClawMachine",
-        "categories": ["Acceptance_C01", "Acceptance_C02", "Acceptance_C03"],
+        "categories": ["Acceptance_C01", "Acceptance_C02", "Acceptance_C03", "Acceptance_C04"],
     },
-    "street": {
-        "namespace": "StreetCrossing.Tests", "name": "StreetCrossing",
-        "editor": "StreetCrossing.Editor.StreetSceneBuilder",
-        "scene": "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity",
-        "static": "docs/Game03_StreetCrossing/tools/validate_street.py",
-        "docs": "docs/Game03_StreetCrossing",
-        "categories": ["Acceptance_S01", "Acceptance_S02", "Acceptance_S03"],
-    },
+
 }
 
 

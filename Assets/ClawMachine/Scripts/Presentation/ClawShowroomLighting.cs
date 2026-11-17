@@ -14,8 +14,12 @@ namespace ClawMachine
             if (ownedRoot) return;
             ownedRoot = new GameObject("Claw showroom lighting (owned)");
             ownedRoot.transform.SetParent(transform, false);
-            Fill("Cabinet softbox", new Vector3(0, 1.89f, 0.10f), new Color(1, 0.95f, 0.87f), 0.58f, 2.2f);
-            Fill("Console fill", new Vector3(-0.85f, 1.2f, -0.9f), new Color(0.81f, 0.94f, 1), 0.24f, 2.4f);
+            // Fill faces from above, the viewing side and the opposite side.
+            // A stronger key alone leaves the cabinet roof's shadow too dark;
+            // these neutral, shadow-free lights preserve fabric/color contrast.
+            Fill("Cabinet ceiling softbox", new Vector3(0, 1.87f, -0.20f), new Color(1, 0.98f, 0.94f), 0.85f, 2.5f);
+            Fill("Front face fill", new Vector3(-0.65f, 1.32f, -0.95f), new Color(0.96f, 0.98f, 1), 0.55f, 2.9f);
+            Fill("Opposite side fill", new Vector3(0.65f, 1.50f, 0.48f), new Color(0.96f, 1, 0.98f), 0.50f, 2.5f);
             var probeObject = new GameObject("One-shot showroom reflection");
             probeObject.transform.SetParent(ownedRoot.transform, false);
             probeObject.transform.localPosition = new Vector3(0, 1.2f, 0);
@@ -24,9 +28,9 @@ namespace ClawMachine
             Probe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
             Probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
             Probe.resolution = 128; Probe.size = new Vector3(9, 5, 9);
-            Probe.boxProjection = true; Probe.intensity = 0.55f;
+            Probe.boxProjection = true; Probe.intensity = 0.65f;
             Probe.clearFlags = ReflectionProbeClearFlags.SolidColor;
-            Probe.backgroundColor = new Color(0.76f, 0.79f, 0.73f);
+            Probe.backgroundColor = new Color(0.80f, 0.83f, 0.84f);
             Probe.cullingMask = ~(1 << 5); Probe.nearClipPlane = 0.1f; Probe.farClipPlane = 15;
             StartCoroutine(CaptureAfterSceneSetup());
         }

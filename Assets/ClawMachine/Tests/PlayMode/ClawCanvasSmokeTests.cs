@@ -37,6 +37,12 @@ namespace ClawMachine.Tests.PlayMode
             Assert.AreEqual("TextMeshPro/Mobile/Bitmap", ui.OwnedFont.material.shader.name);
             foreach (TMP_Text text in ui.OwnedCanvas.GetComponentsInChildren<TMP_Text>(true)) Assert.AreSame(ui.OwnedFont, text.font);
             Assert.IsNotNull(ui.OwnedCanvas.GetComponentInChildren<ScrollRect>(true), "Long menu/settings content must remain reachable at short display heights.");
+            foreach (TMP_Text text in ui.OwnedCanvas.GetComponentsInChildren<TMP_Text>(false))
+            {
+                StringAssert.DoesNotContain("1 / 2 / 3", text.text);
+                Assert.IsFalse(text.text == "1 正面" || text.text == "2 左侧" || text.text == "3 右侧",
+                    "Observation must use right-mouse orbit instead of preset-view buttons.");
+            }
             // These transitions rebuild text while the Canvas is already active.
             // No TMP component may briefly enable with the global default font null.
             ClawGameManager game = Object.FindObjectOfType<ClawGameManager>();

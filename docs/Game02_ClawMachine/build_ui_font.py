@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "Assets" / "ClawMachine"
@@ -140,6 +141,9 @@ def build(source: Path, font_index: int) -> int:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Validate checked-in coverage; no dependencies")
     parser.add_argument("--source", type=Path, help="Original licensed NotoSansCJK-Regular.ttc or SC OTF")

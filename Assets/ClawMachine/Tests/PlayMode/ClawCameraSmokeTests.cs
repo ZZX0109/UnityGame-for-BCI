@@ -41,9 +41,13 @@ namespace ClawMachine.Tests.PlayMode
             Assert.Less(owned.fieldOfView, views[0].fieldOfView, "The inset must frame the work area rather than shrink the full cabinet.");
             foreach (Camera view in views) Assert.IsNull(view.targetTexture);
             controller.Select(2);
-            Assert.AreEqual(views[1], controller.CurrentCamera);
-            Assert.AreEqual("正面 Front", controller.PipViewName);
-            Assert.IsFalse(views[0].enabled); Assert.IsTrue(views[1].enabled); Assert.IsFalse(views[2].enabled);
+            controller.OrbitBy(new Vector2(140, 25));
+            yield return null;
+            Assert.AreEqual(views[0], controller.CurrentCamera);
+            Assert.AreEqual("侧面辅助", controller.PipViewName);
+            Assert.IsTrue(views[0].enabled); Assert.IsFalse(views[1].enabled); Assert.IsFalse(views[2].enabled);
+            Assert.AreEqual(views[1].transform.position, owned.transform.position,
+                "The fixed side inset must not spin when the main view orbits.");
 
             RenderTexture low = controller.PipTexture;
             controller.SetPipQuality(false);
@@ -95,6 +99,46 @@ namespace ClawMachine.Tests.PlayMode
             foreach (Camera camera in root.GetComponentsInChildren<Camera>(true))
                 if (camera.targetTexture == controller.PipTexture) return camera;
             Assert.Fail("Missing owned PIP camera."); return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ShowroomFill_LightsFacesFromSeveralDirectionsWithoutAddingShadowOrLeakingOnToggle()
+        {
+            root = new GameObject("Showroom fill ownership fixture");
+            root.SetActive(false);
+            ClawShowroomLighting lighting = root.AddComponent<ClawShowroomLighting>();
+            root.SetActive(true);
+            for (int cycle = 0; cycle < 3; cycle++)
+            {
+                yield return null;
+                Light[] lights = root.GetComponentsInChildren<Light>(true);
+                Assert.AreEqual(3, lights.Length, "The key plus three fills fit a four-light forward rendering budget.");
+                bool above = false, front = false, opposite = false;
+                foreach (Light light in lights)
+                {
+                    Assert.AreEqual(LightType.Point, light.type);
+                    Assert.AreEqual(LightShadows.None, light.shadows);
+                    Assert.AreEqual(LightRenderMode.ForcePixel, light.renderMode);
+                    Assert.That(light.intensity, Is.InRange(0.45f, 0.9f), "Fill should lift dark faces without overpowering the key.");
+                    float lowest = Mathf.Min(light.color.r, Mathf.Min(light.color.g, light.color.b));
+                    float highest = Mathf.Max(light.color.r, Mathf.Max(light.color.g, light.color.b));
+                    Assert.LessOrEqual(highest - lowest, 0.08f, "Fill must not tint the three prize colors.");
+                    Vector3 position = light.transform.localPosition;
+                    above |= position.y > 1.75f;
+                    front |= position.z < -0.6f;
+                    opposite |= position.z > 0.35f;
+                }
+                Assert.IsTrue(above && front && opposite, "Claw and toy faces need top, front and opposite-side coverage.");
+                Assert.IsNotNull(lighting.Probe);
+                Assert.AreEqual(1, root.GetComponentsInChildren<ReflectionProbe>(true).Length);
+                ReflectionProbe previous = lighting.Probe;
+                lighting.enabled = false;
+                yield return null;
+                Assert.IsNull(lighting.Probe);
+                Assert.IsTrue(previous == null);
+                Assert.AreEqual(0, root.GetComponentsInChildren<Light>(true).Length);
+                lighting.enabled = true;
+            }
         }
     }
 }

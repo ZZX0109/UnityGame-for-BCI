@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 83f4b735fa01960a2b5284a2e8fc07de, type: 3}
+  m_Name: C04
+  m_EditorClassIdentifier:
+  challengeId: "C04"
+  title: "C04 · 旋转玩偶圆盘"
+  instructions: "目标是云朵兔。圆盘缓慢旋转，观察玩偶的位置，移动爪子对准目标。按 Enter 后圆盘刹停，再下爪抓取；抓错玩偶不会得分。"
+  gripHint: "按住右键环绕观察，等待云朵兔进入容易抓取的位置。"
+  prizeId: "cloud-bunny"
+  targetId: "cloud-bunny"
+  seed: 20261116
+  attemptLimit: 5
+  failedAttemptResetPolicy: 0
+  cameraPolicy: RightDragContinuousOrbit
+  successRule: ReleasedTargetFullyInsideChuteAndStable
+  graspProfile: {fileID: 11400000, guid: 6e3727786cba334fe901a67cfb77b5f3, type: 2}
+  spawns:
+  - prizeId: mint-parcel
+    displayName: "薄荷礼盒"
+    spawnPosition: {x: 0.2, y: 0.94, z: 0.33}
+    spawnEuler: {x: 0, y: 0, z: 0}
+    graspProfile: {fileID: 11400000, guid: dae489ae8ee4405788fd5ecc70c92ef7, type: 2}
+  - prizeId: cloud-bunny
+    displayName: "云朵兔"
+    spawnPosition: {x: 0.38, y: 0.95, z: 0.015}
+    spawnEuler: {x: 0, y: 0, z: 0}
+    graspProfile: {fileID: 11400000, guid: 6e3727786cba334fe901a67cfb77b5f3, type: 2}
+  - prizeId: amber-fox
+    displayName: "偏心狐狸"
+    spawnPosition: {x: 0.018, y: 0.91, z: 0.015}
+    spawnEuler: {x: 0, y: 0, z: 0}
+    graspProfile: {fileID: 11400000, guid: 780c974b742b34de7cbf3099a0eb45ef, type: 2}
+  carouselEnabled: 1
+  carouselCenter: {x: 0.2, y: 0.8, z: 0.12}
+  carouselRadius: 0.21
+  carouselDegreesPerSecond: 14
+  carouselStartDegrees: 0

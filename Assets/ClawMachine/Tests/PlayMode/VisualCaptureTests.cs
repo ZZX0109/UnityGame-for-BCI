@@ -79,7 +79,7 @@ namespace ClawMachine.Tests.PlayMode
             Assert.NotNull(ui);
             Assert.IsTrue(ui.IsReady, ui.BootstrapError);
             Assert.AreEqual(RenderMode.ScreenSpaceOverlay, ui.OwnedCanvas.renderMode);
-            Assert.AreEqual(3, game.Challenges.Count);
+            Assert.AreEqual(4, game.Challenges.Count);
             var manifest = new Manifest { renderer = SystemInfo.graphicsDeviceType.ToString() };
             string[] names = { "front", "left", "right", "pip" };
             for (int index = 0; index < game.Challenges.Count; index++)
@@ -98,8 +98,8 @@ namespace ClawMachine.Tests.PlayMode
                 for (int view = 0; view < names.Length; view++)
                 {
                     game.Cameras.SetPipEnabled(false);
-                    game.Cameras.Select(view == 3 ? 1 : view + 1);
                     game.Cameras.ResetOrbit();
+                    game.Cameras.Select(view == 3 ? 1 : view + 1);
                     if (view == 3) { game.Cameras.SetPipQuality(false); game.Cameras.SetPipEnabled(true); }
                     yield return null;
                     yield return null;

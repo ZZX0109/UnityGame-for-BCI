@@ -26,9 +26,9 @@ class VisualCaptureChecks(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        self.manifest = {"schemaVersion": 1, "game": "street", "renderer": "Direct3D11", "screenshots": []}
-        for scenario in capture.GAMES["street"]["scenarios"]:
-            for view in capture.GAMES["street"]["views"]:
+        self.manifest = {"schemaVersion": 1, "game": "claw", "renderer": "Direct3D11", "screenshots": []}
+        for scenario in capture.GAMES["claw"]["scenarios"]:
+            for view in capture.GAMES["claw"]["views"]:
                 filename = scenario + "-" + view + ".png"
                 (self.root / filename).write_bytes(png())
                 self.manifest["screenshots"].append(dict(scenario=scenario, view=view, file=filename, width=64, height=64))
@@ -38,13 +38,13 @@ class VisualCaptureChecks(unittest.TestCase):
 
     def check(self, size=None):
         (self.root / "capture-manifest.json").write_text(json.dumps(self.manifest), encoding="utf-8", newline="\n")
-        return capture.check_captures(self.root, "street", size)
+        return capture.check_captures(self.root, "claw", size)
 
     def test_complete_captures_still_require_human_review(self):
         result = self.check((64, 64))
         self.assertEqual("not_run", result["humanVisualReview"])
         self.assertEqual("not_run", result["gameplayAcceptance"])
-        self.assertEqual(15, len(result["screenshots"]))
+        self.assertEqual(16, len(result["screenshots"]))
         self.assertEqual(hashlib.sha256(png()).hexdigest(), result["screenshots"][0]["sha256"])
 
     def test_missing_scenario_view_is_rejected(self):
@@ -82,14 +82,14 @@ class VisualCaptureChecks(unittest.TestCase):
         xml.write_text('<test-run result="Passed" total="1" passed="1"><test-case fullname="Other.Tests.Pass" result="Passed"/></test-run>', encoding="utf-8", newline="\n")
         log.write_text("Initialize engine version: 2022.3.62f3c1 (fixture)\n", encoding="utf-8", newline="\n")
         with self.assertRaisesRegex(ValueError, "actual passing capture"):
-            capture.check_xml(xml, capture.GAMES["street"]["namespace"], log)
+            capture.check_xml(xml, capture.GAMES["claw"]["namespace"], log)
 
     def test_missing_editor_generates_no_png_or_xml(self):
-        for name, text in {capture.GAMES["street"]["scene"]: "", "ProjectSettings/ProjectVersion.txt": "m_EditorVersion: 2022.3.62f3c1\n"}.items():
+        for name, text in {capture.GAMES["claw"]["scene"]: "", "ProjectSettings/ProjectVersion.txt": "m_EditorVersion: 2022.3.62f3c1\n"}.items():
             path = self.root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(text, encoding="utf-8", newline="\n")
         output = self.root / "BuildOutput/fresh"
         with patch.object(capture, "ROOT", self.root), patch.object(capture, "check_project", return_value=[]), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-            code = capture.main(["--game", "street", "--unity", str(self.root / "missing-editor"), "--output", str(output), "--commit", "fixture-only"])
+            code = capture.main(["--game", "claw", "--unity", str(self.root / "missing-editor"), "--output", str(output), "--commit", "fixture-only"])
         self.assertEqual(1, code)
         self.assertEqual("blocked", json.loads((output / "visual-capture-summary.json").read_text(encoding="utf-8"))["status"])
         self.assertEqual([], list(output.rglob("*.png")))

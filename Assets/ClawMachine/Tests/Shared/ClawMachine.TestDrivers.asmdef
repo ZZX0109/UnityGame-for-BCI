@@ -1,0 +1,14 @@
+{
+  "name": "ClawMachine.TestDrivers",
+  "rootNamespace": "ClawMachine.Tests.Shared",
+  "references": [
+    "ClawMachine.Runtime"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
