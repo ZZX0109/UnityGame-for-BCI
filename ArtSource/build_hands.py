@@ -95,12 +95,11 @@ def fingertip_positions(me):
     for key, seed in TIP_SEEDS_R.items():
         g = np.array(seed)
         dd = np.linalg.norm(V - g, axis=1)
-        cand = V[dd < 0.5]
+        cand = V[dd < 0.3]
         if len(cand) == 0:
             tips[key] = list(g)
-            continue
-        dw = np.linalg.norm(cand - np.array(JOINTS_R["wrist"]), axis=1)
-        tips[key] = list(cand[np.argmax(dw)])
+        else:
+            tips[key] = list(cand[np.argmin(dd[dd < 0.3])])
     return tips
 
 # ---------------------------------------------------------------- armature
@@ -166,6 +165,7 @@ def skin_material(side):
 
 def bake_textures(obj, side, nt, bsdf, size=2048):
     sc = bpy.context.scene
+    bpy.context.view_layer.objects.active = obj  # ensure mesh is active for baking
     sc.render.engine = "CYCLES"
     sc.cycles.samples = 16
     me = obj.data
@@ -185,6 +185,8 @@ def bake_textures(obj, side, nt, bsdf, size=2048):
         node.image = imgs[kind]
         nt.nodes.active = node
         bpy.context.view_layer.objects.active = obj
+        for oo in bpy.context.selected_objects: oo.select_set(False)  # bake applies to selection
+        obj.select_set(True)
         kw = dict(type=bake_type, margin=16, use_selected_to_active=False)
         if pass_filter: kw["pass_filter"] = pass_filter
         bpy.ops.object.bake(**kw)
@@ -260,6 +262,8 @@ def studio(scene):
 
 def render_at(filepath, focus, direction, dist=6.5, lens=85, res=(1280, 960)):
     sc = bpy.context.scene
+    sc.render.filepath = os.path.join(REVIEW, os.path.basename(filepath) + ".png") \
+        if not os.path.isabs(filepath) else filepath
     cam = bpy.data.cameras.new(filepath); cam.lens = lens
     co = bpy.data.objects.new(filepath, cam)
     bpy.context.collection.objects.link(co)
@@ -268,7 +272,6 @@ def render_at(filepath, focus, direction, dist=6.5, lens=85, res=(1280, 960)):
     co.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
     sc.camera = co
     sc.render.resolution_x, sc.render.resolution_y = res
-    sc.render.filepath = filepath
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(co)
     log("rendered", os.path.basename(filepath))
@@ -283,6 +286,12 @@ def set_action(arm, name):
 
 def clear_action(arm):
     if arm.animation_data: arm.animation_data.action = None
+
+def reset_pose(arm):
+    """Zero all pose rotations so saved blend/FBX are at rest."""
+    for pb in arm.pose.bones:
+        pb.rotation_euler = (0, 0, 0)
+    bpy.context.view_layer.update()
 
 # ---------------------------------------------------------------- driver
 def main():
@@ -314,7 +323,9 @@ def main():
     studio(sc)
     for side in ("R", "L"):
         o, arm = hands[side]
-        focus = Vector(mirror(JOINTS_R["wrist"]) if side == "L" else JOINTS_R["wrist"])
+        bb = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        focus = sum(bb, Vector()) / 8.0
+        log(side, "render focus", [round(v, 2) for v in focus])
         sx = 1 if side == "R" else -1
         render_at(f"hand_{side.lower()}_open", focus, (0.35*sx, -1, 0.25))
         render_at(f"hand_{side.lower()}_palm", focus, (0.0, -1, 0.05))
@@ -324,25 +335,11 @@ def main():
             set_action(arm, f"pose_{pose}_{side}")
             render_at(f"hand_{side.lower()}_{pose}", focus, (0.3*sx, -1, 0.2))
             clear_action(arm)
-    # ---- two-hand composites ----
+    # ---- save + export at REST, before any compositing ----
     for side in ("R", "L"):
-        o, arm = hands[side]
-        wrist = Vector(mirror(JOINTS_R["wrist"]) if side == "L" else JOINTS_R["wrist"])
-        target = Vector((-1.05, 0, 2.4)) if side == "R" else Vector((1.05, 0, 2.4))
-        shift = target - wrist
-        for oname in (f"Armature.{side}", f"Hand.{side}"):
-            bpy.data.objects[oname].location += shift
-        if side == "L":
-            bpy.data.objects[f"Armature.{side}"].rotation_euler.z += math.pi
-            bpy.data.objects[f"Hand.{side}"].rotation_euler.z += math.pi
-    bpy.context.view_layer.update()
-    mid = Vector((0, 0, 2.4))
-    render_at("hand_two_open", mid, (0, -1, 0.12), dist=7.5, lens=60)
-    for side in ("R", "L"):
-        set_action(hands[side][1], f"pose_fist_{side}")
-    render_at("hand_two_fist", mid, (0, -1, 0.12), dist=7.5, lens=60)
-    # ---- save + export ----
+        reset_pose(hands[side][1])
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BUILD, "hands_source.blend"))
+    log("saved hands_source.blend")
     for side in ("R", "L"):
         o, arm = hands[side]
         for oo in bpy.context.selected_objects: oo.select_set(False)
@@ -354,5 +351,19 @@ def main():
             object_types={"ARMATURE", "MESH"}, add_leaf_bones=False,
             bake_anim=False, mesh_smooth_type="OFF", path_mode="ABSOLUTE")
         log("exported FBX", side)
+    # ---- two-hand composites (post-export): move ONLY the armature parent ----
+    for side in ("R", "L"):
+        o, arm = hands[side]
+        wrist = Vector(mirror(JOINTS_R["wrist"]) if side == "L" else JOINTS_R["wrist"])
+        target = Vector((-1.05, 0, 2.4)) if side == "R" else Vector((1.05, 0, 2.4))
+        arm.location += (target - wrist)
+        if side == "L":
+            arm.rotation_euler.z += math.pi
+    bpy.context.view_layer.update()
+    mid = Vector((0, 0, 2.4))
+    render_at("hand_two_open", mid, (0, -1, 0.12), dist=7.5, lens=60)
+    for side in ("R", "L"):
+        set_action(hands[side][1], f"pose_fist_{side}")
+    render_at("hand_two_fist", mid, (0, -1, 0.12), dist=7.5, lens=60)
 
 main()

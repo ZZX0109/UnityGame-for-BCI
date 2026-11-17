@@ -1,0 +1,6 @@
+# Game04 VirtualHand data tools (GLM task B)
+# Python 3.12; all packages already present in D:/SoftwareManagement/venv/bci
+numpy>=1.26
+scipy>=1.11
+mne>=1.6
+scikit-learn>=1.4

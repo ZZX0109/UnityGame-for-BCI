@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 """Small unit tests for the Game04 data tools (wire contract + decoders).
 
-Run:
-    python -I test_tools.py          (from Tools/, or set cwd anywhere)
-All tests use synthetic data except one optional EDF smoke check skipped when
-the dataset directory is absent.
+Run (from the project root):
+    D:/SoftwareManagement/venv/bci/Scripts/python.exe -I Tools/test_tools.py
+All tests are synthetic and fast; no dataset download required.
 """
 
-import json
-import math
 import os
 import sys
 import tempfile
@@ -96,7 +93,7 @@ def test_malformed_jsonl_fails_visibly():
     with tempfile.TemporaryDirectory() as d:
         p = os.path.join(d, "bad.jsonl")
         with open(p, "w", encoding="utf-8") as fh:
-            fh.write('{"version": 1, "time": 0}\n')   # valid-ish but incomplete
+            fh.write('{"version": 1, "time": 0.0, "duration": 1.0}\n')
             fh.write("not json at all\n")
         expect_raise(FrameValidationError, lambda: wire.read_jsonl(p))
 
@@ -105,15 +102,14 @@ def test_malformed_jsonl_fails_visibly():
 def test_event_class_mapping_matches_physionet_record_descriptions():
     import eeg_decode as e
 
-    # Unilateral runs: T1 left, T2 right (runs 3,4,7,8,11,12)
+    # Unilateral runs (04/08/12): T1 left, T2 right
     assert e.event_class(4, "T1") == "left" and e.event_class(4, "T2") == "right"
     assert e.event_class(12, "T1") == "left"
-    # Bilateral: T1 both fists, T2 both feet -> excluded (None)
+    # Bilateral (06/10/14): T1 both fists, T2 both feet -> excluded (None)
     assert e.event_class(6, "T1") == "both"
     assert e.event_class(6, "T2") is None
     assert e.event_class(14, "T2") is None
     assert e.event_class(10, "T0") == "rest"
-    # Unknown run rejected loudly
     expect_raise(ValueError, lambda: e.event_class(3, "T1"))
 
 
@@ -132,44 +128,44 @@ def test_epoch_windowing_causal_and_classed():
     import eeg_decode as e
 
     sf = 160.0
-    data = np.zeros((4, int(20 * sf)))          # 4 ch, 20 s
+    data = np.zeros((4, int(20 * sf)))          # 4 ch, 20 s of signal
     ann = [(1.0, "T1"), (4.0, "T0"), (7.0, "T2")]
     X, metas = e.build_epochs(data, sf, ann, run=4)   # unilateral run
-    # epoch = [onset+0.5, onset+2.5] -> 320 samples at 160 Hz, first sample
-    # strictly AFTER the event (causal window, no pre-onset leakage)
+    # epoch = [onset+0.5, onset+2.5] -> 320 samples; nothing before onset+0.5
     assert X.shape == (3, 4, 320)
     assert metas[0] == (1.0 + 2.5, "left")
     assert metas[1] == (4.0 + 2.5, "rest")
     assert metas[2] == (7.0 + 2.5, "right")
-    # feet exclusion in bilateral run: T2 dropped
+    # bilateral run: T2 (both feet) epoch is dropped
     Xb, mb = e.build_epochs(data, sf, ann, run=6)
-    assert Xb.shape[0] == 2 and [c for _, c in mb] == ["left" if False else "both", "rest"]
+    assert Xb.shape[0] == 2 and [c for _, c in mb] == ["both", "rest"]
 
 
 def test_csp_lda_learns_separable_synthetics():
     import eeg_decode as e
 
     rng = np.random.default_rng(42)
-    sf, n = 160.0, 320
-    t = np.arange(n) / sf
+    n_ch, n = 20, 320
+    # Class-discriminative spatial topographies: class "left" modulates the
+    # first channel group, class "right" the second (classic CSP setup).
+    w_left = np.r_[np.ones(10), np.zeros(10)]
+    w_right = np.r_[np.zeros(10), np.ones(10)]
 
-    def trials(freq, amp, n_tr):
-        return np.array([amp * np.sin(2 * np.pi * freq * t + rng.normal(0, 0.3))
-                         + rng.normal(0, 0.1, n) for _ in range(n_tr)])[:, None, :]
+    def trials(w, n_tr):
+        out = np.zeros((n_tr, n_ch, n))
+        for k in range(n_tr):
+            src = np.sin(2 * np.pi * 10 * np.arange(n) / 160.0
+                         + rng.normal(0, 0.3))          # random phase per trial
+            out[k] = rng.normal(0, 0.1, (n_ch, n)) + np.outer(w, 3 * src)
+        return out
 
-    X_a = trials(10.0, 1.0, 30)   # mu-band burst on one channel
-    X_b = trials(20.0, 1.0, 30)
-    X = np.concatenate([X_a, X_b]).transpose(0, 2, 1)  # -> (n, 1, n_samp)
-    X = np.repeat(X, 4, axis=1)                        # 4 identical channels
+    Xa, Xb = trials(w_left, 30), trials(w_right, 30)
+    X = np.concatenate([Xa, Xb])
     y = ["left"] * 30 + ["right"] * 30
-    # pad to 20 channels for CSP stability
-    X = np.repeat(X, 5, axis=1)
-    from sklearn.model_selection import train_test_split
-    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.4, random_state=42,
-                                          stratify=y)
+    Xtr, Xte, ytr, yte = X[:36], X[36:], y[:36], y[36:]
     csp, lda = e.fit_csp_lda(Xtr, ytr)
     pred, proba = e.predict(csp, lda, Xte)
-    acc = np.mean([p == t for p, t in zip(pred, yte)])
+    acc = float(np.mean([p == t for p, t in zip(pred, yte)]))
     assert acc > 0.9, f"CSP/LDA failed on separable synthetic: acc={acc:.2f}"
 
 
@@ -178,18 +174,21 @@ def test_metrics_helpers():
 
     y_true = ["rest", "rest", "left", "left", "both", "both"]
     y_pred = ["rest", "left", "left", "left", "both", "rest"]
-    ba = e.balanced_accuracy(y_true, y_pred)
-    # rest 1/1, left 1/2, both 1/2 -> mean 0.8333
-    assert abs(ba - 5.0 / 6.0) < 1e-9
+    # rest 1/2, left 2/2, both 1/2 (right absent everywhere -> skipped)
+    assert abs(e.balanced_accuracy(y_true, y_pred) - (0.5 + 1.0 + 0.5) / 3) < 1e-9
     cm = e.confusion_fixed(y_true, y_pred)
     assert cm[0, 0] == 1 and cm[0, 1] == 1 and cm[1, 1] == 2 and cm[3, 0] == 1
     assert cm.sum() == len(y_true)
-    assert 0.0 <= e.coverage_fixed(np.array([[0.5, 0.5], [0.9, 0.1]]), thr=0.6) == 0.5
+    assert e.coverage([0.5, 0.9, 0.6]) == pytest_like(3, 2)
+    assert e.coverage([]) == 0.0
+
+
+def pytest_like(total, hits):
+    return hits / total
 
 
 # ---------------------------------------------------------------- DB8 mapping
-def test_db8_controls_shape_and_bounds():
-    sys.path.insert(0, HERE)
+def test_db8_controls_shape_bounds_and_coupling():
     import db8_export as dbe
 
     rng = np.random.default_rng(42)
@@ -198,8 +197,9 @@ def test_db8_controls_shape_and_bounds():
     assert ctrl.shape == (1000, 20)
     assert np.isfinite(ctrl).all()
     assert ctrl.min() >= 0.0 and ctrl.max() <= 1.0
-    # DIP == PIP coupling: index DIP (col 6) must equal index PIP (col 5)
-    assert np.allclose(ctrl[:, 6], ctrl[:, 5])
+    # DIP == PIP coupling for all four fingers (no DIP sensors on this model)
+    for f in range(4):
+        assert np.allclose(ctrl[:, (f + 1) * 4 + 2], ctrl[:, (f + 1) * 4 + 1])
     # thumb block order: CMC(0), MCP(1), IP(2), opposition(3)
     assert np.allclose(ctrl[:, 0], dbe.robust01(glove[:, 1]))
     assert np.allclose(ctrl[:, 3], dbe.robust01(glove[:, 0]))
@@ -209,33 +209,15 @@ def test_db8_clip_extraction_and_timing():
     import db8_export as dbe
 
     stim = np.zeros(4000, dtype=int)
-    stim[1000:2000] = 3          # index clip, 1 s at 2000 Hz
+    stim[1000:2000] = 3          # index clip: 0.5 s..1.0 s at 2000 Hz
     run = dbe.longest_runs(stim, 3)
     assert run[0] == 1000 and run[-1] == 1999
     assert len(dbe.longest_runs(stim, 7)) == 0
-
-
-def test_db8_times_never_exceed_clip_length():
-    import db8_export as dbe
-
-    # 4 s of synthetic data at FS, all labeled index
-    stim = np.ones(int(dbe.FS * 4), dtype=int)
-    run = dbe.longest_runs(stim, 1)
-    fps = 40.0
-    t_last = run[-1] / dbe.FS - run[0] / dbe.FS
-    assert t_last == pytest.approx(4.0 - 1.0 / dbe.FS)
-
-
-try:
-    import pytest  # noqa: F401
-    _HAS_PYTEST = True
-except ImportError:
-    _HAS_PYTEST = False
-
-if _HAS_PYTEST:
-    import pytest
-
-    pytest.approx = pytest.approx if hasattr(pytest, "approx") else None
+    # full-length clip timing never exceeds its wall-clock span
+    stim2 = np.ones(int(dbe.FS * 4), dtype=int)
+    run2 = dbe.longest_runs(stim2, 1)
+    t_last = run2[-1] / dbe.FS - run2[0] / dbe.FS
+    assert abs(t_last - (4.0 - 1.0 / dbe.FS)) < 1e-9
 
 
 def main():

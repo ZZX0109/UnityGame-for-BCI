@@ -33,17 +33,7 @@ namespace Neuralife.VirtualHand.Editor
         public static void GenerateProject()
         {
             EnsureFolders();
-            var generator = Type.GetType("Neuralife.VirtualHand.Editor.DemoSceneBuilder, VirtualHand.Editor")
-                             ?? Type.GetType("Neuralife.VirtualHand.Editor.DemoSceneBuilder, Assembly-CSharp-Editor");
-            if (generator != null)
-            {
-                dynamic builder = Activator.CreateInstance(generator);
-                builder.BuildAll();
-            }
-            else
-            {
-                Debug.LogWarning("[VirtualHandBuild] DemoSceneBuilder type not found; folders ensured only.");
-            }
+            new DemoSceneBuilder().BuildAll();
             AssetDatabase.Refresh();
             Debug.Log("[VirtualHandBuild] GenerateProject done.");
         }

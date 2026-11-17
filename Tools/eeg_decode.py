@@ -104,14 +104,19 @@ def build_epochs(data, sf, ann, run):
 
 
 def fit_csp_lda(X, y):
-    """CSP(6) + shrinkage LDA, fitted on training epochs only."""
+    """CSP(6) + shrinkage LDA, fitted on training epochs only.
+
+    Uniform priors over the classes present in training counter the strong
+    rest over-representation of eegmmidb (15 rest events per run).
+    """
     from mne.decoding import CSP
     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
     csp = CSP(n_components=6, reg="ledoit_wolf", log=True, norm_trace=False)
     csp.fit(X, y)
+    classes = sorted(set(y))
     lda = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto",
-                                     priors=[0.25] * 4)  # uniform: rest dominates train
+                                     priors=[1.0 / len(classes)] * len(classes))
     lda.fit(csp.transform(X), y)
     return csp, lda
 
@@ -131,6 +136,13 @@ def balanced_accuracy(y_true, y_pred):
         total = sum(1 for t in y_true if t == cls)
         recalls.append(tp / total if total else 0.0)
     return float(np.mean(recalls)) if recalls else float("nan")
+
+
+def coverage(confs, thr=CONF_THR):
+    """Fraction of predictions with max class probability >= thr."""
+    if len(confs) == 0:
+        return 0.0
+    return float(np.mean(np.asarray(confs) >= thr))
 
 
 def confusion_fixed(y_true, y_pred):
@@ -180,8 +192,7 @@ def run_subject(subject, data_root, outdir):
         cm = confusion_fixed(y_true, y_pred)
         metrics[f"{split}_balanced_accuracy"] = round(balanced_accuracy(y_true, y_pred), 4)
         metrics[f"{split}_confusion_rest_left_right_both"] = cm.tolist()
-        metrics[f"{split}_coverage_at_{CONF_THR}"] = round(
-            float(np.mean(np.asarray(confs) >= CONF_THR)), 4)
+        metrics[f"{split}_coverage_at_{CONF_THR}"] = round(coverage(confs), 4)
         metrics[f"{split}_n"] = len(y_true)
         if split == "test":
             test_records = recs
@@ -197,8 +208,9 @@ def run_subject(subject, data_root, outdir):
     for run in SPLIT_RUNS["test"]:
         frames = [f for f in test_records if f[0] == run]
         for r, w, truth, p, cf in frames:
-            base = {"time": round(t_shift + w, 3), "duration": FRAME_DURATION,
-                    "subject": subject, "run": f"R{r}"}
+            base = {"version": 1, "time": round(t_shift + w, 3),
+                    "duration": FRAME_DURATION, "subject": subject,
+                    "run": f"R{r}"}
             pred_frames.append({**base, "intent": p,
                                 "confidence": round(cf, 4), "source": "prediction"})
             truth_frames.append({**base, "intent": truth, "confidence": 1.0,

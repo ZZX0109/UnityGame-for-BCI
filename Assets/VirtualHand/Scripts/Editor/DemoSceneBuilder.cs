@@ -26,7 +26,6 @@ namespace Neuralife.VirtualHand.Editor
             light.type = LightType.Directional;
             light.intensity = 1.1f;
             lightGo.transform.rotation = Quaternion.Euler(45, -30, 0);
-            lightGo.AddComponent<UnityEditor.Rendering.Universal.UniversalAdditionalLightData>(); // harmless in builtin if URP absent
 
             // ---- cameras ----
             var camGo = new GameObject("MainCamera");
@@ -109,7 +108,6 @@ namespace Neuralife.VirtualHand.Editor
     /// <summary>Simple orbit camera driven by right-mouse drag; no UI conflict.</summary>
     public class OrbitCamera : MonoBehaviour
     {
-        public Transform focus = new Vector3().x == 0 ? null : null;
         Vector3 _focus = new Vector3(0, 0.3f, 0);
         float _dist = 2.2f, _yaw = 180f, _pitch = 8f;
 

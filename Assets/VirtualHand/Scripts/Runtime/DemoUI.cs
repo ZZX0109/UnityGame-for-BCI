@@ -29,8 +29,11 @@ namespace Neuralife.VirtualHand
         void Update()
         {
             HandleKeys();
-            if (replay != null && replay.GetComponent<ReplaySource>() is var src && src != null)
-                _paused = !src.IsPlaying;
+            if (replay != null)
+            {
+                var src = replay.GetComponent<ReplaySource>();
+                if (src != null) _paused = !src.IsPlaying;
+            }
             UpdateText();
         }
 

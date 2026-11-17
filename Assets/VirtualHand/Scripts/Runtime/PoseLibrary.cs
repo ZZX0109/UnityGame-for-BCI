@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json;
-#if UNITY_EDITOR
-#endif
 
 namespace Neuralife.VirtualHand
 {

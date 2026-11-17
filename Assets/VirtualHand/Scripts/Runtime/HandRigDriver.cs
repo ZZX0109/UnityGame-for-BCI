@@ -61,8 +61,11 @@ namespace Neuralife.VirtualHand
         static Transform FindBone(Transform[] all, string name)
         {
             foreach (var t in all)
-                if (t.name == name || t.name.EndsWith("." + name) || t.name.EndsWith("_" + name))
+            {
+                // matches "Index1", "Index1.R" (Blender FBX keeps side suffix), "Index1_L"
+                if (t.name == name || t.name.StartsWith(name + ".") || t.name.StartsWith(name + "_"))
                     return t;
+            }
             return null;
         }
 
