@@ -1,0 +1,39 @@
+# Game04 Virtual Hand — implementation agreement
+
+User approved 2026-11-17: GLM-5.3-flash in ZCode implements modeling AND data reading/decoding/replay; DHS performs second review; Codex performs final integration, targeted fixes, visual and functional verification. Do not substitute another model silently. Implement now; this is not a planning request.
+
+## Isolation and ownership
+
+Only edit this Game04 project. Do not edit Game01/02/03, Qt games, root configuration, host plugins or main branch. This is a fresh independent git repository on codex/virtual-hand. No full clone of other game Assets. Codex owns the shared Core/HandMotionFrame.cs contract and this brief. GLM owns implementation, ArtSource, Tools, runtime and Editor scripts; do not change frozen fields without coordinating. DHS reviews finished files and returns concise concrete findings, not a broad audit suite.
+
+## Runtime and deliverables
+
+Unity 2022.3.62f3c1 Built-in, Windows x64, reusable skinned hand prefab plus a polished demo scene. Minimal UGUI/TMP Chinese interface. Available Editor: D:/SoftwareManagement/Unity/2022.3.62f3c1/Editor/Unity.exe. Existing scientific venv: D:/SoftwareManagement/venv/bci/Scripts/python.exe (numpy scipy mne sklearn h5py joblib already usable). Cache raw downloads under D:/SoftwareManagement/datasets, not Assets/repository; do not bundle raw data. Include source .blend, exported FBX and 2K textures. Editor automation entrypoints should be Neuralife.VirtualHand.Editor.VirtualHandBuild.GenerateProject and .BuildWindows. Build output Builds/Windows/VirtualHand.exe; screenshots and compact results in Results. Let Codex do final Unity build/test, do not run competing Editors against this project.
+
+## Appearance is a required gate
+
+Light-realistic human hands, short forearms, continuous skinned geometry, natural palm/thumb web/nails/knuckles. Use MakeHuman official CC0 core mesh as the base, refine/extract/rig with Blender. No capsule/block/robot stand-in as final. Around 10-20k triangles/hand, 2K skin/normal/smoothness textures, Standard materials and soft studio lighting/contact shadows. Correct handedness, thumb opposition, non-collapsing fist and pinch. Editable .blend stays in ArtSource outside Assets; export FBX so importing does not require Blender. Runtime must use actual bones and skin deformation, not static meshes swapping. Basic poses open/fist/release, independent five fingers and thumb-index pinch. Ship palm/back/side + fist/pinch/two-hand holding views for review before integration.
+
+## Frozen JSONL v1 and rig control contract
+
+One UTF-8 JSON object per line; fields exactly match Core/HandMotionFrame.cs. time is seconds from replay start; duration >0; prediction time is no earlier than end of its analysis window. intent is rest|left|right|both. confidence is [0,1] model probability (not calibrated clinical confidence). source is manual|glove|labels|prediction. subject/run are provenance. Optional leftJoints/rightJoints have 20 normalized [0,1] controls, finger-major thumb,index,middle,ring,little; thumb block = CMC flexion,MCP flexion,IP flexion,opposition; each other block = MCP,PIP,DIP,spread. This is visual rig control, not a claim of 20 measured angles. Missing pose uses authored intent poses. Rest is NOT a fifth hand or feet. Reject malformed/nonfinite/unknown frame input visibly. Gaps expire active intent, preserving task-held objects. Use one clock that pauses both playback and task motion; reset clears pose, attachment, clock and source.
+
+## DB8 kinematic replay
+
+Get https://ninapro.hevs.ch/files/DB8/S1_E1_A3.mat (~233 MB). Read actual Glove field (18 calibrated sensor signals), labels only to locate clips, never use them as regression targets. Use official Cyberglove sensor diagram to map channels, document assumptions/coupled DIP and unavailable sensors. Never treat sensor numbers as degrees. Export a manageable 30-60Hz visual replay with rest/thumb/index/functional grip clips and provenance. Left glove is actual measured hand; optional right mirror clearly marked. A3 is visualization only, no EMG model trained and no predictive metric on display calibration. Official docs https://ninapro.hevs.ch/instructions/DB8.html.
+
+## Actual EEG decoding
+
+Download only S001-S003, runs 04,06,08,10,12,14 from https://physionet.org/files/eegmmidb/1.0.0/S001/S001R04.edf (change subject/run). EDF annotations contain events. Per-subject train 04+06, validation 08+10, held-out test 12+14. Unilateral runs T1=left fist/T2=right fist; bilateral T1=both fists/T2=both feet (exclude feet); T0=rest. Use causal 8-30Hz filtering, common-average reference, epochs 0.5-2.5sec after event, CSP(6)+shrinkage LDA, fixed seed42. Fit transformations using training only; no test calibration/tuning or overlapping randomized trial split. Report balanced accuracy, fixed-order confusion matrix rest/left/right/both, low confidence coverage at .6. Retain incorrect predictions. Export actual predictions and truth reference to separate files; Unity prediction mode never reads ground truth as controls. Model is four whole-hand intent classes, not independent finger decoding. Document command to download/train/export and exact dependencies. No requirement for a minimum accuracy or 100% task success from raw EEG.
+
+## Demo and assisted tasks
+
+Modes: manual preview, DB8 continuous pose replay, EEG prediction replay, explicit label replay, cooperative carry, handoff (both directions). User-selected assisted spatial paths, not EEG reach-position decoding. Display current stage/recognized intent and assisted motion. Carry: both hands approach/grip box, follow preset path, release at destination on stable rest. Handoff: sender picks cube, reaches transfer point, receiver grips, sender releases only after receiver secure, receiver places. Grip latches after contact across rest/dropout; rest pauses empty-hand motion, and only releases in designated drop stage. Wrong/low-confidence input waits/records mismatch, never silently uses correct truth. One object-ownership state and no simultaneous rigidbody/transform fight. Reset/pause/source change must not orphan/duplicate held objects. Predefined grip points/poses prevent fingers penetrating props. Scripted known commands test task mechanics separately from fallible EEG replay. Replay load/play/pause/restart, clear mode label, readable Chinese; keyboard shortcuts and orbit camera should not conflict with UI. Use minimal tests: real label mapping, no train/test leak, commands-to-bones, pause/reset/hold/handoff, 3 runs each task. No massive inherited audit matrix or long stress suites.
+
+## Review evidence
+
+Save brief implementation notes and exact commands; do not call unrun checks PASS. Final Windows build, six representative hand views, actual DB8 and EEG replay, both tasks 3 repetitions, 1080p FPS check. Only small README + compact test summary + asset/data credits, no giant evidence zip or historical logs clone.
+
+## Verified local data now available
+
+All 18 requested EEG EDFs are downloaded under D:/SoftwareManagement/datasets/eegmmidb/1.0.0/S001 (and S002/S003), runs04,06,08,10,12,14. All load in MNE, 64ch/160Hz; S001/S003 125sec, S002 123sec. MNE get_data gives SI volts, not raw microvolts. DB8 D:/SoftwareManagement/datasets/NinaproDB8/S1_E1_A3.mat (232743598 bytes) is completely downloaded and scipy readable MATLAB5. Actual fields are LOWERCASE: glove(529099,18), emg(529099,16), acc/gyro/mag each48cols; stimulus/restimulus/repetition/rerepetition lower-case. glove float32 finite, range -67.816..167.714, no fs/time/timestamp field; official synchronized2kHz sample clock applies. No need to redownload. Unity initial import completed successfully with license entitlement resolved and natural exit0; no Editor currently owns project.
