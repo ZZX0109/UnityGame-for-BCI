@@ -1,0 +1,95 @@
+{
+  "subject": "S1",
+  "exercise": "E1",
+  "source_file": "S1_E1_A3.mat",
+  "provenance": "Ninapro DB8 (CC-BY-SA 4.0), ninapro.hevs.ch",
+  "fs_native": 2000.0,
+  "export_fps": 40.0,
+  "channel_mapping": {
+    "thumb_opposition": 0,
+    "thumb_cmc_flex": 1,
+    "thumb_mcp_flex": 2,
+    "thumb_ip_flex": 3,
+    "finger_mcp_pip": {
+      "index": [
+        4,
+        5
+      ],
+      "middle": [
+        6,
+        7
+      ],
+      "ring": [
+        9,
+        10
+      ],
+      "little": [
+        12,
+        13
+      ]
+    },
+    "dip": "coupled to PIP (no DIP sensors on this glove model)",
+    "spread": [
+      8,
+      11,
+      14
+    ],
+    "unused_palm_wrist": [
+      15,
+      16,
+      17
+    ]
+  },
+  "normalization": "per-channel 1-99 percentile min-max over whole file",
+  "measured_hand": "left (right optional mirror, marked)",
+  "clips": [
+    {
+      "name": "rest",
+      "stimulus_label": 0,
+      "file": "db8_S1_rest.jsonl",
+      "frames": 320,
+      "seconds": 8.0,
+      "right_mirror": false
+    },
+    {
+      "name": "thumb",
+      "stimulus_label": 1,
+      "file": "db8_S1_thumb.jsonl",
+      "frames": 258,
+      "seconds": 6.5,
+      "right_mirror": false
+    },
+    {
+      "name": "index",
+      "stimulus_label": 3,
+      "file": "db8_S1_index.jsonl",
+      "frames": 320,
+      "seconds": 8.0,
+      "right_mirror": false
+    },
+    {
+      "name": "cylindrical_grip",
+      "stimulus_label": 7,
+      "file": "db8_S1_cylindrical_grip.jsonl",
+      "frames": 288,
+      "seconds": 7.2,
+      "right_mirror": false
+    },
+    {
+      "name": "lateral_grip",
+      "stimulus_label": 8,
+      "file": "db8_S1_lateral_grip.jsonl",
+      "frames": 268,
+      "seconds": 6.7,
+      "right_mirror": false
+    },
+    {
+      "name": "tripod_grip",
+      "stimulus_label": 9,
+      "file": "db8_S1_tripod_grip.jsonl",
+      "frames": 296,
+      "seconds": 7.4,
+      "right_mirror": false
+    }
+  ]
+}
