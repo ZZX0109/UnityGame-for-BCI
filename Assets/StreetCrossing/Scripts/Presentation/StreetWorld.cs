@@ -17,6 +17,16 @@ namespace StreetCrossing.Presentation
         private readonly Dictionary<string, Mesh> detailMeshes = new Dictionary<string, Mesh>();
         private StreetVisualProfile profile;
         public Transform VisualDetailsRoot { get; private set; }
+        private StreetScenarioDefinition definition;
+        private Transform destinationMat, startNotice;
+        private TextMesh startLabel;
+        private Vector3[] approachPath, arrivalPath;
+        private int approachStep, arrivalStep;
+        public Vector3 MissionSpawn { get; private set; }
+        public float MissionHeading { get; private set; }
+        public Vector3 MissionDestination { get; private set; }
+        public string MissionDestinationName { get; private set; }
+        public int MissionForwardSign { get; private set; } = 1;
         private readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
         private readonly List<Mesh> combinedMeshes = new List<Mesh>();
         private List<Vector2[]> turningAprons;
@@ -140,6 +150,9 @@ namespace StreetCrossing.Presentation
         }
         public void Build(StreetScenarioDefinition s)
         {
+            definition = s;
+            MissionSpawn = s.playerSpawn; MissionHeading = 0; MissionDestination = s.destination;
+            MissionDestinationName = s.destinationName; MissionForwardSign = 1;
             profile = s.visualProfile; profile.Validate(s.scenarioId);
             turningAprons = StreetJunctionGeometry.TurnAprons(s);
             RenderSettings.ambientMode = AmbientMode.Trilight;
@@ -219,9 +232,10 @@ namespace StreetCrossing.Presentation
             BuildFurnitureBounds(s);
             StreetBackgroundPopulation population = new GameObject("Background population").AddComponent<StreetBackgroundPopulation>();
             population.transform.SetParent(VisualDetailsRoot, false); population.Initialize(root.GetComponentInParent<Core.StreetGameManager>(), this, s);
-            Inspectable(Box("Start notice", new Vector3(-2.8f, 1.2f, StreetLayout.SidewalkZ(-7.7f)), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA"), "过街练习", "沿人行道到路沿，观察左右来车和行人信号。确认车流停稳、行人绿灯后，从斑马线前往对面便利店。");
-            Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, StreetLayout.SidewalkZ(-7.79f)), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
-            Box("Destination welcome mat", s.destination + new Vector3(0, 0.008f, 0), new Vector3(2.7f, 0.02f, 1.2f), "80946F", false);
+            startNotice = Box("Start notice", new Vector3(-2.8f, 1.2f, StreetLayout.SidewalkZ(-7.7f)), new Vector3(1.3f, 1.3f, 0.12f), "E9DFCA").transform;
+            Inspectable(startNotice.gameObject, "过街练习", "沿人行道到路沿，观察左右来车和行人信号。确认车流停稳、行人绿灯后，从斑马线前往对面便利店。");
+            startLabel = Label("街角便利店\n在马路对面", new Vector3(-2.8f, 1.25f, StreetLayout.SidewalkZ(-7.79f)), 0.055f, "365A46", null, 0, 1.1f, 1.0f);
+            destinationMat = Box("Destination welcome mat", s.destination + new Vector3(0, 0.008f, 0), new Vector3(2.7f, 0.02f, 1.2f), "80946F", false).transform;
             TrafficRoot = new GameObject("Vehicle routes and pool").transform; TrafficRoot.SetParent(root, false);
             Zone(CrossingRegion.Approach, new Vector3(0, 0.9f, StreetLayout.SidewalkZ(-6.9f)), new Vector3(6, 3, 5.5f));
             Zone(CrossingRegion.Kerb, new Vector3(0, 0.9f, -width - 0.45f), new Vector3(4.1f, 3, 1.1f));
@@ -233,6 +247,63 @@ namespace StreetCrossing.Presentation
             Zone(CrossingRegion.Exit, new Vector3(0, 0.9f, width + 0.35f), new Vector3(s.crosswalkHalfWidth * 2, 3, 0.9f));
             Zone(CrossingRegion.Destination, s.destination + Vector3.up * 0.9f, new Vector3(2.8f, 3, 2));
         }
+        public void ApplyMission(StreetMissionDefinition mission, int segmentIndex)
+        {
+            if (definition == null) throw new System.InvalidOperationException("Build the street before applying a mission.");
+            if (mission == null || mission.districtId != definition.scenarioId) throw new System.ArgumentException("Mission must match the built district.", nameof(mission));
+            MissionForwardSign = StreetMissionGeometry.ForwardSign(mission, segmentIndex);
+            MissionSpawn = StreetMissionGeometry.Spawn(mission, segmentIndex);
+            MissionHeading = MissionForwardSign > 0 ? 0 : 180;
+            StreetDestinationKind kind = StreetMissionGeometry.GoalKind(mission, segmentIndex);
+            MissionDestination = StreetMissionGeometry.Doorstep(kind);
+            MissionDestinationName = StreetMissionGeometry.Name(kind);
+            if (Mathf.Sign(MissionDestination.z) != MissionForwardSign) throw new System.ArgumentException("The goal must be on the opposite sidewalk.", nameof(mission));
+            float width = definition.roadHalfWidth;
+            foreach (CrossingZone zone in zones)
+            {
+                Vector3 centre = zone.transform.localPosition;
+                switch (zone.region)
+                {
+                    case CrossingRegion.Approach: centre.z = -MissionForwardSign * Mathf.Abs(StreetLayout.SidewalkZ(-6.9f)); break;
+                    case CrossingRegion.Kerb: centre.z = -MissionForwardSign * (width + .45f); break;
+                    case CrossingRegion.Entry: centre.z = -MissionForwardSign * width; break;
+                    case CrossingRegion.Exit: centre.z = MissionForwardSign * (width + .35f); break;
+                    case CrossingRegion.Destination:
+                        centre.x = MissionDestination.x; centre.z = MissionDestination.z;
+                        zone.size = new Vector3(1.2f, 3, 1f); break;
+                }
+                zone.transform.localPosition = centre;
+            }
+            destinationMat.localPosition = MissionDestination + Vector3.up * .008f;
+            destinationMat.localScale = new Vector3(1.1f, .02f, .85f);
+            startNotice.localPosition = new Vector3(-2.8f, 1.2f, -MissionForwardSign * 11f);
+            startNotice.localRotation = Quaternion.Euler(0, MissionHeading, 0);
+            startLabel.transform.localPosition = new Vector3(-2.8f, 1.25f, -MissionForwardSign * 11.09f);
+            startLabel.transform.localRotation = Quaternion.Euler(0, MissionHeading, 0);
+            startLabel.text = MissionDestinationName + "\n先走指定横道";
+            Player.StreetInspectable notice = startNotice.GetComponent<Player.StreetInspectable>();
+            notice.title = mission.title;
+            notice.description = "目标：" + MissionDestinationName + "。先沿人行道到横道入口，确认信号和左右道路，再沿横道过街；出横道后沿人行道到门前绿色地垫。";
+            approachPath = StreetMissionGeometry.Approach(MissionSpawn, MissionForwardSign, width);
+            arrivalPath = StreetMissionGeometry.Arrival(MissionDestination, MissionForwardSign, width);
+            approachStep = arrivalStep = 0;
+        }
+        public Vector3 NavigationTarget(Vector3 playerPosition, bool crossingComplete)
+        {
+            if (approachPath == null || arrivalPath == null) return MissionDestination;
+            if (!crossingComplete)
+            {
+                // A late HUD query at the kerb must not send an already-aligned pedestrian backwards.
+                if (Mathf.Abs(playerPosition.x) < .3f && MissionForwardSign * playerPosition.z >= -Mathf.Abs(StreetMissionGeometry.CorridorZ(-MissionForwardSign)) - .25f)
+                    approachStep = Mathf.Max(approachStep, 2);
+                while (approachStep < approachPath.Length && PlanarDistance(playerPosition, approachPath[approachStep]) <= .25f) approachStep++;
+                return approachStep < approachPath.Length ? approachPath[approachStep] : arrivalPath[0];
+            }
+            if (MissionForwardSign * playerPosition.z >= definition.roadHalfWidth + .7f) arrivalStep = Mathf.Max(arrivalStep, 1);
+            while (arrivalStep < arrivalPath.Length - 1 && PlanarDistance(playerPosition, arrivalPath[arrivalStep]) <= .25f) arrivalStep++;
+            return arrivalPath[arrivalStep];
+        }
+        private static float PlanarDistance(Vector3 a, Vector3 b) => Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
         private void KerbSegment(float a, float b, float z)
         { if (b > a) Box("Kerb beyond ramp", new Vector3((a + b) * 0.5f, 0.02f, z), new Vector3(b - a, 0.16f, 0.18f), "E6DDC8"); }
         private void BuildLaneMarkings(StreetScenarioDefinition s)
@@ -306,7 +377,16 @@ namespace StreetCrossing.Presentation
         {
             int bay = Mathf.RoundToInt(p.x / 13);
             int type = (bay + 2 + (side > 0 ? 0 : 3)) % 6;
-            Transform block = StreetDistrictBuilder.Building(root, this, profile, p, side, height, profile.FacadeAt(type));
+            Transform block;
+            if (side > 0 && bay == 1)
+            {
+                block = new GameObject("Mission shop frontage block").transform; block.SetParent(root, false); block.localPosition = p;
+                StreetDistrictBuilder.Building(block, this, profile, new Vector3(-3.4f, 0, 0), side, height, StreetFacadeKind.Bookshop, false, false, 3.24f);
+                StreetDistrictBuilder.Building(block, this, profile, Vector3.zero, side, height, StreetFacadeKind.Pharmacy, false, false, 3.24f);
+                StreetDistrictBuilder.Building(block, this, profile, new Vector3(3.4f, 0, 0), side, height, StreetFacadeKind.Cafe, false, false, 3.24f);
+            }
+            else block = StreetDistrictBuilder.Building(root, this, profile, p, side, height,
+                side < 0 && bay == 0 ? StreetFacadeKind.Residence : profile.FacadeAt(type));
             BoxCollider collider = block.gameObject.AddComponent<BoxCollider>(); collider.center = Vector3.up * (height * .5f); collider.size = new Vector3(10.3f, height, 4);
         }
         private static void Inspectable(GameObject target, string title, string description)
@@ -342,6 +422,7 @@ namespace StreetCrossing.Presentation
         }
         private void Shop()
         {
+            Transform doorway = new GameObject("Doorway Convenience").transform; doorway.SetParent(root, false); doorway.localPosition = new Vector3(0, 0, StreetLayout.SidewalkZ(9.5f));
             Box("Convenience shop", new Vector3(0, 2.1f, StreetLayout.SidewalkZ(12)), new Vector3(10.5f, 4.2f, 4.3f), profile.facade);
             Inspectable(Box("Shop sign backing", new Vector3(0, 3.8f, StreetLayout.SidewalkZ(9.79f)), new Vector3(10.7f, 1, 0.2f), profile.accent), "街角便利店", "本次目的地是便利店门前的绿色地垫。安全走完斑马线后，继续沿人行道前往门口。");
             // Both scripts sit above the projecting canopy even from the destination eye height, with normal scene depth.

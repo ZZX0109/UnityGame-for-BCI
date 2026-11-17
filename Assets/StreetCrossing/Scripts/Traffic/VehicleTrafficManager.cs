@@ -20,6 +20,7 @@ namespace StreetCrossing.Traffic
         private readonly float[] nextSpawn;
         private TrafficSpawnSequence sequence;
         private int encounterId, turnOwner;
+        private int? attemptSeed;
         public IReadOnlyList<VehicleController> Active => active;
         public IReadOnlyList<VehicleLanePath> Routes => lanes;
         public int TurningReservation => turnOwner;
@@ -38,7 +39,7 @@ namespace StreetCrossing.Traffic
         public void Reset()
         {
             foreach (VehicleController car in pool) car.gameObject.SetActive(false);
-            active.Clear(); sequence = new TrafficSpawnSequence(scenario.seed); encounterId = turnOwner = 0;
+            active.Clear(); sequence = new TrafficSpawnSequence(attemptSeed ?? scenario.seed); encounterId = turnOwner = 0;
             for (int lane = 0; lane < lanes.Length; lane++)
             {
                 int count = lane < scenario.StraightLaneCount ? scenario.initialVehiclesPerStraightLane : 1;
@@ -46,6 +47,7 @@ namespace StreetCrossing.Traffic
                 nextSpawn[lane] = SpawnInterval(lane);
             }
         }
+        public void ResetWithSeed(int seed) { attemptSeed = seed; Reset(); }
         private float SpawnInterval(int lane)
         {
             float interval = sequence.Between(scenario.minimumSpawnInterval, scenario.maximumSpawnInterval);

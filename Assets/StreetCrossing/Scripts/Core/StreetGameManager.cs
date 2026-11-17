@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using StreetCrossing.Evaluation;
 using StreetCrossing.Player;
 using StreetCrossing.Presentation;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 namespace StreetCrossing.Core
 {
-    public enum StreetGameState { Menu, Playing, Paused, Result }
+    public enum StreetGameState { Menu, Playing, Paused, SegmentComplete, Result }
     public sealed class StreetGameManager : MonoBehaviour
     {
         public StreetScenarioDefinition scenario;
@@ -25,6 +26,9 @@ namespace StreetCrossing.Core
         private IStreetInput input = new LegacyStreetInput();
         private float accumulator;
         private int attempt;
+        private readonly List<StreetSegmentResult> segmentResults = new List<StreetSegmentResult>();
+        private bool prewarming, longWaitNotified;
+        private float missionStartedAt;
         private CrossingRegion region;
         private readonly StreetNoticeBoard notices = new StreetNoticeBoard();
         public IntersectionController Intersection { get; private set; }
@@ -42,13 +46,50 @@ namespace StreetCrossing.Core
         public PedestrianPlayerController Player => player;
         public VehicleTrafficManager Traffic => traffic;
         public IReadOnlyList<CrossingZone> Zones => world.Zones;
-        public Vector3[] LeftRoadTargets => world.LeftRoadTargets;
-        public Vector3[] RightRoadTargets => world.RightRoadTargets;
+        public Vector3[] LeftRoadTargets => world.MissionForwardSign > 0 ? world.LeftRoadTargets : world.RightRoadTargets;
+        public Vector3[] RightRoadTargets => world.MissionForwardSign > 0 ? world.RightRoadTargets : world.LeftRoadTargets;
         public string Notice => notices.Resolve(WorldTime);
         public string LogPath => log?.Path;
         public string LogError => log?.Error;
         public event System.Action<string, string> GameEvent;
-        public int Stars => Evaluation.SafetySuccess ? 1 + (Evaluation.LeftObserved && Evaluation.RightObserved ? 1 : 0) + (Evaluation.NearMisses == 0 && Evaluation.StationaryContacts == 0 ? 1 : 0) : 0;
+        public IReadOnlyList<StreetMissionDefinition> Missions => StreetMissionCatalog.ForDistrict(scenario.scenarioId);
+        public StreetMissionDefinition Mission => Missions[SelectedMissionIndex];
+        public int SelectedMissionIndex { get; private set; }
+        public int SelectedVariant { get; private set; }
+        public int CurrentSegmentIndex { get; private set; }
+        public int SegmentCount => Mission.roundTrip ? 2 : 1;
+        public IReadOnlyList<StreetSegmentResult> SegmentResults => segmentResults;
+        public bool CrossingCompleted => Evaluation != null && Evaluation.HasCrossed;
+        public bool MissionCompleted => State == StreetGameState.Result;
+        public bool MissionSafetySuccess => MissionCompleted && segmentResults.Count == SegmentCount && segmentResults.TrueForAll(item => item.SafetySuccess);
+        public bool HelpRequested { get; private set; }
+        public int AssistanceRequests { get; private set; }
+        public bool PersistMissionProgress { get; set; } = true;
+        public float MissionElapsedSeconds => Mathf.Max(0, WorldTime - missionStartedAt);
+        public string DestinationName => world.MissionDestinationName;
+        public Vector3 Destination => world.MissionDestination;
+        public Vector3 NavigationTarget => world.NavigationTarget(PlayerPosition, CrossingCompleted);
+        public int ForwardSign => world.MissionForwardSign;
+        public int Stars
+        {
+            get
+            {
+                if (!MissionSafetySuccess) return 0;
+                int stars = 3; foreach (StreetSegmentResult item in segmentResults) stars = Mathf.Min(stars, item.Stars);
+                return stars;
+            }
+        }
+        public string MissionSummary
+        {
+            get
+            {
+                var text = new StringBuilder();
+                text.Append(Mission.title).Append("  ·  配置 ").Append(SelectedVariant + 1).Append("\n");
+                foreach (StreetSegmentResult item in segmentResults) text.Append(item.Summary).Append("\n");
+                text.Append("任务时长 ").Append(MissionElapsedSeconds.ToString("F1")).Append(" 秒；主动帮助 ").Append(AssistanceRequests).Append(" 次。\n合理等待不扣分，没有抢时间奖励。观察记录来自镜头可见性。");
+                return text.ToString();
+            }
+        }
         private const float Step = 0.02f;
         private void Awake()
         {
@@ -65,7 +106,24 @@ namespace StreetCrossing.Core
         {
             if (index < 0 || index >= scenarios.Length || IsPlaying) return;
             Record("ScenarioChanged", scenarios[index].scenarioId); SelectedScenarioIndex = index; scenario = scenarios[index];
-            State = StreetGameState.Menu; notices.Reset(); attempt = 0; WorldTime = accumulator = 0; RebuildScenario(); SetCursor(false);
+            State = StreetGameState.Menu; SelectedMissionIndex = SelectedVariant = CurrentSegmentIndex = 0;
+            segmentResults.Clear(); notices.Reset(); attempt = 0; WorldTime = accumulator = 0; RebuildScenario(); SetCursor(false);
+        }
+        public void SelectMission(int index)
+        {
+            if (State != StreetGameState.Menu || index < 0 || index >= Missions.Count) return;
+            SelectedMissionIndex = index; CurrentSegmentIndex = 0; segmentResults.Clear(); notices.Reset();
+            Record("MissionSelected", Mission.missionId);
+        }
+        public void SelectVariant(int index)
+        {
+            if (State != StreetGameState.Menu || index < 0 || index > 2) return;
+            SelectedVariant = index; Record("VariantSelected", "variant=" + index);
+        }
+        public void RequestHelp()
+        {
+            if (State != StreetGameState.Playing && State != StreetGameState.Paused) return;
+            if (!HelpRequested) { HelpRequested = true; AssistanceRequests++; Record("HelpOpened", Mission.missionId + ";segment=" + CurrentSegmentIndex); }
         }
         private void RebuildScenario()
         {
@@ -96,8 +154,33 @@ namespace StreetCrossing.Core
         {
             if (!isActiveAndEnabled) return; ui?.CloseModal();
             attempt++; WorldTime = accumulator = 0; region = CrossingRegion.None; notices.Reset();
-            ResetEvaluation(); player.ResetPose(); Intersection.Reset(); traffic.Reset();
-            State = StreetGameState.Playing; SetCursor(true); Physics.SyncTransforms(); Record("AttemptStarted", "seed=" + scenario.seed);
+            segmentResults.Clear(); CurrentSegmentIndex = 0; HelpRequested = false; AssistanceRequests = 0; longWaitNotified = false;
+            world.ApplyMission(Mission, 0); ResetEvaluation(); player.ResetPose(world.MissionSpawn, world.MissionHeading);
+            Intersection.Reset(); traffic.ResetWithSeed(Mission.SeedForVariant(scenario.seed, SelectedVariant));
+            State = StreetGameState.Playing; Physics.SyncTransforms();
+            // Advance the complete signal/vehicle simulation, never just change the displayed light.
+            prewarming = true;
+            try
+            {
+                int steps = Mathf.RoundToInt(Mission.prewarmSeconds / Step);
+                for (int i = 0; i < steps; i++)
+                {
+                    WorldTime += Step;
+                    Intersection.Tick(Step, traffic.HasUnclearedVehicles, false);
+                    traffic.Tick(Step, WorldTime, false);
+                }
+            }
+            finally { prewarming = false; }
+            ResetEvaluation(); notices.Reset(); missionStartedAt = WorldTime;
+            SetCursor(true); Record("AttemptStarted", "mission=" + Mission.missionId + ";revision=" + Mission.revision + ";variant=" + SelectedVariant + ";seed=" + Mission.SeedForVariant(scenario.seed, SelectedVariant) + ";prewarm=" + Mission.prewarmSeconds);
+        }
+        public void ContinueMission()
+        {
+            if (State != StreetGameState.SegmentComplete || CurrentSegmentIndex + 1 >= SegmentCount) return;
+            CurrentSegmentIndex++; world.ApplyMission(Mission, CurrentSegmentIndex); ResetEvaluation();
+            HelpRequested = false; region = CrossingRegion.None; notices.Reset(); accumulator = 0;
+            State = StreetGameState.Playing; SetCursor(true);
+            Record("SegmentStarted", "segment=" + CurrentSegmentIndex + ";signalContinues=" + Intersection.Phase);
         }
         private void Update()
         {
@@ -110,7 +193,12 @@ namespace StreetCrossing.Core
             while (accumulator >= Step && IsPlaying)
             {
                 accumulator -= Step; WorldTime += Step; TickWorld(Step);
-                if (WorldTime >= scenario.timeoutSeconds && !Evaluation.Finished) Evaluation.Timeout();
+                if (!longWaitNotified && MissionElapsedSeconds >= scenario.timeoutSeconds && !Evaluation.Finished)
+                {
+                    longWaitNotified = true;
+                    notices.Set(StreetNoticeKind.Inspection, "练习时间较长，可以继续观察和安全等待，也可暂停或重新开始。", WorldTime + 12);
+                    Record("PracticeReminder", "Non-failing reminder; safe waiting remains available.");
+                }
                 if (Evaluation.Finished) Finish();
             }
         }
@@ -121,7 +209,7 @@ namespace StreetCrossing.Core
             bool roadway = IsPlayerInRoadwayHazard;
             bool protectedOccupied = IsPlayerInProtectedCrosswalk;
             RoadObservationEvidence evidence = new RoadObservationEvidence {
-                atKerb = IsAtKerb, beforeEntry = Evaluation.MayRecordPreEntryObservation, yaw = player.Heading, pitch = player.Pitch,
+                atKerb = IsAtKerb, beforeEntry = Evaluation.MayRecordPreEntryObservation, yaw = Mathf.DeltaAngle(world.MissionHeading, player.Heading), pitch = player.Pitch,
                 leftTargetVisible = DirectionVisible(true),
                 rightTargetVisible = DirectionVisible(false)
             };
@@ -133,8 +221,8 @@ namespace StreetCrossing.Core
             traffic.Tick(dt, WorldTime, protectedOccupied);
             if (Intersection.IsClearanceHeld) notices.Set(StreetNoticeKind.Clearance, "受保护横道正在清空，冲突车辆继续等待。");
             else { notices.Clear(StreetNoticeKind.Clearance); notices.Clear(StreetNoticeKind.ClearanceWatchdog); }
-            if (!roadway && IsAtKerb && scenario.kerbOcclusion && !evidence.leftTargetVisible && !Evaluation.LeftObserved)
-                notices.Set(StreetNoticeKind.Occlusion, "左侧视线可能被遮挡。请在人行道内调整站位，确认能看到驶近道路。");
+            if (!roadway && IsAtKerb && ((!evidence.leftTargetVisible && !Evaluation.LeftObserved) || (!evidence.rightTargetVisible && !Evaluation.RightObserved)))
+                notices.Set(StreetNoticeKind.Occlusion, (!evidence.leftTargetVisible && !Evaluation.LeftObserved ? "左侧" : "右侧") + "车道尚未看清。请在人行道内调整站位，确认两条驶近车道都可见。");
             else notices.Clear(StreetNoticeKind.Occlusion);
             if (IsAtKerb && Evaluation.MayRecordPreEntryObservation && observation.NeedsRefresh(10))
                 notices.Set(StreetNoticeKind.ObservationRefresh, "距离上次观察已超过10秒。出发前请再次确认左右来车；观察记录不代表当前道路仍然安全。");
@@ -144,7 +232,8 @@ namespace StreetCrossing.Core
         {
             // Four lanes need evidence for both approaching lanes on the chosen side.
             // A visible car in the inner lane cannot prove that the occluded outer lane is visible.
-            int direction = left ? 1 : -1;
+            bool worldLeft = world.MissionForwardSign > 0 ? left : !left;
+            int direction = worldLeft ? 1 : -1;
             for (int lane = 0; lane < scenario.StraightLaneCount; lane++)
             {
                 if (scenario.DirectionForLane(lane) != direction) continue;
@@ -154,7 +243,7 @@ namespace StreetCrossing.Core
                     {
                         if (car.Lane.Direction != direction || Mathf.Abs(car.transform.position.z - scenario.LaneZ(lane)) > scenario.laneOffset * .5f) continue;
                         float dx = car.transform.position.x - player.transform.position.x;
-                        if ((left && dx > -2) || (!left && dx < 2)) continue;
+                        if ((worldLeft && dx > -2) || (!worldLeft && dx < 2)) continue;
                         Vector3 point = car.transform.position + Vector3.up * 0.9f;
                         if (RoadObservationVisibility.PointVisible(player.View, point, player.transform, car.transform)) { visible = true; break; }
                     }
@@ -164,16 +253,22 @@ namespace StreetCrossing.Core
         }
         public void RegisterContact(int encounterId, float vehicleSpeed)
         {
-            if (!IsPlaying || Evaluation.Finished) return;
+            if (!IsPlaying || prewarming || Evaluation.Finished) return;
             Evaluation.Contact(encounterId, vehicleSpeed); if (Evaluation.Finished) Finish();
         }
         public void RegisterCollision(int encounterId) { RegisterContact(encounterId, 1); }
         private void Finish()
         {
             if (State == StreetGameState.Result) return;
+            segmentResults.Add(new StreetSegmentResult(CurrentSegmentIndex, Evaluation));
+            if (CurrentSegmentIndex + 1 < SegmentCount && Evaluation.MovingCollisions == 0)
+            {
+                State = StreetGameState.SegmentComplete; SetCursor(false);
+                Record("SegmentCompleted", segmentResults[segmentResults.Count - 1].Summary); return;
+            }
             State = StreetGameState.Result; SetCursor(false);
-            if (Evaluation.SafetySuccess) StreetPreferences.SaveStars(scenario.scenarioId, Stars);
-            Record("AttemptResult", "safe=" + Evaluation.SafetySuccess + ";stars=" + Stars);
+            if (PersistMissionProgress && MissionSafetySuccess) StreetMissionProgress.RecordSuccess(Mission, SelectedVariant, Stars);
+            Record("AttemptResult", "mission=" + Mission.missionId + ";safe=" + MissionSafetySuccess + ";stars=" + Stars + ";help=" + AssistanceRequests);
         }
         public void Pause() { if (State != StreetGameState.Playing) return; State = StreetGameState.Paused; SetCursor(false); Record("Paused", "Unified simulation frozen."); }
         public void Resume() { if (!isActiveAndEnabled || State != StreetGameState.Paused) return; State = StreetGameState.Playing; SetCursor(true); Record("Resumed", ""); }

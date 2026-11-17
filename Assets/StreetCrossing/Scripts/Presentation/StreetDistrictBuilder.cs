@@ -64,6 +64,7 @@ namespace StreetCrossing.Presentation
                 Part(world, block, "Entrance stone surround", new Vector3(0, 1.45f, -2.10f), new Vector3(1.8f, 2.9f, .22f), profile.secondary);
                 Part(world, block, "Entrance door", new Vector3(0, 1.35f, -2.23f), new Vector3(1.3f, 2.6f, .035f), profile.metal);
                 Part(world, block, "Door glazing", new Vector3(0, 1.7f, -2.26f), new Vector3(.92f, 1.5f, .015f), "718782");
+                Transform doorway = new GameObject("Doorway " + kind).transform; doorway.SetParent(block, false); doorway.localPosition = new Vector3(0, 0, -2.32f);
                 for (int edge = -1; edge <= 1; edge += 2)
                     Part(world, block, "Ground floor residential window", new Vector3(edge * width * .30f, 1.65f, -2.10f), new Vector3(width * .22f, 1.7f, .08f), "667E78");
             }
@@ -75,7 +76,13 @@ namespace StreetCrossing.Presentation
                     float x = bay * width * .30f;
                     Part(world, block, "Shop window frame", new Vector3(x, 1.45f, -2.07f), new Vector3(width * .28f, 2.6f, .16f), profile.metal);
                     Part(world, block, "Shop interior shadow", new Vector3(x, 1.45f, -2.17f), new Vector3(width * .25f, 2.35f, .035f), "344441");
-                    if (!distant) ShopDisplay(world, block, profile, kind, x, width * .25f);
+                    if (bay == 0)
+                    {
+                        Part(world, block, "Shop entrance glazing", new Vector3(0, 1.35f, -2.22f), new Vector3(Mathf.Min(1.15f, width * .25f), 2.3f, .025f), "506866");
+                        Part(world, block, "Shop entrance handle", new Vector3(Mathf.Min(.35f, width * .08f), 1.2f, -2.27f), new Vector3(.035f, .32f, .045f), "D3C3A1");
+                        Transform threshold = new GameObject("Doorway " + kind).transform; threshold.SetParent(block, false); threshold.localPosition = new Vector3(0, 0, -2.32f);
+                    }
+                    else if (!distant) ShopDisplay(world, block, profile, kind, x, width * .25f);
                     Part(world, block, "Shopfront transom", new Vector3(x, 2.45f, -2.22f), new Vector3(width * .26f, .065f, .05f), profile.secondary);
                 }
                 string colour = kind == StreetFacadeKind.Pharmacy ? "4E7965" : kind == StreetFacadeKind.Bookshop ? "5C6A7D" : kind == StreetFacadeKind.Cafe ? "A97651" : profile.accent;

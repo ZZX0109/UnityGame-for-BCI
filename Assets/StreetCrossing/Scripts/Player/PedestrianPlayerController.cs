@@ -30,10 +30,14 @@ namespace StreetCrossing.Player
             cameraObject.AddComponent<AudioListener>(); ResetPose();
         }
         public void SetInputSource(IStreetInput source) { input = source; }
-        public void ResetPose()
+        public void ResetPose() => ResetPose(scenario.playerSpawn, 0);
+        public void ResetPose(Vector3 position, float heading)
         {
-            body.enabled = false; transform.position = scenario.playerSpawn; transform.rotation = Quaternion.identity; body.enabled = true;
-            yaw = pitch = gravity = 0;
+            if (float.IsNaN(heading) || float.IsInfinity(heading) || !float.IsFinite(position.x) || !float.IsFinite(position.y) || !float.IsFinite(position.z))
+                throw new System.ArgumentException("Player reset pose must be finite.");
+            body.enabled = false; transform.position = position;
+            yaw = Mathf.Repeat(heading, 360); pitch = gravity = 0;
+            transform.rotation = Quaternion.Euler(0, yaw, 0); body.enabled = true;
             if (View != null) View.transform.localRotation = Quaternion.identity;
         }
         private void Update()

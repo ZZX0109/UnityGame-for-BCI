@@ -18,8 +18,14 @@ namespace StreetCrossing.UI
         private StreetUIElements ui;
         private Canvas canvas;
         private RectTransform canvasRect, hud, objective, guide, marker, overlay, panel;
+        private ScrollRect pageScroll;
         private TextMeshProUGUI objectiveTitle, objectiveStatus, guideTitle, guideBody, markerText, controls;
+        private Button helpButton;
+        private TextMeshProUGUI helpCaption;
         private bool settings, confirmRestart, redraw = true, previousLargeText;
+        private bool previousHelpRequested;
+        private string previousMissionId, lastPageKey;
+        private int previousDistrictIndex = -1, previousMissionIndex = -1, previousVariant = -1, previousSegment = -1;
         private StreetGameState previousState;
         private EventSystem ownedEventSystem, eventSystem;
         private bool previousNavigationEvents;
@@ -30,6 +36,8 @@ namespace StreetCrossing.UI
         public TMP_FontAsset RuntimeFont => runtimeFont?.Asset;
         public RectTransform ModalPanel => panel;
         public RectTransform DestinationMarker => marker;
+        public RectTransform GuidancePanel => guide;
+        public Button HelpButton => helpButton;
         public bool SettingsVisible => settings;
 
         public void Initialize(StreetGameManager owner, Font ownFont)
@@ -61,14 +69,25 @@ namespace StreetCrossing.UI
         {
             TextMeshProUGUI text = ui.Text(name, parent, value, size, color); scalableText.Add(new KeyValuePair<TextMeshProUGUI, float>(text, size)); return text;
         }
+        private Button Button(string name, Transform parent, string label, UnityEngine.Events.UnityAction action, bool primary = false)
+        {
+            Button button = ui.Button(name, parent, label, action, primary);
+            TextMeshProUGUI caption = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (caption != null) scalableText.Add(new KeyValuePair<TextMeshProUGUI, float>(caption, caption.fontSize));
+            return button;
+        }
         private void BuildHud()
         {
             hud = ui.Rect("First person HUD", canvasRect); StreetUIElements.Stretch(hud);
             objective = ui.Rect("Objective card", hud); objective.anchorMin = objective.anchorMax = new Vector2(0, 1); objective.pivot = new Vector2(0, 1); objective.anchoredPosition = new Vector2(24, -24);
             ui.Image(objective, new Color(0.97f, 0.95f, 0.88f, 0.93f)); StreetUIElements.Vertical(objective, 16, 5);
             objectiveTitle = Text("Objective", objective, "", 22); objectiveStatus = Text("Observation status", objective, "", 16, StreetUIElements.Muted);
-            Button pause = ui.Button("Pause button", hud, "暂停\nEsc", () => game.Pause());
+            Button pause = Button("Pause button", hud, "暂停\nEsc", () => game.Pause());
             RectTransform pauseRect = pause.GetComponent<RectTransform>(); pauseRect.anchorMin = pauseRect.anchorMax = Vector2.one; pauseRect.pivot = Vector2.one; pauseRect.anchoredPosition = new Vector2(-24, -24); pauseRect.sizeDelta = new Vector2(92, 70);
+            helpButton = Button("Request help", hud, "查看帮助  F1", OpenHelp);
+            RectTransform helpRect = helpButton.GetComponent<RectTransform>(); helpRect.anchorMin = helpRect.anchorMax = Vector2.one; helpRect.pivot = Vector2.one;
+            helpRect.anchoredPosition = new Vector2(-24, -108); helpRect.sizeDelta = new Vector2(186, 54);
+            helpCaption = helpButton.GetComponentInChildren<TextMeshProUGUI>();
             guide = ui.Rect("Kerb and feedback guide", hud); guide.anchorMin = guide.anchorMax = new Vector2(0.5f, 0); guide.pivot = new Vector2(0.5f, 0); guide.anchoredPosition = new Vector2(0, 48);
             ui.Image(guide, new Color(0.97f, 0.95f, 0.88f, 0.94f)); StreetUIElements.Vertical(guide, 16, 4);
             guideTitle = Text("Guidance title", guide, "", 20); guideBody = Text("Guidance detail", guide, "", 17, StreetUIElements.Muted);
@@ -81,10 +100,29 @@ namespace StreetCrossing.UI
             ui.Image(marker, new Color(0.18f, 0.3f, 0.23f, 0.94f)); markerText = Text("Destination direction", marker, "", 17, Color.white);
             markerText.alignment = TextAlignmentOptions.Midline; StreetUIElements.Stretch(markerText.rectTransform, 12, 12, 6, 6);
         }
+        private void Update()
+        {
+            // The first-person cursor is locked. F1 and the pause-page button make
+            // on-demand help reachable without changing the player input interface.
+            if (game != null && (game.IsPlaying || game.State == StreetGameState.Paused) && Input.GetKeyDown(KeyCode.F1)) OpenHelp();
+        }
+        private void OpenHelp()
+        {
+            if (game == null || game.Mission == null || (game.State != StreetGameState.Playing && game.State != StreetGameState.Paused)) return;
+            if (!game.HelpRequested) game.RequestHelp();
+            redraw = true;
+        }
         private void LateUpdate()
         {
             if (game == null || canvas == null) return;
             if (game.State != previousState) { previousState = game.State; redraw = true; }
+            string missionId = game.Mission == null ? "" : game.Mission.missionId;
+            if (game.SelectedScenarioIndex != previousDistrictIndex || game.SelectedMissionIndex != previousMissionIndex || missionId != previousMissionId || game.SelectedVariant != previousVariant || game.CurrentSegmentIndex != previousSegment || game.HelpRequested != previousHelpRequested)
+            {
+                previousDistrictIndex = game.SelectedScenarioIndex; previousMissionIndex = game.SelectedMissionIndex;
+                previousMissionId = missionId; previousVariant = game.SelectedVariant;
+                previousSegment = game.CurrentSegmentIndex; previousHelpRequested = game.HelpRequested; redraw = true;
+            }
             if (redraw) RefreshPage();
             if (previousLargeText != StreetPreferences.LargeText) { previousLargeText = StreetPreferences.LargeText; ApplyTextScale(); }
             UpdatePresentation();
@@ -110,33 +148,58 @@ namespace StreetCrossing.UI
             float width = canvasRect.rect.width, height = canvasRect.rect.height;
             if (width <= 0 || height <= 0) return;
             panel.sizeDelta = new Vector2(Mathf.Min(900, width - 48), Mathf.Min(670, height - 48));
-            objective.sizeDelta = new Vector2(Mathf.Min(500, width - 164), StreetPreferences.LargeText ? 120 : 104);
-            guide.sizeDelta = new Vector2(Mathf.Min(760, width - 48), StreetPreferences.LargeText ? 126 : 108);
+            objective.sizeDelta = new Vector2(Mathf.Min(620, width - 240), StreetPreferences.LargeText ? 158 : 138);
+            guide.sizeDelta = new Vector2(Mathf.Min(800, width - 48), StreetPreferences.LargeText ? 178 : 156);
             if (!playing || game.Evaluation == null || game.scenario == null) return;
             StreetScenarioDefinition scenario = game.scenario; CrossingEvaluator result = game.Evaluation;
-            objectiveTitle.text = scenario.scenarioId + "  /  " + scenario.destinationName;
-            objectiveStatus.text = result.IsCrossing ? "沿斑马线完成过街，继续观察车辆" : "左侧 " + ObservationLabel(result.LeftObserved, scenario.requireLeftObservation) + "    右侧 " + ObservationLabel(result.RightObserved, scenario.requireRightObservation);
-            Vector3 position = game.PlayerPosition;
-            bool atKerb = game.IsAtKerb;
-            guideTitle.text = atKerb && !result.IsCrossing ? "路沿等待区  /  观察、确认，再出发" : result.IsCrossing ? "保持在斑马线内" : position.z > scenario.roadHalfWidth ? "继续前往目的地" : "先沿人行道走到斑马线入口";
-            guideBody.text = game.Notice.Length > 0 ? game.Notice : atKerb && !result.IsCrossing
-                ? "向左看 " + ObservationLabel(result.LeftObserved, scenario.requireLeftObservation) + "   ·   查看行人灯   ·   向右看 " + ObservationLabel(result.RightObserved, scenario.requireRightObservation) + "\n确认来车已停稳。辅助提示不能替代街道中的信号与车流。"
-                : result.Feedback;
-            UpdateMarker(scenario, width, height);
+            bool guided = game.Mission == null || game.Mission.assistance == StreetAssistance.Guided;
+            bool detailed = guided || game.HelpRequested;
+            objectiveTitle.text = game.DestinationName;
+            string missionTitle = game.Mission == null ? scenario.title : game.Mission.title;
+            objectiveStatus.text = missionTitle + "  ·  配置 " + VariantName(game.SelectedVariant) + "\n第 " + (game.CurrentSegmentIndex + 1) + " / " + Mathf.Max(1, game.SegmentCount) + " 段"
+                + (detailed ? "  ·  左侧 " + ObservationLabel(result.LeftObserved, scenario.requireLeftObservation) + " / 右侧 " + ObservationLabel(result.RightObserved, scenario.requireRightObservation) : "");
+            helpButton.gameObject.SetActive(true);
+            helpButton.interactable = !game.HelpRequested;
+            helpCaption.text = game.HelpRequested ? "帮助已打开" : "查看帮助  F1";
+            controls.text = "WASD 行走   鼠标观察   Shift 快步走   F1 查看帮助   Esc 暂停";
+            string notice = game.Notice;
+            bool hasNotice = !string.IsNullOrEmpty(notice);
+            guide.gameObject.SetActive(detailed || hasNotice);
+            guideTitle.text = hasNotice ? "现场提醒" : GuidanceTitle();
+            guideBody.text = hasNotice ? notice : GuidanceText();
+            if (detailed) UpdateMarker(width, height);
+            else marker.gameObject.SetActive(false);
         }
-        private void UpdateMarker(StreetScenarioDefinition scenario, float width, float height)
+        private string GuidanceTitle()
+        {
+            if (game.CrossingCompleted) return "已完成过街  /  沿人行道前往目的地";
+            if (game.Evaluation.IsCrossing) return "保持在斑马线内";
+            return game.IsAtKerb ? "路沿等待区  /  观察、确认，再出发" : "先沿人行道走到斑马线入口";
+        }
+        private string GuidanceText()
+        {
+            CrossingEvaluator result = game.Evaluation;
+            if (game.CrossingCompleted) return "沿人行道完成本段行程。方向标指向当前安全路线目标；无需抢时间。";
+            if (game.IsAtKerb && !result.IsCrossing)
+                return "向左看 " + ObservationLabel(result.LeftObserved, game.scenario.requireLeftObservation) + "   ·   查看行人灯   ·   向右看 " + ObservationLabel(result.RightObserved, game.scenario.requireRightObservation)
+                    + "\n确认道路可见、车辆已清空，再开始过街。提示不能替代实际信号与车流。";
+            return result.Feedback;
+        }
+        private void UpdateMarker(float width, float height)
         {
             if (game.Player == null || game.Player.View == null) { marker.gameObject.SetActive(false); return; }
             marker.gameObject.SetActive(true);
-            Vector3 point = game.Player.View.WorldToScreenPoint(scenario.destination + Vector3.up * 2.1f);
+            Vector3 target = game.NavigationTarget;
+            Vector3 point = game.Player.View.WorldToScreenPoint(target + Vector3.up * 2.1f);
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, point, null, out Vector2 local);
             bool behind = point.z <= 0;
             if (behind) local = -local;
             local.x = Mathf.Clamp(local.x, -width * 0.5f + 136, width * 0.5f - 136);
-            local.y = Mathf.Clamp(local.y, -height * 0.5f + 208, height * 0.5f - 174);
+            float bottom = guide.gameObject.activeSelf ? guide.anchoredPosition.y + guide.sizeDelta.y + 44 : 110;
+            local.y = Mathf.Clamp(local.y, -height * 0.5f + bottom, height * 0.5f - objective.sizeDelta.y - 68);
             marker.anchoredPosition = local;
-            Vector3 delta = scenario.destination - game.PlayerPosition; delta.y = 0;
-            markerText.text = (behind ? "转身寻找目的地" : scenario.destinationName) + "\n" + delta.magnitude.ToString("F0") + " m";
+            Vector3 delta = target - game.PlayerPosition; delta.y = 0;
+            markerText.text = (behind ? "转身寻找下一目标" : game.DestinationName) + "\n下一路段 " + delta.magnitude.ToString("F0") + " m";
         }
         private void ClearPanel()
         {
@@ -146,71 +209,140 @@ namespace StreetCrossing.UI
         }
         private void RefreshPage()
         {
-            if (panel == null) return; redraw = false; ClearPanel();
+            if (panel == null) return;
+            redraw = false;
+            if (game.IsPlaying && !HasModal) return;
+            // Layout must also be active before restoring a normalized scroll
+            // position; otherwise the new content still has unmeasured bounds.
+            overlay.gameObject.SetActive(true);
+            string pageKey = settings ? "settings" : confirmRestart ? "restart" : game.State.ToString();
+            bool retainPosition = pageKey == lastPageKey;
+            string selectedName = retainPosition && eventSystem != null && eventSystem.currentSelectedGameObject != null
+                && eventSystem.currentSelectedGameObject.transform.IsChildOf(panel) ? eventSystem.currentSelectedGameObject.name : null;
+            float previousScroll = retainPosition && pageScroll != null ? pageScroll.verticalNormalizedPosition : 1;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject != null && eventSystem.currentSelectedGameObject.transform.IsChildOf(panel)) eventSystem.SetSelectedGameObject(null);
+            ClearPanel(); lastPageKey = pageKey;
             string kicker = game.scenario == null ? "STREET CROSSING" : game.scenario.scenarioId + "  /  FIRST PERSON STREET CROSSING";
             Text("Page eyebrow", panel, kicker, 15, StreetUIElements.Muted);
-            string title = confirmRestart ? "重新开始本次练习？" : settings ? "舒适与显示设置" : game.State == StreetGameState.Menu ? "街角的一次过街" : game.State == StreetGameState.Paused ? "练习已暂停" : game.Evaluation.SafetySuccess ? "安全抵达" : "这次过街的回顾";
+            string title = confirmRestart ? "重新开始本次任务？" : settings ? "舒适与显示设置" : game.State == StreetGameState.Menu ? "选择街区与任务" : game.State == StreetGameState.Paused ? "任务已暂停" : game.State == StreetGameState.SegmentComplete ? "已到店  /  准备下一段" : game.MissionSafetySuccess ? "已安全完成整个任务" : "本次任务的回顾";
             Text("Page title", panel, title, 32);
-            RectTransform content = ui.ScrollContent(panel); Selectable focus;
+            RectTransform content = ui.ScrollContent(panel);
+            // Returning from play rebuilds the page before UpdatePresentation
+            // reactivates its overlay. Its real scroll ancestor is still valid.
+            pageScroll = content.GetComponentInParent<ScrollRect>(true);
+            Selectable focus;
             if (confirmRestart) focus = RestartPage(content);
             else if (settings) focus = SettingsPage(content);
             else if (game.State == StreetGameState.Menu) focus = MenuPage(content);
             else if (game.State == StreetGameState.Paused) focus = PausePage(content);
+            else if (game.State == StreetGameState.SegmentComplete) focus = SegmentPage(content);
             else focus = ResultPage(content);
             ApplyTextScale();
+            if (retainPosition)
+            {
+                Canvas.ForceUpdateCanvases();
+                if (pageScroll != null) pageScroll.verticalNormalizedPosition = previousScroll;
+                if (!string.IsNullOrEmpty(selectedName))
+                    foreach (Selectable candidate in panel.GetComponentsInChildren<Selectable>())
+                        if (candidate.gameObject.activeInHierarchy && candidate.interactable && candidate.name == selectedName) { focus = candidate; break; }
+            }
             if (!game.IsPlaying && focus != null && eventSystem != null) eventSystem.SetSelectedGameObject(focus.gameObject);
         }
         private RectTransform Actions() { RectTransform actions = ui.Rect("Page actions", panel); StreetUIElements.Horizontal(actions); StreetUIElements.Size(actions.gameObject, 54); return actions; }
         private Selectable MenuPage(RectTransform content)
         {
-            Text("Menu introduction", content, "选择情境，沿斑马线前往对面的目的地。安全和完整观察比速度更重要。", 20);
+            Text("Menu introduction", content, "先选街区，再选任务与固定交通配置。所有任务都可直接练习；等待不扣安全分，帮助和舒适设置不降低评价。", 20);
+            Text("District selection heading", content, "街区  /  三种道路情境", 21);
             for (int i = 0; i < game.Scenarios.Count; i++)
             {
                 int index = i; StreetScenarioDefinition definition = game.Scenarios[i]; bool selected = index == game.SelectedScenarioIndex;
-                Button choice = ui.Button("Scenario " + definition.scenarioId, content, "", () => { game.SelectScenario(index); redraw = true; });
-                choice.GetComponent<Image>().color = selected ? StreetUIElements.SoftGreen : new Color(0.91f, 0.91f, 0.84f);
-                choice.GetComponent<LayoutElement>().preferredHeight = StreetPreferences.LargeText ? 124 : 110;
-                Destroy(choice.transform.Find("Caption").gameObject);
-                RectTransform card = ui.Rect("Scenario description", choice.transform); StreetUIElements.Stretch(card, 18, 18, 12, 12); StreetUIElements.Vertical(card, 0, 5);
-                Text("Scenario title", card, (selected ? "已选择  " : "选择  ") + definition.scenarioId + "  " + definition.title, 21);
-                Text("Scenario summary", card, definition.description, 17, StreetUIElements.Muted);
+                RectTransform card = ChoiceCard("Scenario " + definition.scenarioId, content, selected, () => { game.SelectScenario(index); redraw = true; }, StreetPreferences.LargeText ? 112 : 98);
+                Text("Scenario title", card, (selected ? "已选择  " : "选择  ") + definition.title, 21);
+                Text("Scenario summary", card, "建议从" + TierName(StreetMissionProgress.RecommendedTier(definition.scenarioId)) + "任务开始  ·  可自由选择任意梯度", 17, StreetUIElements.Muted);
             }
-            Text("Controls reference", content, "WASD 连续行走  ·  鼠标环顾  ·  Shift 快步走\nE 查看标识  ·  Esc 暂停  ·  R 确认重开", 17, StreetUIElements.Muted);
-            Text("Best result", content, "当前情境最佳安全评价  " + StreetPreferences.BestStars(game.scenario.scenarioId) + " / 3", 17, StreetUIElements.Muted);
-            RectTransform actions = Actions(); Button start = ui.Button("Start practice", actions, "开始练习", () => game.StartPractice(), true);
-            ui.Button("Open settings", actions, "设置", ShowSettings); return start;
+            Text("Mission selection heading", content, "任务  /  引导、标准与挑战", 21);
+            if (game.Missions != null)
+                for (int i = 0; i < game.Missions.Count; i++)
+                {
+                    int index = i; var definition = game.Missions[i]; bool selected = index == game.SelectedMissionIndex;
+                    RectTransform card = ChoiceCard("Mission " + definition.missionId, content, selected, () => { game.SelectMission(index); redraw = true; }, StreetPreferences.LargeText ? 192 : 168);
+                    Text("Mission title", card, (selected ? "已选择  " : "选择  ") + TierName(definition.tier) + "  /  " + definition.title, 21);
+                    Text("Mission summary", card, definition.description, 17, StreetUIElements.Muted);
+                    Text("Mission progress", card, "任务最佳 " + StreetMissionProgress.BestStars(definition) + " / 3 星  ·  安全完成配置 " + StreetMissionProgress.CompletedVariantCount(definition) + " / 3", 17, StreetUIElements.Muted);
+                    Text("Mission assistance", card, AssistanceDescription(definition.assistance), 16, StreetUIElements.Muted);
+                }
+            Text("Traffic variant heading", content, "固定交通配置", 21);
+            Text("Traffic variant information", content, "A、B、C 是同一任务的三组固定车流；配置编号不代表难度。重试可复现当前配置。", 17, StreetUIElements.Muted);
+            for (int i = 0; i < 3; i++)
+            {
+                int variant = i; bool selected = variant == game.SelectedVariant;
+                int stars = game.Mission == null ? 0 : StreetMissionProgress.VariantStars(game.Mission, variant);
+                string completion = stars > 0 ? "已完成 " + stars + " / 3 星" : "尚未完成";
+                Button choice = Button("Traffic variant " + variant, content, (selected ? "已选择  " : "选择  ") + "配置 " + VariantName(variant) + "  ·  " + completion, () => { game.SelectVariant(variant); redraw = true; });
+                choice.GetComponent<Image>().color = selected ? StreetUIElements.SoftGreen : new Color(0.91f, 0.91f, 0.84f);
+            }
+            Text("Controls reference", content, "WASD 连续行走  ·  鼠标环顾  ·  Shift 快步走\nE 查看标识  ·  F1 查看帮助  ·  Esc 暂停  ·  R 确认重开", 17, StreetUIElements.Muted);
+            RectTransform actions = Actions(); Button start = Button("Start practice", actions, "开始任务", () => game.StartPractice(), true);
+            Button("Open settings", actions, "设置", ShowSettings); return start;
+        }
+        private RectTransform ChoiceCard(string name, RectTransform parent, bool selected, UnityEngine.Events.UnityAction action, float height)
+        {
+            Button choice = Button(name, parent, "", action);
+            choice.GetComponent<Image>().color = selected ? StreetUIElements.SoftGreen : new Color(0.91f, 0.91f, 0.84f);
+            choice.GetComponent<LayoutElement>().preferredHeight = height;
+            Transform caption = choice.transform.Find("Caption"); caption.gameObject.SetActive(false); Destroy(caption.gameObject);
+            RectTransform card = ui.Rect(name + " description", choice.transform); StreetUIElements.Stretch(card, 18, 18, 12, 12);
+            StreetUIElements.Vertical(card, 0, 5); return card;
         }
         private Selectable PausePage(RectTransform content)
         {
             Text("Pause explanation", content, "交通、信号和行走已同步暂停。返回后继续观察，确认环境，再完成过街。", 21);
             Text("Pause controls", content, "Esc 可以继续练习。窗口失去焦点时会自动暂停。", 18, StreetUIElements.Muted);
-            ui.Button("Pause settings", content, "设置", ShowSettings);
-            ui.Button("Restart practice", content, "重新开始", ShowRestartConfirmation);
-            ui.Button("Return to scenario menu", content, "返回情境选择", () => game.ReturnToMenu());
-            return ui.Button("Resume practice", Actions(), "继续练习", () => game.Resume(), true);
+            if (game.Mission != null)
+            {
+                Button help = Button("Pause request help", content, game.HelpRequested ? "帮助已打开" : "查看帮助  F1", OpenHelp);
+                help.interactable = !game.HelpRequested;
+                Text("Help scoring information", content, "帮助单独记录，不扣安全分。字号、音量与舒适模式不受任务梯度影响。", 17, StreetUIElements.Muted);
+                if (game.HelpRequested)
+                {
+                    Text("Requested help title", content, GuidanceTitle(), 20);
+                    Text("Requested help detail", content, GuidanceText(), 18, StreetUIElements.Muted);
+                }
+            }
+            Button("Pause settings", content, "设置", ShowSettings);
+            Button("Restart practice", content, "重新开始整个任务", ShowRestartConfirmation);
+            Button("Return to scenario menu", content, "返回任务选择", () => game.ReturnToMenu());
+            return Button("Resume practice", Actions(), "继续任务", () => game.Resume(), true);
+        }
+        private Selectable SegmentPage(RectTransform content)
+        {
+            Text("Segment destination", content, "本段已抵达：" + game.DestinationName, 22);
+            Text("Segment continuation", content, "准备好后继续下一段。你将从当前位置返程；交通和信号保留当前进度，左右观察将重新记录。", 20);
+            Text("Segment results", content, game.MissionSummary, 18, StreetUIElements.Muted);
+            Text("Segment scoring information", content, "整项任务按所有路段评价。前一段的风险记录不会被返程成功覆盖，等待和帮助不扣安全分。", 17, StreetUIElements.Muted);
+            Button("Segment settings", content, "设置", ShowSettings);
+            Button("Segment return menu", content, "返回任务选择", () => game.ReturnToMenu());
+            return Button("Continue mission", Actions(), "准备好了，继续返程", () => game.ContinueMission(), true);
         }
         private Selectable RestartPage(RectTransform content)
         {
-            Text("Restart explanation", content, "玩家位置、交通周期、车辆和本次观察记录将一起重置。同一情境会重现相同的车流。", 21);
+            Text("Restart explanation", content, "整个任务将从第一段重新开始。玩家位置、交通周期、车辆、观察和帮助记录一起重置；同一配置会重现相同车流。", 21);
             Text("Restart note", content, "取消后仍保持暂停，便于准备好再继续。", 18, StreetUIElements.Muted);
-            RectTransform actions = Actions(); ui.Button("Confirm restart", actions, "确认重开", () => { CloseModal(); game.StartPractice(); }, true);
-            return ui.Button("Cancel restart", actions, "取消", CloseModal);
+            RectTransform actions = Actions(); Button("Confirm restart", actions, "确认重开", () => { CloseModal(); game.StartPractice(); }, true);
+            return Button("Cancel restart", actions, "取消", CloseModal);
         }
         private Selectable ResultPage(RectTransform content)
         {
-            CrossingEvaluator result = game.Evaluation;
-            Text("Result feedback", content, result.Feedback, 22);
+            Text("Result feedback", content, game.MissionSafetySuccess ? "所有必需路段均已安全完成。" : "请查看各段的实际风险与未完成原因，再选择是否重新练习。", 22);
             Text("Safety score", content, "安全评价  " + game.Stars + " / 3", 24);
-            Text("Signal at entry", content, "进入时信号  /  " + (result.Attempts == 0 ? "尚未进入道路" : PhaseName(result.SignalAtEntry)), 19);
-            Text("Observation details", content, "左侧观察  " + ObservationLabel(result.LeftObserved, game.scenario.requireLeftObservation) + "   ·   右侧观察  " + ObservationLabel(result.RightObserved, game.scenario.requireRightObservation)
-                + "\n本情境观察要求  " + (result.ObservationRequirementsSatisfied ? "已完成" : "尚未完成"), 19);
-            Text("Event distinctions", content, "规则违规 " + result.Violations + "   ·   危险接近 " + result.NearMisses
-                + "\n静止车辆接触 " + result.StationaryContacts + "   ·   行驶碰撞 " + result.MovingCollisions, 19);
-            Text("Contact explanation", content, "静止车辆接触、危险接近和行驶碰撞分别记录。静止接触不作为行驶碰撞；违规或未完成必要观察会影响安全完成。", 17, StreetUIElements.Muted);
-            Text("Timing", content, "等待 " + result.WaitingSeconds.ToString("F1") + " 秒   ·   总时长 " + game.WorldTime.ToString("F1") + " 秒\n没有抢时间奖励。观察记录表示镜头看到道路，不是注意力测量。", 17, StreetUIElements.Muted);
+            Text("Mission segment results", content, game.MissionSummary, 19);
+            Text("Contact explanation", content, "危险接近、静止车辆接触和行驶碰撞分别记录。整项评价保留各段风险，不以一次幸运抵达代替安全过程。", 17, StreetUIElements.Muted);
+            Text("Timing", content, "任务总时长 " + game.MissionElapsedSeconds.ToString("F1") + " 秒   ·   主动查看帮助 " + game.AssistanceRequests + " 次\n时间和帮助不加减安全分。观察记录表示镜头看到道路，不是眼动或注意力测量。", 17, StreetUIElements.Muted);
+            if (game.Mission != null)
+                Text("Best result", content, "本任务最佳 " + StreetMissionProgress.BestStars(game.Mission) + " / 3 星  ·  安全完成配置 " + StreetMissionProgress.CompletedVariantCount(game.Mission) + " / 3", 17, StreetUIElements.Muted);
             if (!string.IsNullOrEmpty(game.LogError)) Text("Log availability", content, "本次过程记录暂不可用：" + game.LogError, 16, StreetUIElements.Muted);
-            RectTransform actions = Actions(); Button retry = ui.Button("Try again", actions, "再次练习", () => game.StartPractice(), true);
-            ui.Button("Choose another scenario", actions, "选择情境", () => game.ReturnToMenu()); return retry;
+            RectTransform actions = Actions(); Button retry = Button("Try again", actions, "重试当前配置", () => game.StartPractice(), true);
+            Button("Choose another scenario", actions, "选择其他任务或配置", () => game.ReturnToMenu()); return retry;
         }
         private Selectable SettingsPage(RectTransform content)
         {
@@ -223,7 +355,7 @@ namespace StreetCrossing.UI
             ToggleRow(content, "放大辅助文字", StreetPreferences.LargeText, value => { StreetPreferences.LargeText = value; redraw = true; });
             ToggleRow(content, "全屏显示", Screen.fullScreen, value => Screen.fullScreen = value);
             Text("Comfort information", content, "无镜头摇晃、无跳跃。信号同时使用灯位和文字区分；音效不是唯一的过街信息。", 17, StreetUIElements.Muted);
-            return ui.Button("Save settings", Actions(), "保存并返回", CloseModal, true);
+            return Button("Save settings", Actions(), "保存并返回", CloseModal, true);
         }
         private void SliderRow(RectTransform parent, string label, float minimum, float maximum, float value, UnityEngine.Events.UnityAction<float> changed, string format)
         {
@@ -252,6 +384,17 @@ namespace StreetCrossing.UI
             foreach (KeyValuePair<TextMeshProUGUI, float> item in scalableText) if (item.Key != null) item.Key.fontSize = item.Value * scale;
         }
         private static string ObservationLabel(bool observed, bool required) => observed ? "已记录" : required ? "待完成" : "可选";
+        private static string VariantName(int variant) => variant == 1 ? "B" : variant == 2 ? "C" : "A";
+        private static string TierName(int tier) => tier == 2 ? "标准" : tier == 3 ? "挑战" : "引导";
+        private static string AssistanceDescription(StreetAssistance assistance)
+        {
+            switch (assistance)
+            {
+                case StreetAssistance.RiskOnly: return "现场提醒：目标与真实风险常显，逐步提示可按 F1 查看。";
+                case StreetAssistance.OnDemand: return "按需帮助：先独立判断；需要时按 F1，帮助不扣安全分。";
+                default: return "引导帮助：显示路沿观察、确认信号和分段行走提示。";
+            }
+        }
         private static string PhaseName(TrafficPhase phase)
         {
             switch (phase)

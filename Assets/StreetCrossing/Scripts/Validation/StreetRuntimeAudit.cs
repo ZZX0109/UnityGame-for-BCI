@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using BCI.RuntimeValidation;
 using StreetCrossing.Core;
 using StreetCrossing.Player;
@@ -26,7 +28,8 @@ namespace StreetCrossing.Validation
         [Serializable]
         private sealed class Snapshot
         {
-            public string scenarioId, gameState, trafficPhase, eventLogPath;
+            public string scenarioId, missionId, gameState, trafficPhase, eventLogPath;
+            public int missionRevision, variant, segment, longWaitReminders;
             public int activeVehicles, maximumVehicles, backgroundPeople, timeoutRestarts, completedRebuilds, prepareCalls;
             public float worldTime, timeoutSeconds, timeScale;
             public double observedSimulationSeconds;
@@ -38,6 +41,8 @@ namespace StreetCrossing.Validation
         private StreetGameManager game;
         private bool restoreFocus, previousFocusPolicy, subscribed, timeoutObserved;
         private int timeoutRestarts, completedRebuilds, prepareCalls;
+        private int longWaitReminders;
+        private bool galleryCaptured;
         private float previousWorldTime, lastSimulationAdvance;
         private double observedSimulationSeconds;
 
@@ -51,6 +56,8 @@ namespace StreetCrossing.Validation
                 var ui = game.GetComponent<StreetUIController>();
                 return JsonUtility.ToJson(new Snapshot {
                     scenarioId = game.scenario.scenarioId,
+                    missionId = game.Mission.missionId, missionRevision = game.Mission.revision,
+                    variant = game.SelectedVariant, segment = game.CurrentSegmentIndex, longWaitReminders = longWaitReminders,
                     gameState = game.State.ToString(),
                     trafficPhase = game.Intersection.Phase.ToString(),
                     eventLogPath = game.LogPath,
@@ -93,6 +100,12 @@ namespace StreetCrossing.Validation
             game.AutoPauseOnFocusLoss = false;
             game.SetInputSource(quietInput);
             if (!subscribed) { game.GameEvent += OnGameEvent; subscribed = true; }
+            string[] arguments = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < arguments.Length; i++)
+                if (!galleryCaptured && arguments[i] == "--bci-mission-gallery")
+                {
+                    yield return CaptureMissionGallery(arguments[i + 1]); galleryCaptured = true;
+                }
             game.ReturnToMenu();
             game.SelectScenario(1);
             yield return null;
@@ -105,9 +118,65 @@ namespace StreetCrossing.Validation
             if (!game.IsPlaying) throw new InvalidOperationException("S02 did not start through StartPractice.");
             prepareCalls++;
             timeoutRestarts = 0;
+            longWaitReminders = 0;
             observedSimulationSeconds = 0;
             previousWorldTime = game.WorldTime;
             lastSimulationAdvance = Time.realtimeSinceStartup;
+        }
+
+        [Serializable]
+        private sealed class GalleryShot
+        {
+            public string file, missionId, state, assistance, destination;
+            public int width, height, variant, segment;
+            public Vector3 playerPosition, goal, navigationTarget;
+            public bool helpRequested;
+        }
+        [Serializable]
+        private sealed class GalleryManifest
+        {
+            public string renderer, evidence = "Actual standalone backbuffer captures; nine task HUDs, on-demand help and three district menus. Human layout review is separate.";
+            public List<GalleryShot> screenshots = new List<GalleryShot>();
+        }
+        private IEnumerator CaptureMissionGallery(string directory)
+        {
+            if (!Path.IsPathRooted(directory)) throw new ArgumentException("Gallery requires an absolute output path.");
+            Directory.CreateDirectory(directory);
+            var manifest = new GalleryManifest { renderer = SystemInfo.graphicsDeviceName };
+            for (int district = 0; district < game.Scenarios.Count; district++)
+            {
+                game.ReturnToMenu(); game.SelectScenario(district);
+                yield return CaptureGalleryShot(directory, "S0" + (district + 1) + "-menu.png", manifest);
+                for (int tier = 0; tier < game.Missions.Count; tier++)
+                {
+                    game.ReturnToMenu(); game.SelectMission(tier); game.SelectVariant(0); game.StartPractice();
+                    yield return CaptureGalleryShot(directory, game.Mission.missionId + "-hud.png", manifest);
+                    if (game.Mission.assistance == StreetAssistance.OnDemand)
+                    {
+                        game.RequestHelp();
+                        yield return CaptureGalleryShot(directory, game.Mission.missionId + "-help.png", manifest);
+                    }
+                }
+            }
+            File.WriteAllText(Path.Combine(directory, "gallery-manifest.json"), JsonUtility.ToJson(manifest, true) + "\n", new System.Text.UTF8Encoding(false));
+        }
+        private IEnumerator CaptureGalleryShot(string directory, string file, GalleryManifest manifest)
+        {
+            // Real rendered frames allow deferred UI destruction and shader uploads to settle.
+            for (int frame = 0; frame < 8; frame++) { yield return null; yield return new WaitForEndOfFrame(); }
+            Texture2D capture = ScreenCapture.CaptureScreenshotAsTexture();
+            if (!capture) throw new InvalidOperationException("No actual gallery backbuffer.");
+            try
+            {
+                File.WriteAllBytes(Path.Combine(directory, file), capture.EncodeToPNG());
+                manifest.screenshots.Add(new GalleryShot {
+                    file = file, missionId = game.Mission.missionId, state = game.State.ToString(), assistance = game.Mission.assistance.ToString(),
+                    destination = game.DestinationName, width = capture.width, height = capture.height, variant = game.SelectedVariant,
+                    segment = game.CurrentSegmentIndex, playerPosition = game.PlayerPosition, goal = game.Destination,
+                    navigationTarget = game.NavigationTarget, helpRequested = game.HelpRequested
+                });
+            }
+            finally { Object.Destroy(capture); }
         }
 
         public void TickActive()
@@ -158,6 +227,7 @@ namespace StreetCrossing.Validation
         private void OnGameEvent(string name, string detail)
         {
             if (name == "Timeout") timeoutObserved = true;
+            if (name == "PracticeReminder") longWaitReminders++;
         }
 
         public void Restore()

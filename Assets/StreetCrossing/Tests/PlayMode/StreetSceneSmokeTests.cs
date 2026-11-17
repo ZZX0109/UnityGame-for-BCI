@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using StreetCrossing.Core;
 using StreetCrossing.Player;
+using StreetCrossing.Presentation;
 using StreetCrossing.Traffic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,7 +50,7 @@ namespace StreetCrossing.Tests.PlayMode
             Assert.That(Object.FindObjectsOfType<VehicleController>().Length, Is.EqualTo(4));
             Assert.That(game.Evaluation.Attempts, Is.Zero);
             Assert.That(game.Intersection.Phase, Is.EqualTo(TrafficPhase.VehicleGreen));
-            Assert.That(Vector3.Distance(game.PlayerPosition, game.scenario.playerSpawn), Is.LessThan(0.02f));
+            Assert.That(Vector3.Distance(game.PlayerPosition, StreetMissionGeometry.Spawn(game.Mission, 0)), Is.LessThan(0.02f));
             LogAssert.NoUnexpectedReceived();
         }
     }

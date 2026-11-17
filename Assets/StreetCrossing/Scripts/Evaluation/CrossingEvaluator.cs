@@ -32,6 +32,7 @@ namespace StreetCrossing.Evaluation
         public bool ObservationRequirementsSatisfied => (!requireLeft || leftAtEntry) && (!requireRight || rightAtEntry);
         public bool SafetySuccess { get; private set; }
         public bool IsCrossing => active;
+        public bool HasCrossed => crossed;
         public bool Finished => finished;
         public bool MayRecordPreEntryObservation => Attempts == 0 && !finished;
         public float WaitingSeconds { get; private set; }

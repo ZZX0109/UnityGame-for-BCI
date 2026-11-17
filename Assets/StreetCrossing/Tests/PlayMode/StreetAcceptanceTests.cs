@@ -33,7 +33,7 @@ namespace StreetCrossing.Tests.PlayMode
         public IEnumerator LoadStreet()
         {
             yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
-            game = Object.FindObjectOfType<StreetGameManager>(); Assert.That(game, Is.Not.Null); game.AutoPauseOnFocusLoss = false;
+            game = Object.FindObjectOfType<StreetGameManager>(); Assert.That(game, Is.Not.Null); game.AutoPauseOnFocusLoss = false; game.PersistMissionProgress = false;
             input = new ScriptedInput { game = game }; game.SetInputSource(input);
         }
         private IEnumerator WalkTo(float z, float maximumSimulationSeconds)
@@ -52,6 +52,17 @@ namespace StreetCrossing.Tests.PlayMode
             float start = game.WorldTime, realtime = Time.realtimeSinceStartup;
             while (game.IsPlaying && !(left ? game.Evaluation.LeftObserved : game.Evaluation.RightObserved) && game.WorldTime - start < 3 && Time.realtimeSinceStartup - realtime < 10) yield return null;
             Assert.That(left ? game.Evaluation.LeftObserved : game.Evaluation.RightObserved, Is.True, "Visible road/vehicle evidence at kerb was not recorded.");
+        }
+        private IEnumerator FinishSidewalkGoal()
+        {
+            float deadline = Time.realtimeSinceStartup + 40;
+            while (game.IsPlaying && !game.Evaluation.Finished && Time.realtimeSinceStartup < deadline)
+            {
+                Vector3 delta = game.NavigationTarget - game.PlayerPosition; delta.y = 0;
+                input.yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg; input.pitch = 0; input.movement = Vector2.up;
+                yield return null;
+            }
+            input.movement = Vector2.zero;
         }
         private IEnumerator Complete(int scenarioIndex)
         {
@@ -77,9 +88,8 @@ namespace StreetCrossing.Tests.PlayMode
             float start = game.WorldTime, realtime = Time.realtimeSinceStartup;
             while (game.IsPlaying && (game.Intersection.Phase != TrafficPhase.Walk || game.Intersection.Remaining < game.scenario.SafeCrossingSeconds) && game.WorldTime - start < 100 && Time.realtimeSinceStartup - realtime < 160) yield return null;
             Assert.That(game.Intersection.Phase, Is.EqualTo(TrafficPhase.Walk)); Assert.That(game.Traffic.HasUnclearedVehicles, Is.False);
-            input.movement = Vector2.up; start = game.WorldTime; realtime = Time.realtimeSinceStartup;
-            while (game.IsPlaying && !game.Evaluation.Finished && game.WorldTime - start < 25 && Time.realtimeSinceStartup - realtime < 50) yield return null;
-            input.movement = Vector2.zero;
+            yield return WalkTo(game.scenario.roadHalfWidth + .8f, 12);
+            yield return FinishSidewalkGoal();
             Assert.That(game.Evaluation.Finished, Is.True); Assert.That(game.Evaluation.SafetySuccess, Is.True, game.Evaluation.Feedback);
             Assert.That(game.Evaluation.ObservationRequirementsSatisfied, Is.True); Assert.That(game.Evaluation.MovingCollisions, Is.Zero);
             Assert.That(game.Evaluation.Violations, Is.Zero); Assert.That(game.State, Is.EqualTo(StreetGameState.Result));
@@ -124,9 +134,8 @@ namespace StreetCrossing.Tests.PlayMode
             Assert.That(game.IsPlayerInProtectedCrosswalk, Is.True); Assert.That(game.Intersection.IsClearanceHeld, Is.True);
             Assert.That(game.Intersection.CanEnterVehicles, Is.False); Assert.That(game.Traffic.HasUnclearedVehicles, Is.False);
             Assert.That(game.Evaluation.MovingCollisions, Is.Zero);
-            input.movement = Vector2.up; start = game.WorldTime; realtime = Time.realtimeSinceStartup;
-            while (game.IsPlaying && !game.Evaluation.Finished && game.WorldTime - start < 15 && Time.realtimeSinceStartup - realtime < 30) yield return null;
-            input.movement = Vector2.zero;
+            yield return WalkTo(game.scenario.roadHalfWidth + .8f, 12);
+            yield return FinishSidewalkGoal();
             Assert.That(game.Evaluation.SafetySuccess, Is.True, game.Evaluation.Feedback); Assert.That(game.Evaluation.SignalAtEntry, Is.EqualTo(TrafficPhase.Walk));
             LogAssert.NoUnexpectedReceived();
         }

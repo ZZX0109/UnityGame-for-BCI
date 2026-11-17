@@ -36,7 +36,7 @@ GAMES = {
         "scene": "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity",
         "static": "docs/Game03_StreetCrossing/tools/validate_street.py",
         "docs": "docs/Game03_StreetCrossing",
-        "categories": ["Acceptance_S01", "Acceptance_S02", "Acceptance_S03"],
+        "categories": ["Acceptance_S01", "Acceptance_S02", "Acceptance_S03", "MissionAcceptance"],
     },
 }
 

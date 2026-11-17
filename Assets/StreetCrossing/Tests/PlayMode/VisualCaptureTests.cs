@@ -88,6 +88,7 @@ namespace StreetCrossing.Tests.PlayMode
             Assert.NotNull(game);
             Assert.IsTrue(game.enabled);
             game.AutoPauseOnFocusLoss = false;
+            game.PersistMissionProgress = false;
             input = new CaptureInput { game = game };
             game.SetInputSource(input);
             StreetUIController ui = game.GetComponent<StreetUIController>();
@@ -131,10 +132,18 @@ namespace StreetCrossing.Tests.PlayMode
                 yield return WalkTo(0f, 8f);
                 yield return Capture(directory, manifest, "crosswalk");
                 Assert.IsFalse(game.Evaluation.Finished);
-                // The real destination volume begins one metre before its centre; entering it naturally ends the attempt.
-                yield return WalkTo(game.scenario.destination.z - 1f, 12f, true);
-                deadline = Time.realtimeSinceStartup + 2;
-                while (game.IsPlaying && Time.realtimeSinceStartup < deadline) yield return null;
+                yield return WalkTo(game.scenario.roadHalfWidth + .8f, 12f);
+                // The three current tasks lead to real, different storefronts after the far sidewalk.
+                deadline = Time.realtimeSinceStartup + 40;
+                while (game.IsPlaying && Time.realtimeSinceStartup < deadline)
+                {
+                    Vector3 target = game.NavigationTarget;
+                    Vector3 delta = target - game.PlayerPosition; delta.y = 0;
+                    AimAt(target + Vector3.up * 1.65f); input.pitch = 0;
+                    input.movement = Vector2.up * Mathf.Min(1, delta.magnitude / .25f);
+                    yield return null;
+                }
+                input.movement = Vector2.zero;
                 Assert.AreEqual(StreetGameState.Result, game.State);
                 Assert.IsTrue(game.Evaluation.SafetySuccess, game.Evaluation.Feedback);
                 yield return Capture(directory, manifest, "destination", false);
