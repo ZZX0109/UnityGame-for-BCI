@@ -13,6 +13,8 @@
   - `Assets/VirtualHand/Models/Hand_{R,L}_{diffuse,normal,roughness}.png`（2K）
   - `ArtSource/Hands/hands_source.blend`（可编辑源）
   - `ArtSource/Review/hand_{r,l}_{open,palm,back,side,fist,pinch}.png` + `hand_two_{open,fist}.png`
+- 蒙皮：程序化距离衰减顶点组（每顶点最近 3 骨）+ Armature 修改器（headless 下 ops ARMATURE_AUTO 不可靠）。
+- 姿态：世界轴增量旋转（每帧重置 rest 后绕世界 X 弯曲），不依赖 FBX 骨骼 roll 约定；Unity 端 HandRigDriver 同一方法。
 - 命令：
   ```
   D:/SoftwareManagement/apps/Blender/blender.exe --background --factory-startup --python ArtSource/build_hands.py

@@ -159,10 +159,10 @@ def skin(obj, arm):
             d = (ap - ab * tt).length
             ds.append((d, bi))
         ds.sort()
-        top = ds[:3]
-        total = sum((1.0 / max(d, 0.015)) ** 4 for d, _ in top)
+        top = ds[:2]  # max 2 bones per vertex: crisper deformation, no cross-finger pull
+        total = sum((1.0 / max(d, 0.010)) ** 8 for d, _ in top)
         for d, bi in top:
-            wmat[vi, bi] = ((1.0 / max(d, 0.015)) ** 4) / total
+            wmat[vi, bi] = ((1.0 / max(d, 0.010)) ** 8) / total
     for bi, bn in enumerate(names):
         g = obj.vertex_groups.new(name=bn)
         idx = [vi for vi in range(n_v) if wmat[vi, bi] > 1e-4]
@@ -232,14 +232,33 @@ def bake_textures(obj, side, nt, bsdf, size=2048):
 # ---------------------------------------------------------------- poses
 POSE_ANGLES = {}  # (side, name) -> {bone: (x,y,z) degrees}
 
+def _bend_axis(pb, arm):
+    """Curl axis for a finger bone. In the rest A-pose, fingers extend along
+    +Z and the palm faces -Y, so curling = rotating about world X. Mirror-safe
+    because world-X rotation of an L-side bone chain curls toward the palm too."""
+    return Vector((1.0, 0.0, 0.0))
+
 def apply_pose(arm, side, name):
+    """Geometry-driven curl: reset to rest, rotate each bone about its own
+    curl axis (bone dir x palm normal), parent-first so flexion compounds."""
     sfx = "." + side
-    for bn, (x, y, z) in POSE_ANGLES[(side, name)].items():
+    angles = POSE_ANGLES[(side, name)]
+    for bn in angles:
         pb = arm.pose.bones.get(bn + sfx)
         if pb is None: continue
         pb.rotation_mode = "XYZ"
-        pb.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
+        pb.rotation_euler = (0, 0, 0)
     bpy.context.view_layer.update()
+    for bn, (x, y, z) in angles.items():
+        pb = arm.pose.bones.get(bn + sfx)
+        if pb is None: continue
+        head = arm.matrix_world @ Vector(pb.head)
+        axis = _bend_axis(pb, arm)
+        M = Matrix.Translation(head) @ Matrix.Rotation(math.radians(x), 4, axis) @ Matrix.Translation(-head)
+        pb.matrix = M @ pb.matrix
+    bpy.context.view_layer.update()
+
+
 
 def clear_pose(arm):
     for pb in arm.pose.bones:
@@ -289,7 +308,7 @@ def studio(scene):
         d = tgt - Vector(ob.location)
         ob.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
 
-def render_at(filepath, focus, direction, dist=6.5, lens=85, res=(1280, 960)):
+def render_at(filepath, focus, direction, dist=10.0, lens=85, res=(1280, 960)):
     sc = bpy.context.scene
     sc.render.filepath = os.path.join(REVIEW, os.path.basename(filepath) + ".png") \
         if not os.path.isabs(filepath) else filepath
@@ -306,8 +325,10 @@ def render_at(filepath, focus, direction, dist=6.5, lens=85, res=(1280, 960)):
     log("rendered", os.path.basename(filepath))
 
 def set_action(arm, pose_name_and_side):
-    side = pose_name_and_side.rsplit("_", 1)[1]
-    name = pose_name_and_side.rsplit("_", 1)[0]
+    # "pose_fist_R" -> pose name "fist", side "R"
+    parts = pose_name_and_side.split("_")
+    side = parts[-1]
+    name = parts[-2]
     apply_pose(arm, side, name)
 
 def clear_action(arm):

@@ -47,20 +47,23 @@ BIL_RUNS = (6, 10, 14)        # T1 both fists, T2 both feet -> excluded
 RUN_SPLIT = {4: "train", 6: "train", 8: "val", 10: "val", 12: "test", 14: "test"}
 SPLIT_RUNS = {"train": ("04", "06"), "val": ("08", "10"), "test": ("12", "14")}
 TEST_GAP_S = 1.0              # replay-timeline gap between the two test runs
+SUBJECT_GAP_S = 2.0           # replay-timeline gap between subjects in combined files
 
 
 def event_class(run, desc):
     """Map an eegmmidb annotation (T0/T1/T2) to an intent class.
 
     Returns None for events excluded from the 4-class problem (both feet).
+    Run membership is validated before any mapping, so an out-of-contract run
+    can never silently contribute rest epochs via its T0 events.
     """
+    if run not in UNI_RUNS and run not in BIL_RUNS:
+        raise ValueError(f"run R{run:02d} is not part of the contracted run set")
     if desc == "T0":
         return "rest"
     if run in UNI_RUNS:
         return {"T1": "left", "T2": "right"}[desc]
-    if run in BIL_RUNS:
-        return {"T1": "both", "T2": None}[desc]
-    raise ValueError(f"run R{run:02d} is not part of the contracted run set")
+    return {"T1": "both", "T2": None}[desc]  # bilateral: T2 = both feet -> None
 
 
 def load_and_preprocess(edf_path):
@@ -230,17 +233,22 @@ def run_subject(subject, data_root, outdir):
 
 
 def combine_files(subjects, outdir, suffix, out_name):
-    """Concatenate per-subject files onto one monotonic replay timeline."""
-    frames, t_shift, last_t = [], 0.0, 0.0
+    """Concatenate per-subject files onto one monotonic replay timeline.
+
+    The offset is determined exactly once per source file (its last frame time
+    + SUBJECT_GAP_S); local spacing and durations inside each source are
+    preserved untouched. Comparing local times against the global clock here
+    would re-shift every frame and stretch the timeline (DHS finding 1).
+    """
+    frames, offset = [], 0.0
     for subject in subjects:
-        path = os.path.join(outdir, f"eeg_{subject}_{suffix}.jsonl")
-        for fr in wire.read_jsonl(path):
-            if fr["time"] < last_t - 1e-9:   # new subject block begins
-                t_shift = last_t + 2.0
-            last_t = t_shift + fr["time"]
-            frames.append({**fr, "time": round(last_t, 3)})
+        src = wire.read_jsonl(os.path.join(outdir, f"eeg_{subject}_{suffix}.jsonl"))
+        if not src:
+            continue
+        frames.extend({**fr, "time": round(offset + fr["time"], 3)} for fr in src)
+        offset += src[-1]["time"] + SUBJECT_GAP_S
     path = os.path.join(outdir, out_name)
-    wire.write_jsonl(path, frames)
+    wire.write_replay(path, frames)
     return path
 
 

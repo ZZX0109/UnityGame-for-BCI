@@ -130,6 +130,24 @@ def write_jsonl(path, frames):
     return n
 
 
+def write_replay(path, frames):
+    """Write a replay file: per-frame contract validation plus the cross-frame
+    guarantee that times are non-decreasing (single-frame checks alone cannot
+    catch a stretched or shuffled timeline)."""
+    clean = [validate_frame(fr) for fr in frames]
+    for prev, nxt in zip(clean, clean[1:]):
+        if nxt["time"] < prev["time"]:
+            raise FrameValidationError(
+                f"{path}: time {nxt['time']} goes backwards after {prev['time']}")
+    import os
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        for fr in clean:
+            f.write(json.dumps(fr, ensure_ascii=False, separators=(",", ":")))
+            f.write("\n")
+    return len(clean)
+
+
 def iter_jsonl(path):
     """Yield (line_number, validated_frame). Raises visibly on bad input."""
     with open(path, "r", encoding="utf-8") as f:
