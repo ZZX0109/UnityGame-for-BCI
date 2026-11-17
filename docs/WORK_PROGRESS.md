@@ -37,3 +37,13 @@
 - 先前DHS官方API路由曾报 `MISSING_CREDENTIAL`，证据在 `Results/dhs-initial/review-result.json`。本轮改用已有账号的正常入口尝试，没有新建凭据或改全局认证设置；可用性待真实返回确认。
 - 下一步查看DHS结果并将具体问题交回GLM；核对合并时间轴，等待GLM交付可见的双手合成图和稳定场景，再安排Unity运行检查。
 - 未进行发布、main合并或正式宿主覆盖。
+
+## 2026-11-17 17:14:20｜DHS二审完成并回交GLM
+
+- **实际完成的DHS检查**：现有Harness账号路由调用成功，自然退出0；本次明确配置为 `deepseek-account / deepseek-flash`，本机安装目录将该ID显示为DeepSeek V4.1-Flash。返回流未单独提供服务端版本字段。二审原文见 `Results/dhs-data/dhs-review.md`，执行与范围见 `review-summary.json`；没有源码修改，也未宣称最终验收PASS。
+- **DHS发现**：高优先级为 `combine_files` 对每帧重复加全局偏移，导致157帧合并到约12481秒。其余为DB8输出与wire校验／摘要不一致、单左手姿态标为both的语义、非整除fps计时漂移，以及T0分支提前绕过非法run检查。具体性质和范围以原报告为准。
+- **实际交接**：已在现有ZCode数据任务B中发送DHS报告路径和5项最小修复要求，界面已显示GLM-5.3-flash开始读取并处理。仅授予该任务Tools、Replays和Results/data的修复范围；要求重新导出合并文件、增加对应回归测试、更新摘要，不改训练划分或用真值补预测。
+- **模型任务**：GLM建模任务A仍在自主修正双手合成图和弯曲方向；本轮不接管、不重启、不重复派发。
+- **Codex本轮工作**：配置半小时调度、确认模型版本映射、协调DHS二审、把具体问题交回GLM并追加记录。未亲自实现上述业务修复。
+- **下一检查项**：等待GLM数据修复完成，交DHS对对应变更复查；确认模型／场景交付后安排必要Unity联调。Windows构建和最终美术／功能验收仍未完成。
+- **DHS复用入口**：`Results/dhs-data/read-only-account.patch.yml` 为已成功使用的一次性只读账号配置，配合安装CLI的 `--profile headless --patch <该文件> --json -`；不必重新申请API key或反复探测全局认证。

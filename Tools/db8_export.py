@@ -37,17 +37,22 @@ import sys
 import numpy as np
 from scipy.io import loadmat
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import wire  # noqa: E402
+
 FS = 2000.0            # official synchronized DB8 sample clock (Hz)
-FPS = 40.0             # export rate, inside the contracted 30-60 Hz band
+FPS = 40.0             # requested export rate, inside the contracted 30-60 Hz band
 MAX_CLIP_S = 8.0       # representative segment cap per clip
 
 STIM_NAMES = {
     0: "rest", 1: "thumb", 3: "index", 7: "cylindrical_grip",
     8: "lateral_grip", 9: "tripod_grip",
 }
-# intent is the coarse four-class visual tag for the demo UI; the pose always
-# comes from the glove channels themselves (source="glove").
-STIM_INTENT = {0: "rest", 1: "left", 3: "left", 7: "both", 8: "both", 9: "both"}
+# Coarse four-class visual tag for the demo UI. The glove measures ONLY the
+# left hand, so every executed pose is tagged "left" (or "rest"); "both" is
+# reserved for genuine two-hand intent in the EEG prediction mode. Grips
+# involve many fingers, but they are still one hand.
+STIM_INTENT = {0: "rest", 1: "left", 3: "left", 7: "left", 8: "left", 9: "left"}
 
 # Documented mapping from the 18 glove channels (0-based) to rig controls.
 THUMB = (0, 1, 2, 3)               # opposition, CMC flex, MCP flex, IP flex
@@ -102,6 +107,18 @@ def longest_runs(stim, label):
     return max(runs, key=len)
 
 
+def export_indices(n_samples, fps):
+    """Uniform decimation plan: (step, kept decimated indices).
+
+    The step is rounded to whole native samples; when fps does not divide the
+    2000 Hz clock exactly the real cadence is step/FS (e.g. 30 Hz -> 67 samples
+    = 29.85 Hz), and callers must timestamp by native sample index, not by the
+    requested fps (DHS finding 4).
+    """
+    step = max(1, int(round(FS / fps)))
+    return step, np.arange(0, n_samples, step)
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description="DB8 glove replay exporter")
@@ -122,11 +139,10 @@ def main():
 
     n = glove.shape[0]
     ctrl = build_controls(glove)
-    step = max(1, int(round(FS / args.fps)))
-    keep = np.arange(0, n, step)                       # uniform decimation
+    step, keep = export_indices(n, args.fps)           # uniform decimation
     ctrl_d = ctrl[keep]
     stim_d = stim[keep]
-    dur = 1.0 / args.fps
+    dur = round(step / FS, 6)                          # real cadence per kept sample
 
     meta = {"subject": subject, "exercise": exercise,
             "source_file": os.path.basename(args.mat),
@@ -145,30 +161,35 @@ def main():
         run = longest_runs(stim_d, label)
         if len(run) < 5:
             continue
-        if len(run) > MAX_CLIP_S * args.fps:           # representative middle part
-            half = int(len(run) * MAX_CLIP_S * args.fps / (2.0 * len(run)))
+        max_samples = int(MAX_CLIP_S * FS / step)      # representative middle part
+        if len(run) > max_samples:
+            half = max_samples // 2
             mid = len(run) // 2
             run = run[mid - half:mid + half]
         file_name = f"db8_{subject}_{name}.jsonl"
         out = os.path.join(args.outdir, file_name)
-        t0 = run[0] / args.fps
-        n_written = 0
-        with open(out, "w", encoding="utf-8", newline="\n") as fh:
-            for i in run:
-                frame = {"version": 1,
-                         "time": round(i / args.fps - t0, 4),
-                         "duration": round(dur, 4),
-                         "intent": STIM_INTENT[label],
-                         "confidence": 1.0,
-                         "source": "glove",
-                         "subject": subject,
-                         "run": f"{exercise}/{name}",
-                         "leftJoints": [round(float(v), 4) for v in ctrl_d[i]]}
-                if args.mirror_right:
-                    frame["rightJoints"] = list(frame["leftJoints"])  # marked mirror
-                fh.write(json.dumps(frame, ensure_ascii=False,
-                                    separators=(",", ":")) + "\n")
-                n_written += 1
+        # `run` indexes the decimated array; map to ORIGINAL sample indices so
+        # timestamps follow the native 2000 Hz clock (i / FS) with no drift
+        # when fps does not divide 2000 exactly. Poses come from the decimated
+        # array at the decimated index.
+        run_orig = keep[run]
+        t0 = run_orig[0] / FS
+        frames = []
+        for j, i_orig in zip(run, run_orig):
+            frame = {"version": 1,
+                     "time": round(i_orig / FS - t0, 4),
+                     "duration": dur,
+                     "intent": STIM_INTENT[label],
+                     "confidence": 1.0,
+                     "source": "glove",
+                     "subject": subject,
+                     "run": f"{exercise}/{name}",
+                     "leftJoints": [round(float(v), 4) for v in ctrl_d[j]]}
+            if args.mirror_right:
+                frame["rightJoints"] = list(frame["leftJoints"])  # marked mirror
+            frames.append(frame)
+        wire.write_replay(out, frames)                 # contract + monotonic check
+        n_written = len(frames)
         meta["clips"].append({"name": name, "stimulus_label": int(label),
                               "file": file_name, "frames": n_written,
                               "seconds": round(n_written / args.fps, 1),

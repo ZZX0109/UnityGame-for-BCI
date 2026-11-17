@@ -113,6 +113,72 @@ def test_event_class_mapping_matches_physionet_record_descriptions():
     expect_raise(ValueError, lambda: e.event_class(3, "T1"))
 
 
+def test_event_class_rejects_out_of_contract_run_even_for_t0():
+    # DHS finding 5: T0 must not bypass run-membership validation, otherwise
+    # an out-of-contract run would silently contribute "rest" epochs.
+    import eeg_decode as e
+
+    for run in (3, 5, 7, 9, 11, 13, 1, 2):
+        expect_raise(ValueError, lambda r=run: e.event_class(r, "T0"))
+
+
+def test_combine_files_one_offset_per_file_regression():
+    # DHS finding 1 regression: merged timeline must be last subject time +
+    # one 2 s gap per boundary (~380 s for 3 subjects x 52 frames), NOT
+    # ~12481 s from re-shifting every frame against the global clock.
+    import eeg_decode as e
+    import wire
+
+    base = {"version": 1, "duration": 2.0, "intent": "rest", "confidence": 0.5,
+            "source": "prediction", "subject": "SX", "run": "R12"}
+    with tempfile.TemporaryDirectory() as d:
+        for subject in ("S001", "S002", "S003"):
+            frames = [{**base, "subject": subject,
+                       "time": round(2.5 + k * 2.4, 3)} for k in range(52)]
+            wire.write_jsonl(os.path.join(d, f"eeg_{subject}_predictions.jsonl"),
+                             frames)
+        out = e.combine_files(("S001", "S002", "S003"), d, "predictions",
+                              "merged.jsonl")
+        merged = wire.read_jsonl(out)
+    assert len(merged) == 156
+    # each subject spans 2.5..124.9 locally; offset accumulates per file
+    local_last = 2.5 + 51 * 2.4
+    expected_last = 3 * local_last + 2 * e.SUBJECT_GAP_S   # = 378.7
+    assert abs(merged[-1]["time"] - expected_last) < 0.01, \
+        f"merged last time {merged[-1]['time']} != expected {expected_last:.1f}"
+    times = [f["time"] for f in merged]
+    assert all(b >= a for a, b in zip(times, times[1:]))
+    # within-subject spacing (2.4 s) and the subject-boundary gap survive
+    gaps = {round(b - a, 6) for a, b in zip(times, times[1:])}
+    assert gaps == {2.4, round(e.SUBJECT_GAP_S + 2.5, 6)}
+
+
+def test_wire_write_replay_rejects_backwards_time():
+    fr = lambda t: {"version": 1, "time": t, "duration": 1.0, "intent": "rest",  # noqa: E731
+                    "confidence": 1.0, "source": "glove", "subject": "", "run": ""}
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "r.jsonl")
+        expect_raise(FrameValidationError,
+                     lambda: wire.write_replay(p, [fr(5.0), fr(4.9)]))
+        assert wire.write_replay(p, [fr(1.0), fr(1.0), fr(3.0)]) == 3  # equal OK
+
+
+def test_db8_export_indices_no_drift():
+    import db8_export as dbe
+
+    # Non-divisor fps: 30 Hz -> step 67, real cadence 67/2000 s. Kept indices
+    # are ORIGINAL sample indices; timestamps must be index/FS (native clock),
+    # not index/fps, which would drift when fps does not divide 2000 exactly.
+    step, keep = dbe.export_indices(6000, 30.0)
+    assert step == 67
+    assert keep[:4].tolist() == [0, 67, 134, 201]
+    assert keep[10] / dbe.FS == 670 / 2000.0
+    # Divisor fps unchanged: 40 Hz -> step 50
+    step40, keep40 = dbe.export_indices(6000, 40.0)
+    assert step40 == 50 and keep40[7] == 350
+    assert keep40[7] / dbe.FS == 0.175
+
+
 def test_no_train_test_leak_in_run_split():
     import eeg_decode as e
 
@@ -179,12 +245,8 @@ def test_metrics_helpers():
     cm = e.confusion_fixed(y_true, y_pred)
     assert cm[0, 0] == 1 and cm[0, 1] == 1 and cm[1, 1] == 2 and cm[3, 0] == 1
     assert cm.sum() == len(y_true)
-    assert e.coverage([0.5, 0.9, 0.6]) == pytest_like(3, 2)
+    assert e.coverage([0.5, 0.9, 0.6]) == 2 / 3
     assert e.coverage([]) == 0.0
-
-
-def pytest_like(total, hits):
-    return hits / total
 
 
 # ---------------------------------------------------------------- DB8 mapping
@@ -218,6 +280,25 @@ def test_db8_clip_extraction_and_timing():
     run2 = dbe.longest_runs(stim2, 1)
     t_last = run2[-1] / dbe.FS - run2[0] / dbe.FS
     assert abs(t_last - (4.0 - 1.0 / dbe.FS)) < 1e-9
+
+
+def test_db8_exported_clip_times_match_native_clock():
+    # End-to-end regression (DHS finding 4 + follow-up): a 4 s synthetic clip
+    # exported at a non-divisor fps must span ~4 s on the native 2000 Hz
+    # clock, with decimation step and frame duration following the real
+    # cadence; times must stay monotonic.
+    import db8_export as dbe
+
+    fps = 30.0
+    step, keep = dbe.export_indices(int(dbe.FS * 4), fps)
+    run = keep[keep < 2 * dbe.FS]           # 2 s span of kept original indices
+    times = [i / dbe.FS for i in run]
+    # last kept sample below the 2 s mark: span is (n_kept-1) native steps
+    span = times[-1] - times[0]
+    assert abs(span - (len(run) - 1) * step / dbe.FS) < 1e-9, f"span {span} drifts"
+    assert abs(span - 2.0) < step / dbe.FS  # and stays within one step of 2 s
+    dur = round(step / dbe.FS, 6)
+    assert abs(dur - 1.0 / (dbe.FS / step)) < 1e-6
 
 
 def main():
