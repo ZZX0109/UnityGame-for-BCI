@@ -3,6 +3,7 @@
     "rootNamespace": "Game01Integration.Tests",
     "references": [
         "Neuralife.VirtualHand.Runtime",
+        "FirstPersonSokoban.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

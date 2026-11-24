@@ -1,7 +1,9 @@
 {
   "name": "FirstPersonSokoban.Runtime",
   "rootNamespace": "FirstPersonSokoban",
-  "references": [],
+  "references": [
+    "Neuralife.VirtualHand.Runtime"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

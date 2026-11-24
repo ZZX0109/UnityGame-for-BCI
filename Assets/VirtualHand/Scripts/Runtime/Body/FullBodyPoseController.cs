@@ -23,10 +23,12 @@ namespace Neuralife.VirtualHand.Body
         public const string PoseHandsOnLap = "HandsOnLap";
         public const string PoseNaturalSeated = "NaturalSeated";
         public const string PoseStanding = "Standing";
+        public const string PoseBothArmsForward = "BothArmsForward";
 
         static readonly string[] KnownPoseNames =
         {
-            PoseLeftArmForward, PoseRightArmForward, PoseHandsOnLap, PoseNaturalSeated, PoseStanding
+            PoseLeftArmForward, PoseRightArmForward, PoseHandsOnLap, PoseNaturalSeated, PoseStanding,
+            PoseBothArmsForward
         };
 
         [Header("Rig mapping (optional)")]
@@ -42,6 +44,10 @@ namespace Neuralife.VirtualHand.Body
         [Header("Solver")]
         [Tooltip("Body-space direction that keeps the elbow bend hemisphere stable.")]
         public Vector3 stableElbowPole = Vector3.down;
+
+        [Header("Transitions")]
+        [Tooltip("When enabled, ApplyPose solves the new pose without snapping the bound transforms; call BlendTowardCurrent every frame to glide them toward the latest solution.")]
+        public bool blendPoseTransitions = false;
 
         bool _seated = true;
         string _currentPoseName = PoseNaturalSeated;
@@ -74,7 +80,7 @@ namespace Neuralife.VirtualHand.Body
         /// <summary>
         /// Applies a known pose and re-solves both arm chains.  Unknown names are rejected
         /// without changing the current pose.  Known names: LeftArmForward, RightArmForward,
-        /// HandsOnLap, NaturalSeated and Standing (case-insensitive).
+        /// HandsOnLap, NaturalSeated, Standing and BothArmsForward (case-insensitive).
         /// </summary>
         public bool ApplyPose(string poseName)
         {
@@ -123,7 +129,9 @@ namespace Neuralife.VirtualHand.Body
                 case PoseStanding:
                     return new Vector3(sideSign * 0.17f, 0.16f, 0.20f);
                 case PoseHandsOnLap:
-                    return new Vector3(sideSign * 0.10f, 0.30f, 0.26f);
+                    return new Vector3(sideSign * 0.12f, 0.18f, 0.32f);
+                case PoseBothArmsForward:
+                    return new Vector3(sideSign * 0.18f, 0.50f, 0.52f);
                 case PoseLeftArmForward:
                     return side == SeatedHandSide.Left
                         ? new Vector3(-0.18f, 0.50f, 0.52f)
@@ -199,6 +207,8 @@ namespace Neuralife.VirtualHand.Body
         {
             if (!solution.IsValid)
                 return;
+            if (blendPoseTransitions)
+                return;
             Transform space = bodySpace != null ? bodySpace : transform;
             Transform elbow = side == SeatedHandSide.Left ? leftElbow : rightElbow;
             Transform wrist = side == SeatedHandSide.Left ? leftWrist : rightWrist;
@@ -206,6 +216,38 @@ namespace Neuralife.VirtualHand.Body
                 elbow.position = space.TransformPoint(solution.ElbowPositionMeters);
             if (wrist != null)
                 wrist.position = space.TransformPoint(solution.SolvedWristPositionMeters);
+        }
+
+        /// <summary>
+        /// Glides the bound elbow/wrist transforms toward the latest solved pose.  Returns false
+        /// when <paramref name="deltaTime"/> is not positive or <see cref="blendPoseTransitions"/>
+        /// is off; otherwise applies one exponential smoothing step (τ = 0.15 s) and returns true.
+        /// </summary>
+        public bool BlendTowardCurrent(float deltaTime)
+        {
+            if (deltaTime <= 0f || !blendPoseTransitions)
+                return false;
+            float k = 1f - Mathf.Exp(-deltaTime / 0.15f);
+            Transform space = bodySpace != null ? bodySpace : transform;
+            BlendArm(_leftSolution, leftElbow, leftWrist, k, space);
+            BlendArm(_rightSolution, rightElbow, rightWrist, k, space);
+            return true;
+        }
+
+        void BlendArm(SeatedArmSolver.Solution solution, Transform elbow, Transform wrist, float k, Transform space)
+        {
+            if (!solution.IsValid)
+                return;
+            if (elbow != null)
+            {
+                Vector3 elbowTarget = space.TransformPoint(solution.ElbowPositionMeters);
+                elbow.position = elbow.position + (elbowTarget - elbow.position) * k;
+            }
+            if (wrist != null)
+            {
+                Vector3 wristTarget = space.TransformPoint(solution.SolvedWristPositionMeters);
+                wrist.position = wrist.position + (wristTarget - wrist.position) * k;
+            }
         }
     }
 }

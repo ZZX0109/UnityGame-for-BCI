@@ -138,10 +138,10 @@ namespace Neuralife.VirtualHand.EditorTests
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseStanding, SeatedHandSide.Right),
                 "the Standing right preset drifted");
 
-            Assert.AreEqual(new Vector3(-0.10f, 0.30f, 0.26f),
+            Assert.AreEqual(new Vector3(-0.12f, 0.18f, 0.32f),
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseHandsOnLap, SeatedHandSide.Left),
                 "the HandsOnLap left preset drifted");
-            Assert.AreEqual(new Vector3(0.10f, 0.30f, 0.26f),
+            Assert.AreEqual(new Vector3(0.12f, 0.18f, 0.32f),
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseHandsOnLap, SeatedHandSide.Right),
                 "the HandsOnLap right preset drifted");
 

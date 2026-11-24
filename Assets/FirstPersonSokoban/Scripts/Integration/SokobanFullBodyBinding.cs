@@ -195,7 +195,7 @@ namespace FirstPersonSokoban.Integration
 
             _bodyInstance = Instantiate(prefab);
             _bodyInstance.name = "SokobanFullBody";
-            DontDestroyOnLoad(_bodyInstance);
+            if (Application.isPlaying) DontDestroyOnLoad(_bodyInstance);
             _bodyInstance.transform.SetPositionAndRotation(
                 new Vector3(0f, 0f, 0f), Quaternion.identity);
 
