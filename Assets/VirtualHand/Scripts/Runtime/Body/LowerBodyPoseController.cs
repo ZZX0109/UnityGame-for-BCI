@@ -20,6 +20,8 @@ namespace Neuralife.VirtualHand.Body
         float _yawDegreesPerSecond;
         Vector2 _planarPositionMeters;
         float _yawDegrees;
+        float _pathDistanceMeters;
+        int _lastIntegratedFrame = -1;
 
         /// <summary>Most recent planar velocity input, metres per second.</summary>
         public Vector2 PlanarVelocityMetersPerSecond { get { return _planarVelocityMetersPerSecond; } }
@@ -33,6 +35,9 @@ namespace Neuralife.VirtualHand.Body
         /// <summary>Integrated yaw, degrees.</summary>
         public float YawDegrees { get { return _yawDegrees; } }
 
+        /// <summary>Monotonic accumulated path length, metres (sum of |velocity| × dt); drives the walk-cycle phase.</summary>
+        public float PathDistanceMeters { get { return _pathDistanceMeters; } }
+
         /// <summary>Feeds the per-frame locomotion input; no integration happens here.</summary>
         public void SetLocomotionInput(Vector2 planarVelocity, float yawDeltaPerSecond)
         {
@@ -40,17 +45,28 @@ namespace Neuralife.VirtualHand.Body
             _yawDegreesPerSecond = yawDeltaPerSecond;
         }
 
-        /// <summary>Advances position and yaw by <paramref name="deltaTime"/> seconds; non-positive steps are ignored.</summary>
+        /// <summary>
+        /// Advances position and yaw by <paramref name="deltaTime"/> seconds; non-positive steps are ignored.
+        /// Idempotent per Unity frame: a manual call and <c>Update</c> in the same frame integrate once.
+        /// </summary>
         public void Integrate(float deltaTime)
         {
             if (deltaTime <= 0f)
                 return;
+            _lastIntegratedFrame = Time.frameCount;
             _planarPositionMeters += _planarVelocityMetersPerSecond * deltaTime;
             _yawDegrees += _yawDegreesPerSecond * deltaTime;
+            // Path length uses the input speed magnitude so reversing (or turning)
+            // motion keeps advancing the walk-cycle phase instead of rewinding it.
+            _pathDistanceMeters += _planarVelocityMetersPerSecond.magnitude * deltaTime;
         }
 
         void Update()
         {
+            // Hosts may call Integrate explicitly (edit-mode tests, fixed-step games);
+            // skip the automatic step when this frame already integrated.
+            if (_lastIntegratedFrame == Time.frameCount)
+                return;
             Integrate(Time.deltaTime);
         }
     }

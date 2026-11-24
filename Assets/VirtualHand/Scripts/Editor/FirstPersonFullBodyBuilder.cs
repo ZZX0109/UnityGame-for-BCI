@@ -26,8 +26,8 @@ namespace Neuralife.VirtualHand.Editor
     ///   triangle accepted only when all three vertices agree) so first-person hiding can disable exactly the
     ///   head geometry. When the mesh is not readable the split degrades to a wholesale submesh assignment
     ///   and logs a [FullBodyBuilder] WARN - it never silently skips the head split.
-    /// - Runtime body components (FullBodyPoseController, LowerBodyPoseController, FirstPersonVisibility,
-    ///   FullBodyAppearanceController) are attached by name via reflection so this editor utility keeps
+    /// - Runtime body components (FullBodyPoseController, LowerBodyPoseController, WalkCycleDriver,
+    ///   FirstPersonVisibility, FullBodyAppearanceController) are attached by name via reflection so this editor utility keeps
     ///   compiling even if the runtime side lands later; missing types are logged, never silently skipped.
     ///   SeatedArmSolver and AvatarBodyCalibration are not MonoBehaviours and are intentionally not attached.
     ///   GameIntegrationAdapter is deliberately NOT attached (it belongs to Game02/Game03).
@@ -569,6 +569,44 @@ namespace Neuralife.VirtualHand.Editor
             return best;
         }
 
+        // Wires WalkCycleDriver: locomotion source + the six manifest leg bones
+        // (thigh/calf/foot × l/r). Legs are left unwired (logged) when a bone is absent.
+        static void WireWalkCycleDriver(Component walkDriver, Component lowerBody, Transform skeleton, List<string> missingRefs, List<string> attachLog)
+        {
+            var bindings = new (string field, Object value, string label)[]
+            {
+                ("locomotion", lowerBody, lowerBody != null ? lowerBody.name : "LowerBodyPoseController"),
+                ("leftThigh", FindWristBone(skeleton, "thigh_l") as Object, "thigh_l"),
+                ("leftCalf", FindWristBone(skeleton, "calf_l") as Object, "calf_l"),
+                ("leftFoot", FindWristBone(skeleton, "foot_l") as Object, "foot_l"),
+                ("rightThigh", FindWristBone(skeleton, "thigh_r") as Object, "thigh_r"),
+                ("rightCalf", FindWristBone(skeleton, "calf_r") as Object, "calf_r"),
+                ("rightFoot", FindWristBone(skeleton, "foot_r") as Object, "foot_r"),
+            };
+            var serialized = new SerializedObject(walkDriver);
+            int wired = 0;
+            foreach (var (field, value, label) in bindings)
+            {
+                var property = serialized.FindProperty(field);
+                if (property == null || property.propertyType != SerializedPropertyType.ObjectReference)
+                {
+                    missingRefs.Add($"WalkCycleDriver.{field} (serialized field not found)");
+                    continue;
+                }
+                if (value == null)
+                {
+                    missingRefs.Add($"WalkCycleDriver.{field} <- '{label}'");
+                    continue;
+                }
+                property.objectReferenceValue = value;
+                attachLog.Add($"WalkCycleDriver.{field} <- '{label}'");
+                wired++;
+            }
+            serialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(walkDriver);
+            Debug.Log($"{LogPrefix}Wired WalkCycleDriver refs: {wired}/{bindings.Length} (locomotion + thigh/calf/foot × l/r).");
+        }
+
         static Transform FindElenaWrist(Transform handRoot, bool left)
         {
             string exact = left ? "hand.L_02" : "hand.R_02";
@@ -592,8 +630,12 @@ namespace Neuralife.VirtualHand.Editor
                 { "Neuralife.VirtualHand.Body.FullBodyPoseController", "Neuralife.VirtualHand.FullBodyPoseController" }, attachLog, missingRefs);
             if (poseController != null)
                 WirePoseControllerRig(poseController, skeleton, missingRefs, attachLog);
-            AttachRuntimeComponent(root, "LowerBodyPoseController", new[]
+            var lowerBody = AttachRuntimeComponent(root, "LowerBodyPoseController", new[]
                 { "Neuralife.VirtualHand.Body.LowerBodyPoseController", "Neuralife.VirtualHand.LowerBodyPoseController" }, attachLog, missingRefs);
+            var walkDriver = AttachRuntimeComponent(root, "WalkCycleDriver", new[]
+                { "Neuralife.VirtualHand.Body.WalkCycleDriver", "Neuralife.VirtualHand.WalkCycleDriver" }, attachLog, missingRefs);
+            if (walkDriver != null)
+                WireWalkCycleDriver(walkDriver, lowerBody, skeleton, missingRefs, attachLog);
 
             var visibility = AttachRuntimeComponent(root, "FirstPersonVisibility", new[]
                 { "Neuralife.VirtualHand.Body.FirstPersonVisibility", "Neuralife.VirtualHand.FirstPersonVisibility" }, attachLog, missingRefs);

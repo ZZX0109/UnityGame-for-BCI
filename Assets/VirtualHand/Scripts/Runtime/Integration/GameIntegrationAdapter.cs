@@ -34,18 +34,17 @@ namespace Neuralife.VirtualHand
         public HandTrackingFrame LastRightFrame => _lastRight;
 
         HandTrackingFrame _lastLeft, _lastRight;
-        bool _wired;
 
         void Awake() => Wire();
 
+        // Idempotent: only searches for a field that is still empty, so components
+        // added after Awake (e.g. built by the prefab builder at runtime) are picked up.
         void Wire()
         {
-            if (_wired) return;
             if (!poseController) poseController = GetComponentInChildren<FullBodyPoseController>(true);
             if (!locomotion) locomotion = GetComponentInChildren<LowerBodyPoseController>(true);
             if (!visibility) visibility = GetComponentInChildren<FirstPersonVisibility>(true);
             if (!appearance) appearance = GetComponentInChildren<FullBodyAppearanceController>(true);
-            _wired = poseController || locomotion || visibility || appearance;
         }
 
         /// <summary>Entry point for the host's adapter slot when no per-game adapter exists.</summary>
@@ -91,8 +90,12 @@ namespace Neuralife.VirtualHand
             Wire();
             if (poseController)
             {
+                string idlePose = seated ? "NaturalSeated" : "Standing";
                 poseController.Seated = seated;
-                poseController.ApplyPose(seated ? "NaturalSeated" : "Standing");
+                // The Seated setter already cross-applies the mode idle pose; only
+                // solve again when the current pose is not already the target idle.
+                if (poseController.CurrentPoseName != idlePose)
+                    poseController.ApplyPose(idlePose);
             }
         }
 
