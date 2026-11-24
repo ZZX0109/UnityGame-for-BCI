@@ -111,14 +111,105 @@ namespace StreetCrossing.Presentation
                 float z = side * (band == 0 ? (side > 0 ? 4.15f : 5.1f) : band == 1 ? 7.55f : 6.0f);
                 // Leave a real body-width gap between opposite walkers and keep the north lane in front of the bus seat.
                 if (!(band == 0 && side > 0)) z += (i / 6) * .55f;
-                // Four separated standing positions fit inside the bus-shelter waiting area without sharing walking paths.
-                Vector3 start = waiting ? new Vector3(6.0f + (i / 4) * .66f, 0, StreetLayout.SidewalkZ(4.65f)) : new Vector3(minX, 0, StreetLayout.SidewalkZ(z));
+                // §4.4 corridor clearance: walking lines are nudged along z and waiting spots along x
+                // against the shared anchor registry so every background pedestrian keeps a body-width
+                // gap from registered street furniture (ResolveCorridorLine / ResolveWaitingX below).
+                Vector3 start;
+                if (waiting)
+                {
+                    // Four separated standing positions fit inside the bus-shelter waiting area without sharing walking paths.
+                    float spotZ = StreetLayout.SidewalkZ(4.65f);
+                    start = new Vector3(ResolveWaitingX(side, 6.0f + (i / 4) * .66f, spotZ), 0, spotZ);
+                }
+                else
+                {
+                    start = new Vector3(minX, 0, ResolveCorridorLine(side, minX, maxX, StreetLayout.SidewalkZ(z)));
+                }
                 // The east-side walking and waiting routes stay outside all dropped kerbs.
                 start.y = StreetFootwayMesh.HeightAtDepth(.10f, Mathf.Abs(start.z) - StreetLayout.RoadHalfWidth);
                 routes[i] = new StreetBackgroundRoute { start = start, end = waiting ? start : new Vector3(maxX, start.y, start.z), waiting = waiting,
                     speed = .65f + (float)random.NextDouble() * .30f, phase = (float)random.NextDouble() };
             }
             return routes;
+        }
+
+        /// <summary>§4.4 body-width clearance every background walking line keeps from registered furniture.</summary>
+        private const float ObstacleMinGap = 0.40f;
+        /// <summary>Deterministic nudge step and cap for the closed-form clearance search (max travel 0.60 m).</summary>
+        private const float ObstacleNudgeStep = 0.05f;
+        private const int ObstacleMaxNudges = 12;
+
+        /// <summary>Kinds the walker lines must dodge; Kerb/Npc* anchors are markers, not obstructions.</summary>
+        private static readonly AnchorKind[] WalkerObstacleKinds =
+        {
+            AnchorKind.BusStop, AnchorKind.Bench, AnchorKind.TreePit, AnchorKind.BuildingEntrance
+        };
+
+        /// <summary>Waiting spots keep their intentional under-shelter BusStop overlap (PlanarGap −0.20).</summary>
+        private static readonly AnchorKind[] WaitingObstacleKinds =
+        {
+            AnchorKind.Bench, AnchorKind.TreePit, AnchorKind.BuildingEntrance
+        };
+
+        /// <summary>
+        /// §4.4 pedestrian avoidance without a navmesh: walking lines are analytic shuttles, so the
+        /// line itself is probed against the shared anchor registry (StreetSpatialAnchors) and nudged
+        /// toward the kerb in fixed steps until it keeps <see cref="ObstacleMinGap"/> from every
+        /// registered obstruction on its side. No coordinates are duplicated here — the registry stays
+        /// the single source of truth for street furniture envelopes.
+        /// </summary>
+        private static float ResolveCorridorLine(int side, float minX, float maxX, float z)
+        {
+            float bestZ = z, bestGap = float.NegativeInfinity;
+            for (int nudge = 0; nudge <= ObstacleMaxNudges; nudge++)
+            {
+                float candidate = z - side * nudge * ObstacleNudgeStep;
+                float worst = WorstGap(LineProbe(side, minX, maxX, candidate), WalkerObstacleKinds);
+                if (worst > bestGap) { bestGap = worst; bestZ = candidate; }
+                if (worst >= ObstacleMinGap) return candidate;
+            }
+            return bestZ; // registry saturated: keep the clearest line found instead of dropping the walker
+        }
+
+        /// <summary>
+        /// Waiting spots nudge east in fixed steps if a future registry change squeezes the standing
+        /// row; today every authored spot already clears the non-BusStop kinds at nudge 0.
+        /// </summary>
+        private static float ResolveWaitingX(int side, float x, float z)
+        {
+            float bestX = x, bestGap = float.NegativeInfinity;
+            for (int nudge = 0; nudge <= ObstacleMaxNudges; nudge++)
+            {
+                float candidate = x + nudge * ObstacleNudgeStep;
+                SpatialAnchor probe = new SpatialAnchor("background-waiting", AnchorKind.NpcWaitingPoint, side,
+                    new Vector3(candidate, 0f, z), Vector2.zero);
+                float worst = WorstGap(probe, WaitingObstacleKinds);
+                if (worst > bestGap) { bestGap = worst; bestX = candidate; }
+                if (worst >= ObstacleMinGap) return candidate;
+            }
+            return bestX;
+        }
+
+        /// <summary>Synthesizes the walking-line envelope: full x span, zero z extent, route side.</summary>
+        private static SpatialAnchor LineProbe(int side, float minX, float maxX, float z)
+        {
+            return new SpatialAnchor("background-walkline", AnchorKind.NpcWalkingBand, side,
+                new Vector3((minX + maxX) * .5f, 0f, z), new Vector2(maxX - minX, 0f));
+        }
+
+        /// <summary>Smallest planar gap the probe keeps to any same-side anchor of the given kinds; +∞ when none.</summary>
+        private static float WorstGap(SpatialAnchor probe, AnchorKind[] kinds)
+        {
+            float worst = float.PositiveInfinity;
+            foreach (AnchorKind kind in kinds)
+            {
+                foreach (SpatialAnchor obstacle in StreetSpatialAnchors.OfKind(kind))
+                {
+                    if (obstacle.Side != probe.Side) continue;
+                    worst = Mathf.Min(worst, probe.PlanarGap(obstacle));
+                }
+            }
+            return worst;
         }
         public void Initialize(StreetGameManager owner, StreetWorld world, StreetScenarioDefinition scenario)
         {
