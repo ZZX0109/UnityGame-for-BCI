@@ -62,3 +62,4 @@ namespace Game01Integration.Tests
         }
     }
 }
+#endif
