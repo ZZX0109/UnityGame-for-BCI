@@ -1,0 +1,29 @@
+{
+    "name": "Neuralife.VirtualHand.Tests",
+    "rootNamespace": "Neuralife.VirtualHand.Tests",
+    "references": [
+        "Neuralife.VirtualHand.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.7.0",
+            "define": "VIRTUALHAND_INPUTSYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}
