@@ -695,6 +695,11 @@ namespace StreetCrossing.Presentation
             {
                 PhysicalBounds("Cycle stand bounds", new Vector3((side > 0 ? 19 : 17) + .8f, .44f, StreetLayout.SidewalkZ(side * 8.4f)), new Vector3(2.3f, .88f, .72f));
                 PhysicalBounds("Litter bin bounds", new Vector3(25, .52f, StreetLayout.SidewalkZ(side * 7.8f)), new Vector3(.62f, 1.04f, .62f));
+                // The imported utility cabinets are visual-only (StreetVisualContractTests forbids
+                // colliders under VisualDetailsRoot), so their blockers live here instead and stop
+                // the player from walking through the box.
+                PhysicalBounds("Utility cabinet bounds", new Vector3(side * 4f, .56f, StreetLayout.SidewalkZ(side * 8.2f)), new Vector3(.56f, 1.12f, .46f));
+                PhysicalBounds("Secondary utility cabinet bounds", new Vector3(side * 22.5f, .43f, StreetLayout.SidewalkZ(side * 8.2f)), new Vector3(.72f, .86f, .36f));
                 for (int slot = -2; slot <= 2; slot++)
                 {
                     float x = slot * profile.furnishingSpacing;

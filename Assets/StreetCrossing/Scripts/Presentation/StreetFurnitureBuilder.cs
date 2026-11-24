@@ -198,10 +198,12 @@ namespace StreetCrossing.Presentation
                 Part(world, hydrant, "Hydrant top nut", new Vector3(0, .56f, 0), new Vector3(.06f, .06f, .06f), "C7BFA9", .02f, .5f);
                 Part(world, hydrant, "Hydrant base flange", new Vector3(0, .02f, 0), new Vector3(.26f, .04f, .26f), "8E3529");
             }
-            // Street-level utility boxes near the service covers, clear of the walking band.
+            // Street-level utility cabinets stand against the facade line at |z| ~ 11.5 m, the same
+            // depth the bins and cycle racks use. They must stay clear of the z ~ +-10 m walking
+            // corridor (StreetMissionGeometry.CorridorZ) and of every doorstep approach at |z| = 11.9.
             for (int boxSide = -1; boxSide <= 1; boxSide += 2)
             {
-                Vector3 boxPos = new Vector3(boxSide > 0 ? -8.5f : 8.5f, 0, Z(boxSide, 6.2f));
+                Vector3 boxPos = new Vector3(boxSide * 4f, 0, Z(boxSide, 8.2f));
                 Transform box01 = world.Modules.SpawnImported(furniture, "utility_box_01", boxPos, 1.1f);
                 // Imported props carry their own LODGroup: CombineVisuals(furniture) skips renderers
                 // held by a LODGroup, which keeps FBX sub-meshes out of the merged furniture batch.
@@ -212,7 +214,7 @@ namespace StreetCrossing.Presentation
                     Part(world, furniture, "Utility box door", boxPos + new Vector3(0, .35f, .16f), new Vector3(.32f, .25f, .015f), "4A5447", .015f, .30f);
                     Part(world, furniture, "Utility box lock", boxPos + new Vector3(.10f, .35f, .155f), new Vector3(.02f, .04f, .02f), "C1BAA7", .005f, .45f);
                 }
-                Vector3 box2Pos = new Vector3(boxSide > 0 ? -7.5f : 9.5f, 0, Z(boxSide, 6.4f));
+                Vector3 box2Pos = new Vector3(boxSide * 22.5f, 0, Z(boxSide, 8.2f));
                 Transform box02 = world.Modules.SpawnImported(furniture, "utility_box_02", box2Pos, .85f);
                 if (box02 != null) world.AddVisualLod(box02, .012f);
                 else Part(world, furniture, "Secondary utility box", box2Pos + Vector3.up * .20f, new Vector3(.32f, .40f, .22f), "616F5E", .03f, .22f);
@@ -224,9 +226,9 @@ namespace StreetCrossing.Presentation
                 // Both props sit just clear of the 0.30 m wide gate envelope collider, which starts
                 // at |x| = 38.85, so nothing overlaps an invisible blocker.
                 float x = end * 38.48f;
-                Transform tyre = world.Modules.SpawnImported(furniture, "old_tyre", new Vector3(x, .03f, Z(side, 6.0f)), .58f);
+                Transform tyre = world.Modules.SpawnImported(furniture, "old_tyre", new Vector3(x, .03f, Z(side, 7.8f)), .58f);
                 if (tyre != null) world.AddVisualLod(tyre, .012f);
-                else Part(world, furniture, "Old tyre", new Vector3(x, .30f, Z(side, 6.0f)), new Vector3(.56f, .58f, .56f), "282A28", .08f, .15f);
+                else Part(world, furniture, "Old tyre", new Vector3(x, .30f, Z(side, 7.8f)), new Vector3(.56f, .58f, .56f), "282A28", .08f, .15f);
                 // Security light bracketed onto the gate's upper rail; the rail face is at
                 // |x| = 38.94 and its underside at y = 1.11, so the body touches both.
                 Transform lightParent = new GameObject("Gate security light").transform;
