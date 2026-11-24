@@ -98,12 +98,22 @@ namespace Game01Integration.Tests
 
                 Transform current = null;
                 string[] chain = { "pelvis", "spine_01", "spine_02", "spine_03", "neck_01", "head" };
-                foreach (string boneName in chain)
+                for (int i = 0; i < chain.Length; i++)
                 {
+                    string boneName = chain[i];
                     Transform bone = FindBoneExact(root, boneName);
                     Assert.IsNotNull(bone, $"Bone '{boneName}' missing from instantiated skeleton.");
-                    Assert.AreEqual(current, bone.parent,
-                        $"Bone '{boneName}' is not parented to the previous chain bone.");
+                    if (i == 0)
+                    {
+                        // 链首骨(pelvis)挂在骨架根节点(Root)下,并非没有父节点。
+                        Assert.IsNotNull(bone.parent,
+                            $"Chain root bone '{boneName}' must stay parented under the rig root.");
+                    }
+                    else
+                    {
+                        Assert.AreEqual(current, bone.parent,
+                            $"Bone '{boneName}' is not parented to the previous chain bone.");
+                    }
                     AssertAreEqual(Vector3.zero, bone.localPosition, MaxChainLocalPosition,
                         $"Bone '{boneName}' local position exceeds one meter.");
                     current = bone;

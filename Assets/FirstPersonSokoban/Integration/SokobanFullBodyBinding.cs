@@ -161,7 +161,9 @@ namespace FirstPersonSokoban.Integration
 
             Vector3 worldVel = delta / dt;
             float planarSpeed = worldVel.magnitude;
-            if (planarSpeed > TeleportPlanarSpeed || Mathf.Abs(Mathf.DeltaAngle(_lastYaw, yaw)) / dt > 1440f)
+            // 3600 deg/s:高于连续旋转可达速率约 5 倍,同时远低于平滑转向帧间增量的误报阈值
+            // (60fps 下单帧 60° 才会触发);1 秒内 8 圈只可能是传送/重生/瞬间朝向重置。
+            if (planarSpeed > TeleportPlanarSpeed || Mathf.Abs(Mathf.DeltaAngle(_lastYaw, yaw)) / dt > 3600f)
             {
                 // 传送(Teleport/RestartLevel):跳过本帧,不产生速度尖峰。
                 _lastYaw = yaw;

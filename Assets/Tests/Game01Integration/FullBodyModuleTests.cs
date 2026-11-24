@@ -68,7 +68,29 @@ namespace Game01Integration.Tests
                 Object.DestroyImmediate(root);
         }
 
-        /// <summary>Collects the unique bone names referenced by every skinned renderer.</summary>
+        /// <summary>
+        /// True when the renderer is bound to the first-person body skeleton.
+        /// The body skeleton is the only bone set containing the pelvis root;
+        /// nested first-person hand prefab instances additionally bind their
+        /// own 69-bone GLB hand rig and must not pollute body assertions.
+        /// </summary>
+        protected static bool BindsBodySkeleton(SkinnedMeshRenderer renderer)
+        {
+            Transform[] bones = renderer.bones;
+            if (bones == null || bones.Length == 0)
+                return false;
+            foreach (Transform bone in bones)
+            {
+                if (bone != null && bone.name == "pelvis")
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Collects the unique bone names referenced by every body-skeleton
+        /// skinned renderer (nested hand-rig renderers excluded).
+        /// </summary>
         protected HashSet<string> CollectBoneNames(GameObject root)
         {
             HashSet<string> names = new HashSet<string>();
@@ -76,8 +98,9 @@ namespace Game01Integration.Tests
             Assert.GreaterOrEqual(renderers.Length, 1, "Prefab instantiates no SkinnedMeshRenderer.");
             foreach (SkinnedMeshRenderer renderer in renderers)
             {
-                Transform[] bones = renderer.bones;
-                foreach (Transform bone in bones)
+                if (!BindsBodySkeleton(renderer))
+                    continue;
+                foreach (Transform bone in renderer.bones)
                 {
                     if (bone != null)
                         names.Add(bone.name);
@@ -157,12 +180,17 @@ namespace Game01Integration.Tests
                 SkinnedMeshRenderer[] renderers = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
                 Assert.GreaterOrEqual(renderers.Length, 1, "Prefab instantiates no SkinnedMeshRenderer.");
 
-                int maxBoneCount = 0;
+                int bodyRendererCount = 0;
                 foreach (SkinnedMeshRenderer renderer in renderers)
-                    maxBoneCount = Mathf.Max(maxBoneCount, renderer.bones.Length);
-
-                Assert.AreEqual(ExpectedBoneCount, maxBoneCount,
-                    "No renderer references the complete 53-bone skeleton.");
+                {
+                    if (!BindsBodySkeleton(renderer))
+                        continue; // nested hand-rig renderers bind their own 69-bone GLB skeleton
+                    bodyRendererCount++;
+                    Assert.AreEqual(ExpectedBoneCount, renderer.bones.Length,
+                        $"Body renderer '{renderer.name}' does not bind the complete {ExpectedBoneCount}-bone skeleton.");
+                }
+                Assert.GreaterOrEqual(bodyRendererCount, 1,
+                    "No renderer binds the body skeleton (no pelvis bone found).");
 
                 AssertAllNamedBonesPresent(CollectBoneNames(root));
             }
