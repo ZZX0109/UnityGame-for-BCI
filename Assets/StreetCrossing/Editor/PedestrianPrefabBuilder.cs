@@ -82,6 +82,10 @@ namespace StreetCrossing.Editor
                 var any = sm.AddAnyStateTransition(state);
                 any.hasExitTime = false;
                 any.duration = 0.12f;
+                // Apply re-asserts the Motion int every pose pass; without this flag an AnyState
+                // transition whose Equals condition matches the state's own Motion value would
+                // re-trigger that state onto itself and restart its clip each pass.
+                any.canTransitionToSelf = false;
                 any.AddCondition(AnimatorConditionMode.Equals, i, "Motion");
             }
             EditorUtility.SetDirty(controller);

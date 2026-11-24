@@ -9,13 +9,73 @@ namespace StreetCrossing.Presentation
         public Vector3 start, end;
         public bool waiting;
         public float speed, phase;
+
+        // Comfort constants for the stateful traversal (see Position): gentle, human-scale numbers so
+        // start-ups, arrivals and pivots read as a person rather than a PingPong float reversing instantly.
+        private const float Accel = .5f;     // m/s² - comfortable walking acceleration order; caps start-up and braking.
+        private const float RestTime = 1.5f; // s    - full pause at each end, body facing held exactly as on arrival.
+        private const float TurnTime = 2f;   // s    - 180° pivot at ≤90°/s so no single frame ever flips the body.
+
+        /// <summary>
+        /// Pure function of time: cruise, gentle start-up, braking into the far end, pause, in-place pivot,
+        /// then the same in reverse. Closed analytic piecewise integration per half-cycle with no internal
+        /// state, so sampling any number of times per frame (including the seconds+0.04 tangent look-ahead)
+        /// stays reentrant and deterministic.
+        /// </summary>
         public Vector3 Position(float seconds)
         {
             if (waiting) return start;
-            float length = Vector3.Distance(start, end);
-            float t = Mathf.PingPong(phase + seconds * speed / Mathf.Max(.01f, length), 1);
-            return Vector3.Lerp(start, end, t);
+            Segment(seconds, out int leg, out float u, out float accelTime, out float cruiseTime, out float length);
+            Vector3 from = leg == 0 ? start : end;
+            Vector3 dir = (leg == 0 ? end - start : start - end) / length;
+            float rampDistance = .5f * Accel * accelTime * accelTime; // ground used by the start-up ramp
+            float s; // arc length travelled away from `from` within this half-cycle
+            if (u < accelTime)
+                s = .5f * Accel * u * u;                                    // start-up: s = ½at²
+            else if (u < accelTime + cruiseTime)
+                s = rampDistance + speed * (u - accelTime);                 // cruise at route speed
+            else if (u < accelTime + cruiseTime + accelTime)
+            {
+                float brake = u - accelTime - cruiseTime;                   // remaining ground = ½a(t_brake-τ)²
+                s = length - .5f * Accel * (accelTime - brake) * (accelTime - brake);
+            }
+            else
+                s = length;                                                 // paused at the far end, then pivoting in place
+            return from + dir * s;
         }
+
+        /// <summary>
+        /// True while the body performs the in-place pivot between the two travel directions; <paramref name="yaw"/>
+        /// sweeps the arrival-to-departure arc at ≤90°/s so Apply can rotate smoothly instead of snapping 180°.
+        /// A straight route cannot express a direction reversal as continuous on-line motion, so the pivot is
+        /// an explicit stationary heading rather than a position tangent.
+        /// </summary>
+        public bool TryTurnYaw(float seconds, out float yaw)
+        {
+            yaw = 0f;
+            if (waiting) return false;
+            Segment(seconds, out int leg, out float u, out float accelTime, out float cruiseTime, out float length);
+            float turn = 2f * accelTime + cruiseTime + RestTime; // pivot window inside the half-cycle
+            if (u < turn) return false;
+            float arrive = leg == 0 ? YawOf(end - start) : YawOf(start - end);
+            float depart = leg == 0 ? YawOf(start - end) : YawOf(end - start);
+            yaw = Mathf.LerpAngle(arrive, depart, (u - turn) / TurnTime);
+            return true;
+        }
+
+        /// <summary>Decomposes a time into the half-cycle index (0 outbound, 1 homebound) and local time within it.</summary>
+        private void Segment(float seconds, out int leg, out float u, out float accelTime, out float cruiseTime, out float length)
+        {
+            length = Vector3.Distance(start, end);
+            accelTime = speed / Accel;                                    // gentle start-up/braking duration
+            cruiseTime = Mathf.Max(0f, length / Mathf.Max(speed, .01f) - accelTime);
+            float half = 2f * accelTime + cruiseTime + RestTime + TurnTime;
+            float t = Mathf.Repeat(seconds, 2f * half);
+            leg = t < half ? 0 : 1;
+            u = t - leg * half;
+        }
+
+        private static float YawOf(Vector3 dir) => Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg; // Unity yaw of LookRotation(dir)
     }
 
     /// <summary>Independent seed, fixed safe sidewalk routes; no navmesh, colliders, crossing participation or shared traffic RNG.</summary>
@@ -118,7 +178,12 @@ namespace StreetCrossing.Presentation
                 Vector3 p = actor.route.Position(seconds);
                 Vector3 tangent = actor.route.Position(seconds + .04f) - p;
                 actor.root.localPosition = p;
-                if (tangent.sqrMagnitude > .000001f) actor.root.localRotation = Quaternion.LookRotation(tangent);
+                // The end-of-route pivot is analytic (TryTurnYaw): the straight route cannot express the
+                // reversal as motion, so without this branch the first reverse tangent would snap the
+                // body 180° in a single frame.
+                if (actor.route.TryTurnYaw(seconds, out float yaw))
+                    actor.root.localRotation = Quaternion.Euler(0, yaw, 0);
+                else if (tangent.sqrMagnitude > .000001f) actor.root.localRotation = Quaternion.LookRotation(tangent);
                 else if (actor.route.waiting) actor.root.localRotation = Quaternion.Euler(0, actor.restYaw, 0);
                 if (actor.animator != null)
                     actor.animator.SetInteger("Motion", actor.route.waiting
