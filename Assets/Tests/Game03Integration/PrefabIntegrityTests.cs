@@ -18,7 +18,7 @@ namespace StreetCrossing.Integration.Tests
     [TestFixture]
     public class PrefabIntegrityTests
     {
-        const string PrefabPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+        const string PrefabPath = "Assets/StreetCrossing/Resources/FirstPersonFullBody.prefab";
 
         static GameObject LoadPrefab()
         {

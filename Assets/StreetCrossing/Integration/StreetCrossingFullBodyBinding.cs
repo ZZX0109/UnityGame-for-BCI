@@ -28,8 +28,19 @@ namespace StreetCrossing.Integration
     [DisallowMultipleComponent]
     public sealed class StreetCrossingFullBodyBinding : MonoBehaviour
     {
-        /// <summary>Project-relative path of the full-body prefab (loaded via AssetDatabase in the editor).</summary>
-        public const string BodyPrefabPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+        /// <summary>
+        /// Project-relative path of the full-body prefab. The prefab lives under a Resources
+        /// folder so player builds resolve it via <c>Resources.Load("FirstPersonFullBody")</c>
+        /// (see <see cref="LoadBodyPrefab"/>); in the editor it is also loadable via AssetDatabase.
+        /// </summary>
+        public const string BodyPrefabPath = "Assets/StreetCrossing/Resources/FirstPersonFullBody.prefab";
+
+        /// <summary>
+        /// Resources-relative name of the prefab, used only by the player-build fallback in
+        /// <see cref="LoadBodyPrefab"/> (Resources.Load paths are project-Resources-relative,
+        /// without the .prefab extension).
+        /// </summary>
+        const string BodyPrefabResourceName = "FirstPersonFullBody";
 
         /// <summary>
         /// Per-frame planar displacement gate (metres). Below this the avatar is considered
@@ -119,7 +130,7 @@ namespace StreetCrossing.Integration
                     {
                         _warnedPrefabMissing = true;
                         Debug.LogWarning($"[StreetCrossingFullBodyBinding] Full-body prefab not found at '{BodyPrefabPath}'. " +
-                                         "In player builds the prefab must be moved under a Resources folder; retrying every frame.");
+                                         "In player builds the prefab must live under a Resources folder as 'FirstPersonFullBody'; retrying every frame.");
                     }
 
                     PlayerRoot = null; // retry next frame
@@ -276,9 +287,10 @@ namespace StreetCrossing.Integration
             if (asset != null)
                 return asset;
 #endif
-            // Player-build fallback: only resolves when the prefab is moved under Resources
-            // (documented TODO — the prefab currently lives outside any Resources folder).
-            return Resources.Load<GameObject>("FirstPersonFullBody");
+            // Player-build fallback: resolves because the prefab lives under
+            // Assets/StreetCrossing/Resources (see BodyPrefabPath). Also reached in the
+            // editor when the AssetDatabase load above misses.
+            return Resources.Load<GameObject>(BodyPrefabResourceName);
         }
     }
 }

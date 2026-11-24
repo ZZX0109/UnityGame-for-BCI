@@ -1,7 +1,8 @@
 # StreetCrossing Full-Body Integration
 
 `StreetCrossingFullBodyBinding.cs` glues the VirtualHand full-body avatar
-(`Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab`) onto the StreetCrossing player
+(`Assets/StreetCrossing/Resources/FirstPersonFullBody.prefab`, loaded via
+`Resources.Load` in player builds) onto the StreetCrossing player
 at runtime:
 
 - A `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` bootstrap creates a
