@@ -336,8 +336,20 @@ namespace StreetCrossing.Presentation
             if (residential && !distant)
             {
                 // Wall-mounted condenser on its own pair of brackets; visual only, no collider.
-                Part(world, block, "AC outdoor unit", new Vector3(width * .17f, 3.20f, -2.30f), new Vector3(.66f, .48f, .26f), "C9CFC9", .025f, .35f);
-                Part(world, block, "AC fan grille", new Vector3(width * .17f, 3.20f, -2.435f), new Vector3(.32f, .32f, .02f), "6E7672", .025f, .30f);
+                // 2026-11-25: the CC0 air-conditioner FBX replaces the old blocky Part unit; the
+                // procedural version stays as fallback when the imported model is unavailable.
+                Transform condenser = world.Modules.SpawnImported(block, "exterior_aircon_unit",
+                    new Vector3(width * .17f, 2.96f, -2.30f), .55f);
+                if (condenser != null)
+                {
+                    DisableRustedVariant(condenser);
+                    world.AddVisualLod(condenser, .012f);
+                }
+                else
+                {
+                    Part(world, block, "AC outdoor unit", new Vector3(width * .17f, 3.20f, -2.30f), new Vector3(.66f, .48f, .26f), "C9CFC9", .025f, .35f);
+                    Part(world, block, "AC fan grille", new Vector3(width * .17f, 3.20f, -2.435f), new Vector3(.32f, .32f, .02f), "6E7672", .025f, .30f);
+                }
                 for (int bracket = -1; bracket <= 1; bracket += 2)
                     Part(world, block, "AC bracket", new Vector3(width * .17f + bracket * .25f, 2.92f, -2.28f), new Vector3(.05f, .08f, .24f), profile.metal);
                 // Entrance porch: canopy on brackets, lamp and number plaque beside the door, threshold stone at the step.
@@ -360,6 +372,17 @@ namespace StreetCrossing.Presentation
                 for (int legX = -1; legX <= 1; legX += 2)
                 for (int legZ = -1; legZ <= 1; legZ += 2)
                     Part(world, block, "Tank leg", new Vector3(width * .10f + legX * .5f, height + .20f, 1.4f + legZ * .5f), new Vector3(.06f, .40f, .06f), profile.metal);
+                if (!corner)
+                {
+                    // Modular CC0 fire escape climbing the facade from pavement level, offset left of
+                    // the central entrance and the bay-0 balcony; visual only, no collider. Its front
+                    // tip stops at the same ~3.4 m envelope as the shopfront valances so the walk
+                    // bands keep their clearance.
+                    Transform fireEscape = world.Modules.SpawnImported(block, "modular_fire_escape",
+                        new Vector3(-width * .28f, 0f, -2.68f), 6.4f);
+                    if (fireEscape != null) world.AddVisualLod(fireEscape, .012f);
+                    else Part(world, block, "Fire escape stub", new Vector3(-width * .28f, 3.2f, -2.55f), new Vector3(2.4f, 6.4f, .08f), "6E7672", .02f, .4f);
+                }
             }
             if (!distant) world.Label(Captions[(int)kind], new Vector3(0, residential ? 2.82f : 2.98f, -2.37f), .075f,
                 residential ? profile.accent : "F3EDDB", block, 0, width * .75f, .43f);
@@ -379,6 +402,23 @@ namespace StreetCrossing.Presentation
             world.CombineVisuals(block);
             world.AddVisualLod(block, distant ? .018f : .006f);
             return block;
+        }
+
+        /// <summary>
+        /// Poly Haven's exterior_aircon_unit FBX carries a pristine and a rusted twin stacked on the
+        /// same spot (one texture set per state). Whole-file instantiation would z-fight the pair, so
+        /// the rusted subtree is switched off — renderers too, because CombineVisuals walks inactive
+        /// children as well and would otherwise bake the duplicate shell into the combined chunk.
+        /// </summary>
+        private static void DisableRustedVariant(Transform imported)
+        {
+            Transform[] nodes = imported.GetComponentsInChildren<Transform>(true);
+            foreach (Transform node in nodes)
+            {
+                if (node == imported || !node.name.ToLowerInvariant().Contains("rusted")) continue;
+                node.gameObject.SetActive(false);
+                foreach (Renderer renderer in node.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
+            }
         }
 
         /// <summary>

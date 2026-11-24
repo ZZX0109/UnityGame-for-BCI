@@ -42,7 +42,7 @@ FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0
 4. **落座**：把模型底面精确放在 `localPosition.y`，水平居中到 `localPosition`
 5. 由调用方 `AddVisualLod` 加入视距剔除
 
-已接入 10 处（10 个资产）：垃圾桶、消防栓、路灯、井盖、旧轮胎、配电箱×2、安防灯、卷帘窗（住宅立面）、卷帘门（Convenience 服务口）。当前若模型缺失，会静默回退到上一轮的程序化实现——**不会中断场景构建或测试**。
+已接入 12 处（12 个资产）：垃圾桶、消防栓、路灯、井盖、旧轮胎、配电箱×2、安防灯、卷帘窗（住宅立面）、卷帘门（Convenience 服务口）、空调外机（住宅立面上层）、防火梯（Apartment 立面）。当前若模型缺失，会静默回退到上一轮的程序化实现——**不会中断场景构建或测试**。
 
 ## 已知限制（运行时材质构建）
 
@@ -83,7 +83,7 @@ FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0
 | `modular_fire_escape` | Juniix | 11,322 | 原样使用；7 个网格对象、2 材质槽（`_01`/`_02`），已补 `_02` 槽贴图三联组，双槽各自成材质 |
 | `exterior_aircon_unit` | Poly Haven | — | 原样使用；原始 FBX 为直接 Kaydara 二进制（非 zip），md5 `2c65dec41975985948e3e4ed8a9f3418`；2 材质槽（`_01`/`_02`），双槽贴图三联组已齐；上游另有 `_rusted_01/_rusted_02` 变体贴图未下载（运行时材质会覆盖，无影响） |
 
-全部来自 [Hidden Alley 合集](https://polyhaven.com/collections/hidden_alley)，CC0。下载源清单与校验脚本产物在仓库外 `BuildOutput/polyhaven-dl/` 留档。后续扩充新资产时，代码侧 `GetImportedModel`/`SetImportedModel` 需各加一个 case 才能生效（`exterior_aircon_unit` 已于 2026-11-25 接入，尚无场景挂点）。
+全部来自 [Hidden Alley 合集](https://polyhaven.com/collections/hidden_alley)，CC0。下载源清单与校验脚本产物在仓库外 `BuildOutput/polyhaven-dl/` 留档。后续扩充新资产时，代码侧 `GetImportedModel`/`SetImportedModel` 需各加一个 case 才能生效（`exterior_aircon_unit` 已于 2026-11-25 接入住宅立面上层挂点，运行时以 `DisableRustedVariant` 关闭 FBX 内置锈化孪生子树；`modular_fire_escape` 同日接入 Apartment 立面，归一化后按 6.4 m 高度整装落地）。
 
 ## 已放弃的方案（记录以免重走）
 
