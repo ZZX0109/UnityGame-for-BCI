@@ -1,0 +1,50 @@
+13:58:38 | INFO: Data are loaded, start creating Blender stuff
+13:58:38 | INFO: Blender create Mesh node handSmooth.001_lambert1_0
+13:58:38 | INFO: glTF import finished in 0.08s
+SOURCE_GROUP pulse.R_01 count 2619 min (-2.9868, 0.1375, -0.1138) max (0.2251, 72.3969, 13.4958)
+SOURCE_GROUP hand.R_02 count 3154 min (-3.4598, 0.1375, -0.1138) max (0.2251, 82.0647, 15.4501)
+SOURCE_GROUP thumb_base.R_03 count 2048 min (-3.4643, 0.1375, 0.0648) max (0.215, 82.1518, 15.9565)
+SOURCE_GROUP thumb_01.R_08 count 1367 min (-3.4555, 0.3094, 0.3138) max (0.0875, 82.3746, 16.1432)
+SOURCE_GROUP thumb_02.R_09 count 1011 min (-2.9367, 0.6643, 0.5367) max (-0.0733, 70.5935, 13.9307)
+SOURCE_GROUP thumb_03.R_010 count 1352 min (-0.4632, 0.8548, 0.66) max (-0.1727, 5.5777, 1.5767)
+SOURCE_GROUP index_base.R_012 count 2350 min (-3.4946, 1.1703, 0.4815) max (0.137, 83.7212, 16.4161)
+SOURCE_GROUP index_01.R_017 count 1089 min (-3.493, 78.4211, 15.4009) max (-3.1836, 83.9022, 16.4693)
+SOURCE_GROUP index_02.R_018 count 930 min (-3.4141, 83.557, 16.2108) max (-3.1914, 84.0911, 16.5142)
+SOURCE_GROUP index_03.R_019 count 1465 min (-3.3751, 83.7906, 16.2999) max (-3.2168, 84.2263, 16.5193)
+SOURCE_GROUP middle_base.R_020 count 1975 min (-3.5034, 5.2664, 1.278) max (-0.5556, 83.7179, 16.3259)
+SOURCE_GROUP middle_01.R_025 count 1221 min (-3.4897, 83.3269, 15.8139) max (-3.174, 83.9729, 16.2345)
+SOURCE_GROUP middle_02.R_026 count 805 min (-3.486, 83.6143, 15.9353) max (-3.2561, 84.1582, 16.1679)
+SOURCE_GROUP middle_03.R_027 count 1559 min (-3.4868, 83.8229, 15.971) max (-3.3157, 84.3806, 16.1808)
+SOURCE_GROUP ring_base.R_028 count 1922 min (-3.5034, 34.904, 6.6264) max (-1.1747, 83.7364, 16.1381)
+SOURCE_GROUP ring_01.R_033 count 1201 min (-3.4891, 83.2924, 15.5831) max (-3.1754, 83.9084, 15.9687)
+SOURCE_GROUP ring_02.R_034 count 774 min (-3.5035, 83.59, 15.686) max (-3.2598, 84.0796, 15.8562)
+SOURCE_GROUP ring_03.R_035 count 1496 min (-3.5215, 83.8, 15.6995) max (-3.3286, 84.2775, 15.8536)
+SOURCE_GROUP pinky_base.R_036 count 3486 min (-3.5034, 1.0299, 0.0469) max (0.186, 83.5478, 16.0116)
+SOURCE_GROUP pinky_01.R_041 count 1280 min (-3.4886, 2.0617, 1.2316) max (-0.3258, 84.3022, 16.049)
+SOURCE_GROUP pinky_02.R_042 count 882 min (-3.4553, 83.412, 15.3493) max (-3.2935, 83.8306, 15.5671)
+SOURCE_GROUP pinky_03.R_043 count 1468 min (-3.4553, 83.5706, 15.3492) max (-3.3243, 83.926, 15.5194)
+SOURCE_COMPONENT 0 (14499, (-4.0965, -3.0732, 0.1253), (0.3262, 2.7998, 2.2957))
+C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\inspect_visual.py:73: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+SOURCE_REVIEW source_open_a min (-4.0965118408203125, -3.0731966495513916, 0.12534208595752716) max (0.32624414563179016, 2.7998299598693848, 2.2956886291503906)
+00:04.297  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_open_a.png'
+SOURCE_REVIEW source_open_b min (-4.0965118408203125, -3.0731966495513916, 0.12534208595752716) max (0.32624414563179016, 2.7998299598693848, 2.2956886291503906)
+00:04.657  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_open_b.png'
+SOURCE_REVIEW source_closed_a min (-1.395595669746399, -1.5227241516113281, 0.12541408836841583) max (6.278872966766357, 4.149052143096924, 1.9934433698654175)
+00:05.047  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_closed_a.png'
+SOURCE_REVIEW source_closed_b min (-1.395595669746399, -1.5227241516113281, 0.12541408836841583) max (6.278872966766357, 4.149052143096924, 1.9934433698654175)
+00:05.422  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_closed_b.png'
+SOURCE_REVIEW source_reopen_a min (-4.0965118408203125, -3.0731966495513916, 0.12534208595752716) max (0.32624414563179016, 2.7998299598693848, 2.2956886291503906)
+00:05.813  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_reopen_a.png'
+SOURCE_REVIEW source_reopen_b min (-4.0965118408203125, -3.0731966495513916, 0.12534208595752716) max (0.32624414563179016, 2.7998299598693848, 2.2956886291503906)
+00:06.172  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_reopen_b.png'
+SOURCE_REVIEW source_no_action_a min (-4.0965118408203125, -3.0731966495513916, 0.12534208595752716) max (0.32624414563179016, 2.7998299598693848, 2.2956886291503906)
+00:06.578  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_no_action_a.png'
+SOURCE_REVIEW source_true_rest_a min (-3.5215044021606445, 0.13753271102905273, -0.11384715139865875) max (0.22512350976467133, 84.38057708740234, 16.519277572631836)
+00:06.907  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_true_rest_a.png'
+SOURCE_REVIEW source_true_rest_b min (-3.5215044021606445, 0.13753271102905273, -0.11384715139865875) max (0.22512350976467133, 84.38057708740234, 16.519277572631836)
+00:07.235  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\source-review\source_true_rest_b.png'
+SOURCE_REVIEW_DONE
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

@@ -1,0 +1,7 @@
+Noto Sans CJK SC (subset of NotoSansCJK-Regular-2.004.ttc, face 2)
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved
+Font Name 'Noto'.
+
+This Font Software is licensed under the SIL
+Open Font License, Version 1.1 <https://scripts.sil.org/OFL>.
+Subset generated for Game04-VirtualHand UI text only.

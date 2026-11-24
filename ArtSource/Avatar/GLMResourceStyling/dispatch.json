@@ -1,0 +1,15 @@
+{
+  "checked": "2026-11-20T16:11:17.9746643+08:00",
+  "app": "ZCode",
+  "model": "glm-5.3-flash",
+  "effort": "最高",
+  "task": "GLM 开源虚拟身体外观适配",
+  "status": "working",
+  "scope": "ArtSource/Avatar/GLMResourceStyling",
+  "evidence": "UI observed TASK.md read, source/cache inspection, 工作中 and 停止生成; model shown glm-5.3-flash 最高",
+  "expected": [
+    "appearance_presets.json",
+    "style_preview.py",
+    "HANDOFF.md"
+  ]
+}

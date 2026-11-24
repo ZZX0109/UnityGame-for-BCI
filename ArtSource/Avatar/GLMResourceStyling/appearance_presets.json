@@ -1,0 +1,283 @@
+{
+  "$schema_note": "GLMResourceStyling 外观预设。资产名均取自官方素材包清单（见 each pack 的 source 字段）。相对路径 relative_path 相对 MPFB 资产根目录；status=pending_download 表示包尚未下载完成，路径为按包清单推断的预期位置，解压后必须由 style_preview.py 实际解析确认。所有资产均为现成开源资产，不含自造模型。外观为通用成人，禁止作为患者测量数据使用。",
+  "generated_by": "glm-5.3-flash (GLMResourceStyling)",
+  "generated_at": "2026-11-20",
+  "asset_packs": {
+    "makehuman_system_assets": {
+      "status": "pending_download",
+      "download_filename": "makehuman_system_assets_cc0.zip",
+      "expected_unzip_dir": "ArtSource/_download/avatar-resources/makehuman_system_assets_cc0/",
+      "manifest_entry": "ArtSource/_download/avatar-resources/manifest.json (resources.makehuman_system_assets, 由 Codex 下载完成后登记)",
+      "source": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+      "author": "makehuman_system",
+      "license": "CC0"
+    },
+    "skins02": {
+      "status": "pending_download",
+      "download_filename": "skins02_cc0.zip",
+      "expected_unzip_dir": "ArtSource/_download/avatar-resources/skins02_cc0/",
+      "manifest_entry": "同上，由 Codex 下载完成后登记",
+      "source": "https://static.makehumancommunity.org/assets/assetpacks/skins02.html",
+      "author": "各皮肤作者见 preset 内逐项标注",
+      "license": "CC0"
+    },
+    "mpfb2_testdata": {
+      "status": "resolved",
+      "local_root": "ArtSource/_download/avatar-resources/mpfb2_v2.0.18/mpfb2-2.0.18/",
+      "manifest_entry": "ArtSource/_download/avatar-resources/manifest.json resources.mpfb2",
+      "source": "https://github.com/makehumancommunity/mpfb2/archive/refs/tags/v2.0.18.zip",
+      "author": "MPFB2 contributors",
+      "license": "GPLv3 (code); bundled graphic assets CC0 (LICENSE.ASSETS.md)"
+    }
+  },
+  "presets": [
+    {
+      "id": "casual_female_A",
+      "label": "通用成年女性 · 日常便装",
+      "usage_note": "通用成人外观基线之一，仅用于虚拟手/身体视觉验证，不代表任何患者人体测量。",
+      "body": {
+        "basemesh": "MPFB2 default basemesh (HumanService.create_human)",
+        "proportions": "默认真实人体比例，不使用卡通化或球形躯干；体型微调由 AG 的 build_mpfb_avatar.py targets 决定，本预设不覆盖建模 targets。"
+      },
+      "skin": {
+        "asset_name": "young_caucasian_female",
+        "filename": "young_caucasian_female.mhmat",
+        "relative_path": "skins/young_caucasian_female.mhmat",
+        "pack": "makehuman_system_assets",
+        "author": "makehuman_system",
+        "license": "CC0",
+        "status": "pending_download",
+        "material_type": "GAMEENGINE",
+        "roughness": "0.55-0.65（自然皮肤，勿抛光；GAMEENGINE 材质下调 Principled BSDF Roughness）",
+        "tint_advice": "不额外调色，保留 mhmat 原始漫反射；若偏灰可 +3% 饱和度"
+      },
+      "face": {
+        "eyes": {
+          "asset_name": "low-poly",
+          "filename": "low-poly.mhclo",
+          "relative_path": "eyes/low-poly.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.15（虹膜湿润感）",
+          "tint_advice": "默认棕色 brown 亦可替换；低多边形版本用于游戏性能"
+        },
+        "eyebrows": {
+          "asset_name": "eyebrow002",
+          "filename": "eyebrow002.mhclo",
+          "relative_path": "eyebrows/eyebrow002.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.7",
+          "tint_advice": "深棕，接近发色；若 eyebrow002 形状不理想可换 eyebrow001-012 中任一"
+        },
+        "eyelashes": {
+          "asset_name": "eyelashes01",
+          "filename": "eyelashes01.mhclo",
+          "relative_path": "eyelashes/eyelashes01.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.6",
+          "tint_advice": "与眉毛同色系"
+        },
+        "teeth": {
+          "asset_name": "teeth_base",
+          "filename": "teeth_base.mhclo",
+          "relative_path": "teeth/teeth_base.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.3",
+          "tint_advice": "保持默认，不做美白"
+        },
+        "tongue": {
+          "asset_name": "tongue01",
+          "filename": "tongue01.mhclo",
+          "relative_path": "tongue/tongue01.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.4",
+          "tint_advice": "保持默认"
+        }
+      },
+      "hair": {
+        "asset_name": "short02",
+        "filename": "short02.mhclo",
+        "relative_path": "hair/short02.mhclo",
+        "pack": "makehuman_system_assets",
+        "author": "makehuman_system",
+        "license": "CC0",
+        "status": "pending_download",
+        "material_type": "GAMEENGINE",
+        "roughness": "0.45",
+        "tint_advice": "深棕 (0.09, 0.05, 0.04)；替代当前硬壳头发，这是系统包真发网格"
+      },
+      "clothes": [
+        {
+          "asset_name": "female_casualsuit01",
+          "filename": "female_casualsuit01.mhclo",
+          "relative_path": "clothes/female_casualsuit01.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.8（棉质）",
+          "tint_advice": "朴素中性色（灰蓝或米色），低饱和"
+        },
+        {
+          "asset_name": "shoes01",
+          "filename": "shoes01.mhclo",
+          "relative_path": "clothes/shoes01.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.7",
+          "tint_advice": "与服装同色系深一档"
+        }
+      ]
+    },
+    {
+      "id": "casual_male_A",
+      "label": "通用成年男性 · 日常便装",
+      "usage_note": "通用成人外观基线之二；皮肤选用 skins02 自然皮肤包，作者与许可逐项标注。",
+      "body": {
+        "basemesh": "MPFB2 default basemesh (HumanService.create_human)",
+        "proportions": "默认真实人体比例，同上。"
+      },
+      "skin": {
+        "asset_name": "toigo_light_skin_male_freckles",
+        "filename": "toigo_light_skin_male_freckles.mhmat",
+        "relative_path": "skins/toigo_light_skin_male_freckles.mhmat",
+        "pack": "skins02",
+        "author": "MargaretToigo",
+        "license": "CC0",
+        "status": "pending_download",
+        "material_type": "GAMEENGINE",
+        "roughness": "0.55-0.65",
+        "tint_advice": "自带 freckles 细节，保留原贴图不覆盖；备选同作者 toigo_light_skin_male_bronze"
+      },
+      "face": {
+        "eyes": {
+          "asset_name": "high-poly",
+          "filename": "high-poly.mhclo",
+          "relative_path": "eyes/high-poly.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.15",
+          "tint_advice": "默认即可"
+        },
+        "eyebrows": {
+          "asset_name": "eyebrow001",
+          "filename": "eyebrow001.mhclo",
+          "relative_path": "eyebrows/eyebrow001.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.7",
+          "tint_advice": "深棕"
+        },
+        "eyelashes": {
+          "asset_name": "eyelashes02",
+          "filename": "eyelashes02.mhclo",
+          "relative_path": "eyelashes/eyelashes02.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.6",
+          "tint_advice": "同眉毛色系"
+        },
+        "teeth": {
+          "asset_name": "teeth_base",
+          "filename": "teeth_base.mhclo",
+          "relative_path": "teeth/teeth_base.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.3",
+          "tint_advice": "保持默认"
+        },
+        "tongue": {
+          "asset_name": "tongue01",
+          "filename": "tongue01.mhclo",
+          "relative_path": "tongue/tongue01.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.4",
+          "tint_advice": "保持默认"
+        }
+      },
+      "hair": {
+        "asset_name": "short01",
+        "filename": "short01.mhclo",
+        "relative_path": "hair/short01.mhclo",
+        "pack": "makehuman_system_assets",
+        "author": "makehuman_system",
+        "license": "CC0",
+        "status": "pending_download",
+        "material_type": "GAMEENGINE",
+        "roughness": "0.45",
+        "tint_advice": "深棕黑 (0.05, 0.04, 0.035)"
+      },
+      "clothes": [
+        {
+          "asset_name": "male_casualsuit03",
+          "filename": "male_casualsuit03.mhclo",
+          "relative_path": "clothes/male_casualsuit03.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.8（棉质）",
+          "tint_advice": "朴素中性色；male_casualsuit01-06 均可互换，以解压后实际预览为准"
+        },
+        {
+          "asset_name": "shoes02",
+          "filename": "shoes02.mhclo",
+          "relative_path": "clothes/shoes02.mhclo",
+          "pack": "makehuman_system_assets",
+          "author": "makehuman_system",
+          "license": "CC0",
+          "status": "pending_download",
+          "material_type": "GAMEENGINE",
+          "roughness": "0.7",
+          "tint_advice": "与服装同色系深一档"
+        }
+      ]
+    }
+  ],
+  "integration_notes": {
+    "material_type": "所有 GAMEENGINE 选择与 AG 导出器保持一致（script_samples/10_complete_character_export_fbx.py 的推荐路径），Unity FBX 导入只需 Principled BSDF。",
+    "restyle_workflow": "AG .blend 生成后，style_preview.py 以副本方式加载该 .blend，按本预设调整材质粗糙度/色泽并渲染预览，不回写原文件。",
+    "forbidden": "不得用程序生成假皮肤/假头发贴图替代缺失资产；资产缺失时 style_preview.py 必须显式报错退出。",
+    "patient_data": "本预设与渲染结果均为通用成人外观，禁止登记或混淆为患者测量数据。"
+  }
+}

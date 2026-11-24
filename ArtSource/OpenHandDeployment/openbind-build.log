@@ -1,0 +1,38 @@
+14:24:16 | INFO: Data are loaded, start creating Blender stuff
+14:24:16 | INFO: Blender create Mesh node handSmooth.001_lambert1_0
+14:24:16 | INFO: glTF import finished in 0.08s
+VH-OPENBIND: wrist (2.5166728701009333e-09, -0.08412455022335052, 0.2517448365688324) middle (0.22022730112075806, -0.32975679636001587, 1.9360151290893555) source hand length 2.077382877469063 metric 0.09146123329536761
+VH-OPENBIND: bone-envelope cleanup removed 3705 of 16330 vertices; radius 0.35
+VH-OPENBIND: long-face cleanup removed 99 faces and 1 loose vertices; max edge 0.22
+VH-OPENBIND: native rotation-only action transferred (0.0, 77.0)
+C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\build_elena_openbind.py:343: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:03.844  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_open_palm.png'
+00:04.219  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_open_back.png'
+00:04.641  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_closed_palm.png'
+00:05.079  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_closed_back.png'
+00:05.375  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_reopen_palm.png'
+00:05.688  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_R_reopen_back.png'
+00:06.000  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_open_palm.png'
+00:06.297  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_open_back.png'
+00:06.625  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_closed_palm.png'
+00:06.954  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_closed_back.png'
+00:07.235  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_reopen_palm.png'
+00:07.532  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind\Elena_L_reopen_back.png'
+C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\build_elena_openbind.py:317: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if not mat or not mat.use_nodes:
+Info: Saved as "ElenaHands.blend"
+
+FBX export starting... 'C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\OpenHandDeployment\\output_openbind\\ElenaHand_R.fbx'
+(bpy.data.armatures['ElenaFF.OpenRig'], 'POSE')
+export finished in 0.0633 sec.
+VH-OPENBIND: exported ElenaHand_R.fbx
+
+FBX export starting... 'C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\OpenHandDeployment\\output_openbind\\ElenaHand_L.fbx'
+(bpy.data.armatures['ElenaFF.OpenRig.L'], 'POSE')
+export finished in 0.0600 sec.
+VH-OPENBIND: exported ElenaHand_L.fbx
+VH-OPENBIND: DONE C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_openbind
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

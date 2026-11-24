@@ -1,0 +1,267 @@
+{
+  "created_utc": "2026-11-20T15:37:56.001418+00:00",
+  "project": "Game04-VirtualHand prototype",
+  "blender_version": "5.2.3 LTS",
+  "mpfb": {
+    "version": "2.0.18",
+    "source_directory": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\mpfb2_v2.0.18\\mpfb2-2.0.18\\src",
+    "license": "GPL; source package provenance retained",
+    "license_file": null,
+    "bootstrap": "Local source imported using the supplied smoke-script extension-module approach."
+  },
+  "assets": {
+    "skin": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\skins02_cc0\\skins\\toigo_light_skin_male_bronze\\toigo_light_skin_male_bronze.mhmat",
+      "source_pack": "skins02_cc0",
+      "source_relative_path": "skins/toigo_light_skin_male_bronze/toigo_light_skin_male_bronze.mhmat",
+      "selection_method": "explicit CLI path",
+      "license": "CC0 (skins02 pack, manifest.json of _download/avatar-resources; descriptor has no explicit license line)",
+      "descriptor_sha256": "4dbc8cd5a4c37b415556e76b6b7c5802e4d1432fffa3b0669646c5a92fb584b7",
+      "license_from_descriptor": "unknown",
+      "author_from_descriptor": "unknown (no author line in .mhmat)",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "eyes": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\system-assets-cc0-fresh-20261120\\eyes\\low-poly\\low-poly.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "low-poly.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "CC0 (explicit release statement in low-poly.mhclo header, Sept 2020, Data Collection AB)",
+      "descriptor_sha256": "68582e28e9176cba7cfcf35208f671b6201b8d1bc95c32decff61a3160ec34d8",
+      "license_from_descriptor": "unknown",
+      "author_from_descriptor": "Data Collection AB (copyright holder named in header)",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "eyebrows": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\garments-cc0\\eyebrows\\mindfront_eyebrows_01\\mindfront_eyebrows_01.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "mindfront_eyebrows_01.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "Not inferred for this explicit external path",
+      "descriptor_sha256": "1e62989df0749a955fffee30622cd3cd62f400a3524bec07658bfee234a1757f",
+      "license_from_descriptor": "CC0",
+      "author_from_descriptor": "Mindfront (Sweden)",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "hair": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\garments-cc0\\hair\\toigo_blunt_bob\\toigo_blunt_bob.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "toigo_blunt_bob.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "Not inferred for this explicit external path",
+      "descriptor_sha256": "252f6b2edbc9f1568b85ff7f367709f5c328110023573df35720a4c84879f4e1",
+      "license_from_descriptor": "CC0",
+      "author_from_descriptor": "MRT",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "shirt": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_fisherman_sweater\\toigo_fisherman_sweater.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "toigo_fisherman_sweater.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "Not inferred for this explicit external path",
+      "descriptor_sha256": "b454960bdd61985f246e88e547a127a75d590dc87d6c1a4062fb7c7c281d8999",
+      "license_from_descriptor": "CC0",
+      "author_from_descriptor": "MRT",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "trousers": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\garments-cc0\\clothes\\cortu_cargo_pants\\cortu_cargo_pants.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "cortu_cargo_pants.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "CC0 (cortu_cargo_pants.mhclo header: \"Cortu Johnstone - CC0\")",
+      "descriptor_sha256": "5bc0c7282a5a2694d55b6df2ed5642a382d89d0b77bd98703dac7e110e51fada",
+      "license_from_descriptor": "unknown",
+      "author_from_descriptor": "Cortu Johnstone",
+      "official_asset_page_verified_this_round": "unknown"
+    },
+    "shoes": {
+      "file": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_mj_cloth_shoes\\toigo_mj_cloth_shoes.mhclo",
+      "source_pack": "explicit external path",
+      "source_relative_path": "toigo_mj_cloth_shoes.mhclo",
+      "selection_method": "explicit CLI path",
+      "license": "Not inferred for this explicit external path",
+      "descriptor_sha256": "6e81c1d6475a03b91a2c7002176883efce5e2a0b129d6c8cb00864415cdb905e",
+      "license_from_descriptor": "CC0",
+      "author_from_descriptor": "MRT",
+      "official_asset_page_verified_this_round": "unknown"
+    }
+  },
+  "revision": "rev2_20261120",
+  "revision_changes": [
+    "macro cupsize/firmness/weight adjusted so the body stays inside the CC0 sweater",
+    "millimetre-scale normal displacement on shirt/trousers to clear body and pant-shoe overlap",
+    "bump/normal map strength lowered on knit/pants to stop far-field texture noise",
+    "five baseline-comparable plus two posed views rendered with recorded camera metadata"
+  ],
+  "fabric_fixes": {
+    "macro_overrides": {
+      "cupsize": 0.25,
+      "firmness": 0.35,
+      "weight": 0.5
+    },
+    "shirt_offset_m": 0.0005,
+    "trousers_offset_m": 0.0025,
+    "bump_strength": 0.2,
+    "normal_strength": 0.35
+  },
+  "body": {
+    "macro_values": {
+      "gender": 0.5,
+      "age": 0.5,
+      "muscle": 0.5,
+      "weight": 0.5,
+      "proportions": 0.5,
+      "height": 0.5,
+      "cupsize": 0.25,
+      "firmness": 0.35
+    },
+    "rig": "game_engine",
+    "rig_object": "Human.rig",
+    "uniform_scale": {
+      "target_height_m": 1.7,
+      "initial_height_m": 1.6723797051236033,
+      "uniform_scale_factor": 1.0165155644927868,
+      "final_height_m": 1.7000000486150384,
+      "final_bounds_m": {
+        "min": [
+          -0.5342040061950684,
+          -0.3399961292743683,
+          -9.313225746154785e-10
+        ],
+        "max": [
+          0.5342040061950684,
+          0.11512601375579834,
+          1.7000000476837158
+        ]
+      }
+    }
+  },
+  "equipped_objects": {
+    "eyes": "Human.low-poly",
+    "eyebrows": "Human.mindfront_eyebrows_01",
+    "hair": "Human.toigo_blunt_bob",
+    "shirt": "Human.toigo_fisherman_sweater",
+    "trousers": "Human.cortu_cargo_pants",
+    "shoes": "Human.toigo_mj_cloth_shoes"
+  },
+  "bone_names": [
+    "Root",
+    "ball_l",
+    "ball_r",
+    "calf_l",
+    "calf_r",
+    "clavicle_l",
+    "clavicle_r",
+    "foot_l",
+    "foot_r",
+    "hand_l",
+    "hand_r",
+    "head",
+    "index_01_l",
+    "index_01_r",
+    "index_02_l",
+    "index_02_r",
+    "index_03_l",
+    "index_03_r",
+    "lowerarm_l",
+    "lowerarm_r",
+    "middle_01_l",
+    "middle_01_r",
+    "middle_02_l",
+    "middle_02_r",
+    "middle_03_l",
+    "middle_03_r",
+    "neck_01",
+    "pelvis",
+    "pinky_01_l",
+    "pinky_01_r",
+    "pinky_02_l",
+    "pinky_02_r",
+    "pinky_03_l",
+    "pinky_03_r",
+    "ring_01_l",
+    "ring_01_r",
+    "ring_02_l",
+    "ring_02_r",
+    "ring_03_l",
+    "ring_03_r",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "thigh_l",
+    "thigh_r",
+    "thumb_01_l",
+    "thumb_01_r",
+    "thumb_02_l",
+    "thumb_02_r",
+    "thumb_03_l",
+    "thumb_03_r",
+    "upperarm_l",
+    "upperarm_r"
+  ],
+  "mesh_vertex_counts": {
+    "by_mesh_object": {
+      "Human": {
+        "source_vertices": 19158,
+        "evaluated_vertices": 11880,
+        "evaluated_faces": 11760
+      },
+      "Human.low-poly": {
+        "source_vertices": 96,
+        "evaluated_vertices": 96,
+        "evaluated_faces": 86
+      },
+      "Human.mindfront_eyebrows_01": {
+        "source_vertices": 9468,
+        "evaluated_vertices": 9468,
+        "evaluated_faces": 7101
+      },
+      "Human.toigo_blunt_bob": {
+        "source_vertices": 1510,
+        "evaluated_vertices": 1510,
+        "evaluated_faces": 1429
+      },
+      "Human.toigo_fisherman_sweater": {
+        "source_vertices": 2126,
+        "evaluated_vertices": 2126,
+        "evaluated_faces": 2082
+      },
+      "Human.cortu_cargo_pants": {
+        "source_vertices": 211,
+        "evaluated_vertices": 211,
+        "evaluated_faces": 196
+      },
+      "Human.toigo_mj_cloth_shoes": {
+        "source_vertices": 556,
+        "evaluated_vertices": 556,
+        "evaluated_faces": 502
+      }
+    },
+    "total_source_vertices": 33125,
+    "total_evaluated_vertices": 25847
+  },
+  "generated_files": [
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\neutral_adult_avatar.blend",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\neutral_adult_avatar.fbx",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\neutral_adult_avatar.glb",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\front.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\three_quarter.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\side.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\oblique_front_left_armraised.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\oblique_front_right_armraised.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\eye_level_chest_waist.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\feet_oblique_side.png",
+    "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult_rev2_20261120\\views_metadata.json"
+  ],
+  "material_note": "Blender shader nodes remain in the authoring scene. Adapt materials for Unity Built-in Render Pipeline after import.",
+  "fbx_note": "Exports the game_engine deformation rig and skin weights without leaf bones or animation clips.",
+  "reopen_verification": {
+    "method": "three separate fresh blender.exe processes, one per format; reports in reopen_results/",
+    "blend": "OK: 13 objects, 7 meshes, 53 bones, 14 materials, 14 images, 0 missing unpacked images",
+    "fbx": "OK: 9 objects, 7 meshes, 53 bones, 25847 vertices, 4 images with data",
+    "glb": "OK: 10 objects, 8 meshes (extra Icosphere from hair subrig), 53 bones, 37107 vertices",
+    "note": "counts are per fresh-process import; GLB Icosphere matches baseline build (MPFB hair subrig helper)"
+  }
+}

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Neuralife.VirtualHand
 {
@@ -126,7 +125,7 @@ namespace Neuralife.VirtualHand
     /// Streams HandMotionFrames from a UTF-8 JSONL file (one JSON object per line).
     /// Clock is owned by ReplayController so pause affects both playback and tasks.
     /// </summary>
-    public class ReplaySource : MonoBehaviour
+    public class ReplaySource : MonoBehaviour, IHandMotionSource
     {
         public ReplayData Data { get; private set; } = new ReplayData();
         public event Action<HandMotionFrame> FrameReady;
@@ -139,21 +138,27 @@ namespace Neuralife.VirtualHand
 
         public static ReplayData LoadFile(string path, ReplayParseMode mode = ReplayParseMode.Tolerant)
         {
+            // v1 contract: local Windows JSONL only. Remote URLs and the missing
+            // UnityWebRequest module are out of scope; fail fast and visibly.
+            if (string.IsNullOrWhiteSpace(path)) throw new IOException("回放路径为空");
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                throw new IOException("v1 仅支持本地 JSONL 文件: " + path);
+            if (!File.Exists(path)) throw new IOException("回放文件不存在: " + path);
             var data = new ReplayData { filePath = path };
             string text;
-            if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase) || !File.Exists(path))
+            try
             {
-                var req = UnityWebRequest.Get(path);
-                var op = req.SendWebRequest();
-                while (!op.isDone) { }
-#if UNITY_2020_1_OR_NEWER
-                if (req.result != UnityWebRequest.Result.Success) throw new IOException("web " + req.error);
-#else
-                if (req.isNetworkError || req.isHttpError) throw new IOException("web " + req.error);
-#endif
-                text = req.downloadHandler.text;
+                text = File.ReadAllText(path, System.Text.Encoding.UTF8);
             }
-            else text = File.ReadAllText(path);
+            catch (IOException)
+            {
+                throw; // file is locked or unreadable: surface as-is
+            }
+            catch (Exception e)
+            {
+                throw new IOException("读取回放文件失败: " + e.Message);
+            }
 
             int lineNo = 0;
             using (var sr = new StringReader(text))
@@ -207,10 +212,24 @@ namespace Neuralife.VirtualHand
                 FrameReady?.Invoke(Data.frames[_cursor]);
                 _cursor++;
             }
-            if (_cursor >= Data.frames.Count)
+            double total = Duration;
+            if (total <= 0 || Position >= total)
             {
-                if (_loop) { _cursor = 0; Position = 0; }
-                else IsPlaying = false;
+                if (_loop && total > 0)
+                {
+                    Position -= Math.Floor(Position / total) * total;
+                    _cursor = 0;
+                    while (_cursor < Data.frames.Count && Data.frames[_cursor].time <= Position)
+                    {
+                        FrameReady?.Invoke(Data.frames[_cursor]);
+                        _cursor++;
+                    }
+                }
+                else
+                {
+                    Position = total;
+                    IsPlaying = false;
+                }
             }
         }
     }

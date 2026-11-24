@@ -1,0 +1,396 @@
+{
+ "character": {
+  "model": "Rigged hand — Elena FF (CC-BY-SA-4.0)",
+  "file": "ArtSource/ThirdParty/ElenaFF_RiggedHand/hand.glb",
+  "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58",
+  "armature": "Object_11",
+  "bones_total": 69,
+  "deform_bones": 69,
+  "deform_with_weights": 22,
+  "side": "Right hand (.R suffix); mirror for left",
+  "anim": "Open/Close: open t=0s, most closed t=1.333333s, reopen t=3.208333s (24fps, frames 1..77)"
+ },
+ "native_chain": {
+  "thumb": [
+   "thumb_base.R_03",
+   "thumb_01.R_08",
+   "thumb_02.R_09",
+   "thumb_03.R_010"
+  ],
+  "index": [
+   "index_base.R_012",
+   "index_01.R_017",
+   "index_02.R_018",
+   "index_03.R_019"
+  ],
+  "middle": [
+   "middle_base.R_020",
+   "middle_01.R_025",
+   "middle_02.R_026",
+   "middle_03.R_027"
+  ],
+  "ring": [
+   "ring_base.R_028",
+   "ring_01.R_033",
+   "ring_02.R_034",
+   "ring_03.R_035"
+  ],
+  "pinky": [
+   "pinky_base.R_036",
+   "pinky_01.R_041",
+   "pinky_02.R_042",
+   "pinky_03.R_043"
+  ]
+ },
+ "controls_20": [
+  {
+   "index": 0,
+   "control": "thumb_cmc_flex",
+   "native_bone": "thumb_base.R_03",
+   "note": "CMC flexion (small in artist anim)",
+   "open_deg": 0.0,
+   "closed_deg": 9.35,
+   "measured_delta": {
+    "delta_deg": 9.35,
+    "axis_xyz": [
+     0.484,
+     0.395,
+     -0.781
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 1,
+   "control": "thumb_mcp_flex",
+   "native_bone": "thumb_01.R_08",
+   "note": "MCP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 91.64,
+   "measured_delta": {
+    "delta_deg": 91.64,
+    "axis_xyz": [
+     -0.31,
+     0.63,
+     -0.712
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 2,
+   "control": "thumb_ip_flex",
+   "native_bone": "thumb_03.R_010",
+   "note": "IP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 131.14,
+   "measured_delta": {
+    "delta_deg": 131.14,
+    "axis_xyz": [
+     0.296,
+     0.443,
+     -0.846
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 3,
+   "control": "thumb_opposition",
+   "native_bone": "thumb_Ctrl_01.R_05",
+   "note": "opposition/twist: no dedicated native joint; artist curve carries it mixed into thumb_01/02 axes (-0.16,0.57,-0.81)/(0.63,-0.71 components)",
+   "open_deg": 0.0,
+   "closed_deg": 91.64,
+   "measured_delta": {
+    "delta_deg": 91.64,
+    "axis_xyz": [
+     -0.31,
+     0.63,
+     -0.712
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 4,
+   "control": "index_mcp_flex",
+   "native_bone": "index_01.R_017",
+   "note": "MCP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 66.84679447296664,
+   "measured_delta": {
+    "delta_deg": 66.85,
+    "axis_xyz": [
+     0.05,
+     -0.022,
+     -0.999
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 5,
+   "control": "index_pip_flex",
+   "native_bone": "index_02.R_018",
+   "note": "PIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 157.50120598739198,
+   "measured_delta": {
+    "delta_deg": 157.5,
+    "axis_xyz": [
+     -0.081,
+     0.046,
+     -0.996
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 6,
+   "control": "index_dip_flex",
+   "native_bone": "index_03.R_019",
+   "note": "DIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 121.57579949678279,
+   "measured_delta": {
+    "delta_deg": 121.58,
+    "axis_xyz": [
+     0.046,
+     -0.177,
+     0.983
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 7,
+   "control": "index_spread",
+   "native_bone": "index_base.R_012",
+   "note": "spread: base lateral tilt in artist anim",
+   "open_deg": 0.0,
+   "closed_deg": 18.084293689594983,
+   "measured_delta": {
+    "delta_deg": 18.08,
+    "axis_xyz": [
+     -0.023,
+     -0.552,
+     -0.833
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 8,
+   "control": "middle_mcp_flex",
+   "native_bone": "middle_01.R_025",
+   "note": "MCP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 69.20774243781075,
+   "measured_delta": {
+    "delta_deg": 69.21,
+    "axis_xyz": [
+     -0.055,
+     -0.004,
+     -0.998
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 9,
+   "control": "middle_pip_flex",
+   "native_bone": "middle_02.R_026",
+   "note": "PIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 161.64691851063597,
+   "measured_delta": {
+    "delta_deg": 161.65,
+    "axis_xyz": [
+     -0.045,
+     -0.008,
+     -0.999
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 10,
+   "control": "middle_dip_flex",
+   "native_bone": "middle_03.R_027",
+   "note": "DIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 129.3339374504062,
+   "measured_delta": {
+    "delta_deg": 129.33,
+    "axis_xyz": [
+     0.071,
+     -0.009,
+     0.997
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 11,
+   "control": "middle_spread",
+   "native_bone": "middle_base.R_020",
+   "note": "spread: base lateral tilt in artist anim",
+   "open_deg": 0.0,
+   "closed_deg": 18.15706200602167,
+   "measured_delta": {
+    "delta_deg": 18.16,
+    "axis_xyz": [
+     -0.131,
+     -0.171,
+     -0.976
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 12,
+   "control": "ring_mcp_flex",
+   "native_bone": "ring_01.R_033",
+   "note": "MCP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 81.38881189034299,
+   "measured_delta": {
+    "delta_deg": 81.39,
+    "axis_xyz": [
+     -0.109,
+     0.044,
+     -0.993
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 13,
+   "control": "ring_pip_flex",
+   "native_bone": "ring_02.R_034",
+   "note": "PIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 158.6298089401278,
+   "measured_delta": {
+    "delta_deg": 158.63,
+    "axis_xyz": [
+     -0.021,
+     0.058,
+     -0.998
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 14,
+   "control": "ring_dip_flex",
+   "native_bone": "ring_03.R_035",
+   "note": "DIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 134.87388328457817,
+   "measured_delta": {
+    "delta_deg": 134.87,
+    "axis_xyz": [
+     -0.036,
+     0.064,
+     0.997
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 15,
+   "control": "ring_spread",
+   "native_bone": "ring_base.R_028",
+   "note": "spread: base lateral tilt in artist anim",
+   "open_deg": 0.0,
+   "closed_deg": 18.138897066556083,
+   "measured_delta": {
+    "delta_deg": 18.14,
+    "axis_xyz": [
+     -0.002,
+     0.262,
+     -0.965
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 16,
+   "control": "pinky_mcp_flex",
+   "native_bone": "pinky_01.R_041",
+   "note": "MCP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 94.32146567775581,
+   "measured_delta": {
+    "delta_deg": 94.32,
+    "axis_xyz": [
+     -0.092,
+     0.105,
+     -0.99
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 17,
+   "control": "pinky_pip_flex",
+   "native_bone": "pinky_02.R_042",
+   "note": "PIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 152.89785798084847,
+   "measured_delta": {
+    "delta_deg": 152.9,
+    "axis_xyz": [
+     -0.281,
+     0.027,
+     -0.959
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 18,
+   "control": "pinky_dip_flex",
+   "native_bone": "pinky_03.R_043",
+   "note": "DIP flexion",
+   "open_deg": 0.0,
+   "closed_deg": 166.88364697201723,
+   "measured_delta": {
+    "delta_deg": 166.88,
+    "axis_xyz": [
+     0.056,
+     -0.093,
+     0.994
+    ]
+   },
+   "normalized_closed": 1.0
+  },
+  {
+   "index": 19,
+   "control": "pinky_spread",
+   "native_bone": "pinky_base.R_036",
+   "note": "spread: base lateral tilt in artist anim",
+   "open_deg": 0.0,
+   "closed_deg": 17.99951696554395,
+   "measured_delta": {
+    "delta_deg": 18.0,
+    "axis_xyz": [
+     0.059,
+     0.631,
+     -0.774
+    ]
+   },
+   "normalized_closed": 1.0
+  }
+ ],
+ "missing_dof_notes": [
+  "No dedicated opposition/twist joint: the artist rig mixes opposition into thumb_01/02 bend axes; control 3 currently aliases thumb MCP.",
+  "No dedicated spread joints: each *_base lateral tilt (18 deg in artist anim) is the only lateral motion; spread controls alias base joints.",
+  "thumb_base contributes only 9.35 deg in the artist anim: CMC flexion range is small."
+ ],
+ "license": {
+  "asset": "CC-BY-SA-4.0 Elena FF",
+  "requirement": "Derivative animation/model data must credit Elena FF and stay CC-BY-SA-4.0"
+ }
+}

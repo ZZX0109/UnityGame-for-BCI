@@ -1,0 +1,61 @@
+Traceback (most recent call last):
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 619, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 572, in main
+    camera, center = create_lighting_and_camera(scale_record['final_bounds_m'])
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 389, in create_lighting_and_camera
+    scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    ^^^^^^^^^^^^^^^^^^^
+TypeError: bpy_struct: item.attr = val: enum "BLENDER_EEVEE_NEXT" not found in ('BLENDER_EEVEE', 'BLENDER_WORKBENCH', 'CYCLES')
+Traceback (most recent call last):
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 619, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 572, in main
+    camera, center = create_lighting_and_camera(scale_record['final_bounds_m'])
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py", line 389, in create_lighting_and_camera
+    scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    ^^^^^^^^^^^^^^^^^^^
+TypeError: bpy_struct: item.attr = val: enum "BLENDER_EEVEE_NEXT" not found in ('BLENDER_EEVEE', 'BLENDER_WORKBENCH', 'CYCLES')
+[INFO ] services.locationservice ...............: Not adding link to MakeHuman user data, since neither explicit path nor auto-discovery is set in preferences.
+[INFO ] services.locationservice ...............: Creating relevant directory: C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\.mpfb-runtime\data
+[INFO ] services.locationservice ...............: Creating relevant directory: C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\.mpfb-runtime\config
+[INFO ] services.locationservice ...............: Creating relevant directory: C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\.mpfb-runtime\cache
+[INFO ] services.locationservice ...............: Creating relevant directory: C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\.mpfb-runtime\logs
+[INFO ] mpfb.init ..............................: Build info FROM_SOURCE
+[INFO ] mpfb.init ..............................: Online access preference is not enabled. Not checking if MakeHuman is online.
+[INFO ] mpfb.init ..............................: MPFB initialization has finished.
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Exponent
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Smoothness
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: W
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['RadiatingFromCoord'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[WARN ] material.mhmaterial ....................: Patching input material line to cater for non-normalized key ('bumpTexture', 'bumpmapTexture')
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+OBJ import of 'base.obj' took 8.80 ms
+OBJ import of 'low-poly.obj' took 0.41 ms
+OBJ import of 'mind_eyebrows_01.obj' took 3.41 ms
+OBJ import of 'bob_blunt.obj' took 1.02 ms
+OBJ import of 'sweater_fisherman.obj' took 1.32 ms
+OBJ import of 'cargo_pants.obj' took 0.58 ms
+OBJ import of 'mj_shoes.obj' took 0.68 ms
+
+Blender quit

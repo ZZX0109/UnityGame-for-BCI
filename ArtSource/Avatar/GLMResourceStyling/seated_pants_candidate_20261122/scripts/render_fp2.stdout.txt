@@ -1,0 +1,12 @@
+00:00.390  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\neutral_adult_seated_pants_candidate.blend"
+00:03.000  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\renders\candidate\candidate_front.png'
+00:04.078  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\renders\candidate\candidate_side.png'
+00:05.281  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\renders\candidate\candidate_threequarter.png'
+00:06.562  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\renders\candidate\candidate_firstperson.png'
+GLM_RENDER candidate front done
+GLM_RENDER candidate side done
+GLM_RENDER candidate threequarter done
+GLM_RENDER candidate firstperson done
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

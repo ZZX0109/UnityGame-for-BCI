@@ -1,0 +1,13 @@
+00:00.375  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\neutral_adult_seated_pants_candidate.blend"
+GLM_EDIT3 primary=52 buffer=28
+GLM_EDIT3 protected_excluded=4
+GLM_EDIT3 iter=0 stats={"inside": 6, "tooclose": 20, "ok": 50}
+GLM_EDIT3 iter=1 stats={"inside": 10, "tooclose": 38, "ok": 28}
+GLM_EDIT3 iter=2 stats={"inside": 37, "tooclose": 26, "ok": 13}
+GLM_EDIT3 protected_below_guard=0
+Info: Saved as "neutral_adult_seated_pants_candidate.blend"
+GLM_EDIT3 sha_before=5b78b94ce0a6a0fe3122d47659a5a3e9604597fa4f8d2219e3c019e9ad5d34e0
+GLM_EDIT3 sha_after=a0739224cb1fe2c1d2abf38194735d2a7b5f3d6389f383ec9067e87586347181
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

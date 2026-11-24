@@ -18,3 +18,17 @@ datasets/
 # Blender autosave backups; editable .blend source is retained.
 *.blend[0-9]*
 
+# Local Unity build output and downloaded originals; sources stay in ArtSource.
+BuildOutput/
+ArtSource/_download/
+
+# Blender backup copies of imported hands; editable pipeline source is retained.
+ArtSource/_backup_*.glb
+
+# Avatar generation iteration dumps; manifests, build logs, review PNGs and
+# SHA256 evidence stay tracked, only heavyweight duplicate model copies are
+# excluded (regenerable via build_mpfb_avatar_rev2.py).
+ArtSource/Avatar/generated/*/ITER_*/
+ArtSource/Avatar/generated/*/REJECTED_*/
+ArtSource/Avatar/generated/*/INCIDENT_*/
+

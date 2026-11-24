@@ -1,0 +1,13 @@
+{
+  "checkedLocal": "2026-11-18 12:50",
+  "bytes": 3812180,
+  "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58",
+  "animations": [
+    "Open/Close"
+  ],
+  "skinJointCounts": [
+    69
+  ],
+  "imageCount": 3,
+  "scope": "Source GLB metadata only; no Unity or gesture acceptance"
+}

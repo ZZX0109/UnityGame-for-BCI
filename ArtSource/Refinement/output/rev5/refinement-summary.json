@@ -1,0 +1,35 @@
+{
+  "hands": [
+    {
+      "side": "R",
+      "tris": 13646,
+      "textures": [
+        "diffuse",
+        "roughness",
+        "normal"
+      ]
+    },
+    {
+      "side": "L",
+      "tris": 13646,
+      "textures": [
+        "diffuse",
+        "roughness",
+        "normal"
+      ]
+    }
+  ],
+  "renders": [],
+  "exports": [
+    {
+      "side": "R",
+      "file": "Hand_R_refined5.fbx",
+      "metresPerSourceUnit": 0.119187
+    },
+    {
+      "side": "L",
+      "file": "Hand_L_refined5.fbx",
+      "metresPerSourceUnit": 0.119187
+    }
+  ]
+}

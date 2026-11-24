@@ -1,0 +1,47 @@
+{
+  "hands": [
+    {
+      "side": "R",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormal": [
+        -0.037,
+        -0.498,
+        -0.867
+      ]
+    },
+    {
+      "side": "L",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormal": [
+        -0.037,
+        0.498,
+        0.867
+      ]
+    }
+  ],
+  "textures_reloaded": 6,
+  "renders": [
+    "refined3_r_palm",
+    "refined3_r_back",
+    "refined3_r_side",
+    "refined3_r_fist",
+    "refined3_l_palm",
+    "refined3_l_back",
+    "refined3_l_side",
+    "refined3_l_fist"
+  ],
+  "exports": [
+    {
+      "side": "R",
+      "file": "Hand_R_refined3.fbx",
+      "metresPerSourceUnit": 0.119187
+    },
+    {
+      "side": "L",
+      "file": "Hand_L_refined3.fbx",
+      "metresPerSourceUnit": 0.119187
+    }
+  ]
+}

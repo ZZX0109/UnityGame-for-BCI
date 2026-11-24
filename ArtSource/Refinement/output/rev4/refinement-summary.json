@@ -1,0 +1,37 @@
+{
+  "hands": [
+    {
+      "side": "R",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormalWorld": [
+        -0.812,
+        -0.085,
+        0.577
+      ]
+    },
+    {
+      "side": "L",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormalWorld": [
+        -0.812,
+        0.085,
+        -0.577
+      ]
+    }
+  ],
+  "renders": [],
+  "exports": [
+    {
+      "side": "R",
+      "file": "Hand_R_refined4.fbx",
+      "metresPerSourceUnit": 0.119187
+    },
+    {
+      "side": "L",
+      "file": "Hand_L_refined4.fbx",
+      "metresPerSourceUnit": 0.119187
+    }
+  ]
+}

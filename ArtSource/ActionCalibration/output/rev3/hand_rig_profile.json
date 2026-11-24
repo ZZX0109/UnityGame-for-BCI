@@ -1,0 +1,262 @@
+{
+  "version": 2,
+  "rig": "MakeHuman-base body-only skin, baked +90X space, roll-aligned X curl",
+  "space": "bone-local euler XYZ, degrees at control=1.0 relative to rest pose",
+  "channels": [
+    {
+      "bone": "Thumb1",
+      "axis": "X",
+      "scale": 90.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "thumb CMC flex",
+      "index": 0
+    },
+    {
+      "bone": "Thumb2",
+      "axis": "X",
+      "scale": 90.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "thumb MCP flex",
+      "index": 1
+    },
+    {
+      "bone": "Thumb3",
+      "axis": "X",
+      "scale": 114.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "thumb IP flex",
+      "index": 2
+    },
+    {
+      "bone": "Thumb1",
+      "axis": "Y",
+      "scale": 160.0,
+      "sign": 1,
+      "rest": 0.5,
+      "note": "thumb opposition twist about bone-long axis (0.5=center)",
+      "index": 3
+    },
+    {
+      "bone": "Index1",
+      "axis": "X",
+      "scale": 75.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "MCP flex",
+      "index": 4
+    },
+    {
+      "bone": "Index2",
+      "axis": "X",
+      "scale": 85.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "PIP flex",
+      "index": 5
+    },
+    {
+      "bone": "Index3",
+      "axis": "X",
+      "scale": 109.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "DIP flex",
+      "index": 6
+    },
+    {
+      "bone": "Index2",
+      "axis": "Z",
+      "scale": 80.0,
+      "sign": 1,
+      "rest": 0.5,
+      "note": "spread",
+      "index": 7
+    },
+    {
+      "bone": "Middle1",
+      "axis": "X",
+      "scale": 75.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "MCP flex",
+      "index": 8
+    },
+    {
+      "bone": "Middle2",
+      "axis": "X",
+      "scale": 88.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "PIP flex",
+      "index": 9
+    },
+    {
+      "bone": "Middle3",
+      "axis": "X",
+      "scale": 90.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "DIP flex",
+      "index": 10
+    },
+    {
+      "bone": "Middle2",
+      "axis": "Z",
+      "scale": 80.0,
+      "sign": 1,
+      "rest": 0.5,
+      "note": "spread",
+      "index": 11
+    },
+    {
+      "bone": "Ring1",
+      "axis": "X",
+      "scale": 75.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "MCP flex",
+      "index": 12
+    },
+    {
+      "bone": "Ring2",
+      "axis": "X",
+      "scale": 85.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "PIP flex",
+      "index": 13
+    },
+    {
+      "bone": "Ring3",
+      "axis": "X",
+      "scale": 87.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "DIP flex",
+      "index": 14
+    },
+    {
+      "bone": "Ring2",
+      "axis": "Z",
+      "scale": 80.0,
+      "sign": 1,
+      "rest": 0.5,
+      "note": "spread",
+      "index": 15
+    },
+    {
+      "bone": "Little1",
+      "axis": "X",
+      "scale": 110.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "MCP flex",
+      "index": 16
+    },
+    {
+      "bone": "Little2",
+      "axis": "X",
+      "scale": 117.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "PIP flex",
+      "index": 17
+    },
+    {
+      "bone": "Little3",
+      "axis": "X",
+      "scale": 119.0,
+      "sign": 1,
+      "rest": 0.0,
+      "note": "DIP flex",
+      "index": 18
+    },
+    {
+      "bone": "Little2",
+      "axis": "Z",
+      "scale": 128.0,
+      "sign": 1,
+      "rest": 0.5,
+      "note": "spread",
+      "index": 19
+    }
+  ],
+  "samples": {
+    "open": [
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      0.5
+    ],
+    "fist": [
+      0.1089,
+      0.7267,
+      0.3053,
+      0.1713,
+      1.0,
+      1.0,
+      0.5505,
+      0.4,
+      0.9347,
+      1.0,
+      1.0,
+      0.4375,
+      1.0,
+      1.0,
+      0.6977,
+      0.4375,
+      0.6545,
+      0.7692,
+      0.4622,
+      0.4375
+    ],
+    "pinch": [
+      0.1222,
+      0.8822,
+      0.2825,
+      0.0294,
+      0.6973,
+      0.7635,
+      0.6743,
+      0.3212,
+      0.2933,
+      0.3182,
+      0.1333,
+      0.5,
+      0.3333,
+      0.3529,
+      0.1609,
+      0.5,
+      0.2545,
+      0.2735,
+      0.1345,
+      0.5
+    ]
+  },
+  "notes": [
+    "20 controls finger-major: thumb CMC/MCP/IP/opposition then index..little MCP/PIP/DIP/spread",
+    "Unity HandRigProfile loads this JSON; PoseLibrary samples feed SetControls directly",
+    "sign=-1 means the bone's local axis is inverted relative to the control direction",
+    "samples authored in degrees per gesture and converted via input rest/scale/sign; decoded angles re-verified against targets"
+  ],
+  "source_note": "Author presets v3 (ActionCalibration): rev2 pose refined by staged pattern search against skin-surface contact metrics on the rev7 mesh (fingertip pads to palm skin; thumb pad to index middle-phalanx skin in fist; thumb-index pad contact with opposing normals in pinch). Channels unchanged from input_rev7. No Unity validation here (Codex)."
+}

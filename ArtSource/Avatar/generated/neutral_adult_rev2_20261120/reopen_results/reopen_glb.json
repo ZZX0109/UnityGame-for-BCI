@@ -1,0 +1,25 @@
+{
+  "format": "glb",
+  "file": "C:/Users/Ait/Desktop/Neuralife/Unity/Game04-VirtualHand/ArtSource/Avatar/generated/neutral_adult_rev2_20261120/neutral_adult_avatar.glb",
+  "file_sha256": "431ad42e79d26f636c30bcdaf8f1871882852b45db5535834a102bb2febec0dc",
+  "object_count": 10,
+  "mesh_objects": [
+    "Human",
+    "Human.cortu_cargo_pants",
+    "Human.low-poly",
+    "Human.mindfront_eyebrows_01",
+    "Human.toigo_blunt_bob",
+    "Human.toigo_fisherman_sweater",
+    "Human.toigo_mj_cloth_shoes",
+    "Icosphere"
+  ],
+  "armatures": [
+    "Human.rig"
+  ],
+  "armature_bone_count": 53,
+  "material_count": 12,
+  "image_count": 11,
+  "images_with_pixels": 0,
+  "vertex_total": 37107,
+  "status": "OK"
+}

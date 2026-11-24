@@ -1,0 +1,5 @@
+00:00.391  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\neutral_adult_avatar.blend"
+REOPEN_RESULT OK totals= {'objects': 13, 'meshes': 7, 'materials': 14, 'images': 14, 'armatures': 1} error= None
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

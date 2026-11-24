@@ -1,0 +1,23 @@
+{
+  "hands": [
+    {
+      "side": "R",
+      "tris_before": 13646,
+      "tris_after": 54792
+    },
+    {
+      "side": "L",
+      "tris_before": 13646,
+      "tris_after": 54792
+    }
+  ],
+  "renders": [
+    "refined6_r_palm",
+    "refined6_r_back",
+    "refined6_r_side",
+    "refined6_l_palm",
+    "refined6_l_back",
+    "refined6_l_side"
+  ],
+  "exports": []
+}

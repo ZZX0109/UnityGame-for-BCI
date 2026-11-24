@@ -1,0 +1,77 @@
+{
+  "input": "C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Refinement\\output\\rev7\\refined_hands.blend",
+  "hands": {
+    "R": {
+      "before": {
+        "band_edges": 23,
+        "min_ratio": 0.7665595321319985,
+        "web_n": 84,
+        "web_max_disp": 0.3408301073322823,
+        "web_mean_disp": 0.11397121497169813,
+        "max_edge_cliff": 0.2247
+      },
+      "after": {
+        "band_edges": 23,
+        "min_ratio": 0.7665595321319985,
+        "web_n": 84,
+        "web_max_disp": 0.3121472140615101,
+        "web_mean_disp": 0.10432996034622312,
+        "max_edge_cliff": 0.1023
+      },
+      "fix": {
+        "band_verts": 191,
+        "web_verts": 42,
+        "max_edge_cliff": 0.1023,
+        "hand_len": 1.5941
+      },
+      "tris": 13724,
+      "verts": 6864,
+      "bones": 22
+    },
+    "L": {
+      "before": {
+        "band_edges": 23,
+        "min_ratio": 0.7668850828158724,
+        "web_n": 84,
+        "web_max_disp": 0.4544293410173167,
+        "web_mean_disp": 0.15950406682633594,
+        "max_edge_cliff": 0.3407
+      },
+      "after": {
+        "band_edges": 23,
+        "min_ratio": 0.7668850828158724,
+        "web_n": 84,
+        "web_max_disp": 0.4326153202425613,
+        "web_mean_disp": 0.14915020689163883,
+        "max_edge_cliff": 0.1347
+      },
+      "fix": {
+        "band_verts": 191,
+        "web_verts": 40,
+        "max_edge_cliff": 0.1347,
+        "hand_len": 1.5941
+      },
+      "tris": 13724,
+      "verts": 6864,
+      "bones": 22
+    }
+  },
+  "renders": [
+    "rev8_cmp_dorsal_before",
+    "rev8_cmp_web_before",
+    "rev8_cmp_dorsal_after",
+    "rev8_cmp_web_after"
+  ],
+  "exports": [
+    {
+      "side": "R",
+      "file": "Hand_R_rev8.fbx",
+      "metresPerSourceUnit": 0.119187
+    },
+    {
+      "side": "L",
+      "file": "Hand_L_rev8.fbx",
+      "metresPerSourceUnit": 0.119187
+    }
+  ]
+}

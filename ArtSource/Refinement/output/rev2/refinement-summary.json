@@ -1,0 +1,24 @@
+{
+  "hands": [
+    {
+      "side": "R",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormal": [
+        -0.037,
+        -0.498,
+        -0.867
+      ]
+    },
+    {
+      "side": "L",
+      "tris_before": 3414,
+      "tris_after": 13646,
+      "palmNormal": [
+        -0.037,
+        0.498,
+        0.867
+      ]
+    }
+  ]
+}

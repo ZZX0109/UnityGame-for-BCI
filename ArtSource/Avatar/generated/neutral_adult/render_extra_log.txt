@@ -1,0 +1,8 @@
+00:00.390  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\neutral_adult_avatar.blend"
+00:03.047  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\side.png'
+00:04.375  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\wrist_closeup.png'
+WROTE C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\side.png
+WROTE C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\wrist_closeup.png
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

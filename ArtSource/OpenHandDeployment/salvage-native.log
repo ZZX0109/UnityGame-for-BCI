@@ -1,0 +1,18 @@
+14:56:59 | INFO: Data are loaded, start creating Blender stuff
+14:56:59 | INFO: Blender create Mesh node handSmooth.001_lambert1_0
+14:56:59 | INFO: glTF import finished in 0.07s
+VH-SALVAGE: source hand length 2.077382877469063 metric 0.09146123329536761
+VH-SALVAGE: removed 202 long faces and 3221 far/proximal vertices; remaining 13092
+C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\salvage_elena_native.py:85: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  w.use_nodes = True
+00:02.672  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_salvage\Elena_open_palm.png'
+00:02.953  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_salvage\Elena_closed_palm.png'
+00:03.250  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_salvage\Elena_reopen_palm.png'
+
+FBX export starting... 'C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\OpenHandDeployment\\output_salvage\\ElenaHand_R.fbx'
+(bpy.data.armatures['Armature'], 'POSE')
+export finished in 0.0674 sec.
+VH-SALVAGE: DONE C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\OpenHandDeployment\output_salvage
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

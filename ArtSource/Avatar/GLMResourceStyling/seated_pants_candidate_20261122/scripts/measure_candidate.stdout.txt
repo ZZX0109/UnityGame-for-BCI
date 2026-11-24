@@ -1,0 +1,5 @@
+00:00.406  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\neutral_adult_seated_pants_candidate.blend"
+GLM_CAND {"thigh-80_calf70": {"body_pants": {"events": 710, "outsideRegion": 0}, "sweater_pants": {"events": 388, "outsideRegion": 0}}, "thigh-80_calf80": {"body_pants": {"events": 768, "outsideRegion": 0}, "sweater_pants": {"events": 388, "outsideRegion": 0}}}
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

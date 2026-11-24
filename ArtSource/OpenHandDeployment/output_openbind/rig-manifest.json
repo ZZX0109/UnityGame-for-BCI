@@ -1,0 +1,39 @@
+{
+  "method": "visible native open pose rebound; relative native rotations only; short forearm crop; positive-scale numeric left mirror",
+  "source": "Rigged hand by Elena FF, CC BY-SA 4.0",
+  "sourceSha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58",
+  "changes": "Rebased bind pose to source open pose, removed long proximal arm, capped forearm, mirrored left hand, transferred native Open/Close rotations.",
+  "handLengthMetres": 0.19,
+  "forearmLengthMetres": 0.065,
+  "frames": {
+    "open": 0,
+    "closed": 32,
+    "reopen": 77
+  },
+  "seconds": {
+    "open": 0.0,
+    "closed": 1.3333333333333333,
+    "reopen": 3.2083333333333335
+  },
+  "trianglesPerHand": 23446,
+  "textures": {
+    "basecolor": "ElenaFF_basecolor.png",
+    "metallicroughness": "ElenaFF_metallicroughness.png",
+    "occlusion": "ElenaFF_occlusion.png"
+  },
+  "renders": [
+    "Elena_R_open_palm.png",
+    "Elena_R_open_back.png",
+    "Elena_R_closed_palm.png",
+    "Elena_R_closed_back.png",
+    "Elena_R_reopen_palm.png",
+    "Elena_R_reopen_back.png",
+    "Elena_L_open_palm.png",
+    "Elena_L_open_back.png",
+    "Elena_L_closed_palm.png",
+    "Elena_L_closed_back.png",
+    "Elena_L_reopen_palm.png",
+    "Elena_L_reopen_back.png"
+  ],
+  "license": "CC BY-SA 4.0 \u2014 Elena FF; derivative model and animation retain the same license"
+}

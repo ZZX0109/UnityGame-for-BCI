@@ -1,0 +1,42 @@
+{
+  "scope": "mesh/weights/material refinement; armature, rest matrices, axes and lengths untouched; Unity verification remains Codex's",
+  "unverified": "Unity import, deformation quality in Play mode, final art sign-off",
+  "data": {
+    "refined": [
+      {
+        "side": "R",
+        "tris_before": 3414,
+        "tris_after": 13622
+      },
+      {
+        "side": "L",
+        "tris_before": 3414,
+        "tris_after": 13622
+      }
+    ],
+    "exports": [
+      {
+        "side": "R",
+        "file": "Hand_R_refined.fbx",
+        "metresPerSourceUnit": 0.119187
+      },
+      {
+        "side": "L",
+        "file": "Hand_L_refined.fbx",
+        "metresPerSourceUnit": 0.119187
+      }
+    ],
+    "renders": [
+      "refined_r_palm.png",
+      "refined_r_back.png",
+      "refined_r_side.png",
+      "refined_l_palm.png",
+      "refined_l_back.png",
+      "refined_l_side.png",
+      "refined_r_fist.png",
+      "refined_r_pinch.png",
+      "refined_l_fist.png",
+      "refined_l_pinch.png"
+    ]
+  }
+}

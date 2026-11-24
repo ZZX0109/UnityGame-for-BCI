@@ -1,0 +1,602 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 400f8c8a0ec78c742aae78a0d78820c6, type: 3}
+  m_Name: ElenaNativeRig_R
+  m_EditorClassIdentifier: 
+  modelName: Elena FF Rigged hand
+  license: CC BY-SA 4.0
+  bones:
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint
+    name: _rootJoint
+    openLocal: {x: 0, y: 0, z: 0, w: 1}
+    closedLocal: {x: 0, y: 0, z: 0, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01
+    name: pulse.R_01
+    openLocal: {x: 0.73748165, y: -0.000000080510056, z: -0.00000008791467, w: 0.6753672}
+    closedLocal: {x: 0.73748165, y: -0.000000080510056, z: -0.00000008791467, w: 0.6753672}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02
+    name: hand.R_02
+    openLocal: {x: 0.030325498, y: 0.008348146, z: 0.041529186, w: 0.9986421}
+    closedLocal: {x: 0.030325498, y: 0.008348146, z: 0.041529186, w: 0.9986421}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03
+    name: thumb_base.R_03
+    openLocal: {x: 0.4173415, y: -0.08096787, z: -0.26713136, w: 0.8648186}
+    closedLocal: {x: 0.39317468, y: -0.009104112, z: -0.31542307, w: 0.8636198}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl.R_04
+    name: thumb_Ctrl.R_04
+    openLocal: {x: -0.13216057, y: 0.19158848, z: 0.21654814, w: 0.9481215}
+    closedLocal: {x: -0.13216057, y: 0.19158848, z: 0.21654814, w: 0.9481215}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl.R_04/thumb_Ctrl.R_end_049
+    name: thumb_Ctrl.R_end_049
+    openLocal: {x: 8.326673e-17, y: 5.551115e-17, z: 1.3877788e-17, w: 1}
+    closedLocal: {x: 8.326673e-17, y: 5.551115e-17, z: 1.3877788e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl_01.R_05
+    name: thumb_Ctrl_01.R_05
+    openLocal: {x: -0.071054086, y: 0.14909877, z: 0.35821253, w: 0.9189149}
+    closedLocal: {x: -0.079058096, y: 0.5434918, z: -0.2191104, w: 0.8064472}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl_01.R_05/thumb_Ctrl_02.R_06
+    name: thumb_Ctrl_02.R_06
+    openLocal: {x: -0.0069041736, y: 0.28009024, z: -0.23742913, w: 0.9301232}
+    closedLocal: {x: 0.047951967, y: 0.109726936, z: -0.51372796, w: 0.8495553}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl_01.R_05/thumb_Ctrl_02.R_06/thumb_Ctrl_03.R_07
+    name: thumb_Ctrl_03.R_07
+    openLocal: {x: 0.010405863, y: -0.101939835, z: -0.23611982, w: 0.9663061}
+    closedLocal: {x: 0.04522859, y: -0.03698809, z: -0.45378602, w: 0.8891932}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_Ctrl_01.R_05/thumb_Ctrl_02.R_06/thumb_Ctrl_03.R_07/thumb_Ctrl_03.R_end_050
+    name: thumb_Ctrl_03.R_end_050
+    openLocal: {x: -1.3877788e-17, y: 9.020562e-17, z: 1.2518545e-33, w: 1}
+    closedLocal: {x: -1.3877788e-17, y: 9.020562e-17, z: 1.2518545e-33, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08
+    name: thumb_01.R_08
+    openLocal: {x: -0.07105413, y: 0.14909877, z: 0.35821253, w: 0.9189149}
+    closedLocal: {x: -0.07905802, y: 0.5434918, z: -0.21911046, w: 0.8064472}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08/thumb_02.R_09
+    name: thumb_02.R_09
+    openLocal: {x: -0.0069041764, y: 0.28009024, z: -0.23742913, w: 0.9301232}
+    closedLocal: {x: 0.04795191, y: 0.109726965, z: -0.5137278, w: 0.84955543}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08/thumb_02.R_09/thumb_03.R_010
+    name: thumb_03.R_010
+    openLocal: {x: 0.0104058655, y: -0.10193985, z: -0.23611984, w: 0.9663061}
+    closedLocal: {x: 0.039953046, y: -0.034451574, z: -0.4578797, w: 0.88744754}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08/thumb_02.R_09/thumb_03.R_010/thumb_03.R_end_051
+    name: thumb_03.R_end_051
+    openLocal: {x: 1.3877788e-17, y: 8.326673e-17, z: -1.155558e-33, w: 1}
+    closedLocal: {x: 1.3877788e-17, y: 8.326673e-17, z: -1.155558e-33, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011
+    name: hand.R.001_011
+    openLocal: {x: -0.019853504, y: -0.0036330898, z: -0.026446449, w: 0.99944645}
+    closedLocal: {x: -0.019402878, y: -0.01138973, z: -0.08633465, w: 0.99601215}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012
+    name: index_base.R_012
+    openLocal: {x: 0.29963446, y: 0.0087666875, z: 0.0129060475, w: 0.9539265}
+    closedLocal: {x: 0.29953125, y: -0.011377299, z: -0.085703075, w: 0.95016134}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl.R_013
+    name: index_Ctrl.R_013
+    openLocal: {x: -0.26601973, y: 0.06645477, z: 0.0017488578, w: 0.9616726}
+    closedLocal: {x: -0.26601973, y: 0.06645477, z: 0.0017488578, w: 0.9616726}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl.R_013/index_Ctrl.R_end_00
+    name: index_Ctrl.R_end_00
+    openLocal: {x: -4.1633363e-17, y: 2.7755576e-17, z: -2.6020852e-17, w: 1}
+    closedLocal: {x: -4.1633363e-17, y: 2.7755576e-17, z: -2.6020852e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl_01.R_014
+    name: index_Ctrl_01.R_014
+    openLocal: {x: -0.289532, y: -0.031275626, z: 0.058467537, w: 0.9548689}
+    closedLocal: {x: -0.26462057, y: -0.15989026, z: -0.34066522, w: 0.88789546}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl_01.R_014/index_Ctrl_02.R_015
+    name: index_Ctrl_02.R_015
+    openLocal: {x: 0.051361892, y: 0.13101499, z: -0.025520183, w: 0.98972005}
+    closedLocal: {x: -0.10376639, y: 0.10525831, z: -0.7304423, w: 0.6667888}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl_01.R_014/index_Ctrl_02.R_015/index_Ctrl_03.R_016
+    name: index_Ctrl_03.R_016
+    openLocal: {x: -0.047082104, y: 0.004453886, z: -0.009012456, w: 0.99884045}
+    closedLocal: {x: -0.018779585, y: 0.035721187, z: -0.6598384, w: 0.75032306}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_Ctrl_01.R_014/index_Ctrl_02.R_015/index_Ctrl_03.R_016/index_Ctrl_03.R_end_052
+    name: index_Ctrl_03.R_end_052
+    openLocal: {x: 2.7755576e-17, y: 5.551115e-17, z: -1.0408341e-17, w: 1}
+    closedLocal: {x: 2.7755576e-17, y: 5.551115e-17, z: -1.0408341e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017
+    name: index_01.R_017
+    openLocal: {x: -0.28953195, y: -0.031275637, z: 0.058467552, w: 0.9548689}
+    closedLocal: {x: -0.26462057, y: -0.15989017, z: -0.34066522, w: 0.8878954}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017/index_02.R_018
+    name: index_02.R_018
+    openLocal: {x: 0.05136186, y: 0.131015, z: -0.02552017, w: 0.98972005}
+    closedLocal: {x: -0.103766225, y: 0.10525837, z: -0.7304422, w: 0.6667889}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017/index_02.R_018/index_03.R_019
+    name: index_03.R_019
+    openLocal: {x: -0.04708207, y: 0.004453883, z: -0.009012455, w: 0.99884045}
+    closedLocal: {x: -0.01877945, y: 0.035721146, z: -0.65983874, w: 0.75032276}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017/index_02.R_018/index_03.R_019/index_03.R_end_053
+    name: index_03.R_end_053
+    openLocal: {x: -1.3877788e-17, y: 4.814825e-35, z: -3.469447e-18, w: 1}
+    closedLocal: {x: -1.3877788e-17, y: 4.814825e-35, z: -3.469447e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020
+    name: middle_base.R_020
+    openLocal: {x: 0.057519663, y: 0.068738185, z: 0.058026597, w: 0.99428344}
+    closedLocal: {x: 0.06425738, y: 0.061214156, z: -0.042145498, w: 0.99516207}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl.R_021
+    name: middle_Ctrl.R_021
+    openLocal: {x: -0.06992949, y: 0.055708848, z: -0.0044506947, w: 0.99598527}
+    closedLocal: {x: -0.06992949, y: 0.055708848, z: -0.0044506947, w: 0.99598527}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl.R_021/middle_Ctrl.R_end_054
+    name: middle_Ctrl.R_end_054
+    openLocal: {x: -6.938894e-18, y: 2.7755576e-17, z: -1.7347235e-18, w: 1}
+    closedLocal: {x: -6.938894e-18, y: 2.7755576e-17, z: -1.7347235e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl_01.R_022
+    name: middle_Ctrl_01.R_022
+    openLocal: {x: -0.07393301, y: -0.0035972723, z: 0.016993409, w: 0.9971119}
+    closedLocal: {x: -0.05023164, y: -0.04207364, z: -0.43164733, w: 0.8996595}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl_01.R_022/middle_Ctrl_02.R_023
+    name: middle_Ctrl_02.R_023
+    openLocal: {x: 0.034858745, y: -0.026656054, z: -0.014347877, w: 0.9989337}
+    closedLocal: {x: 0.043954086, y: 0.030068036, z: -0.7435391, w: 0.6665685}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl_01.R_022/middle_Ctrl_02.R_023/middle_Ctrl_03.R_024
+    name: middle_Ctrl_03.R_024
+    openLocal: {x: -0.0036416624, y: 0.034941237, z: -0.07312082, w: 0.9967042}
+    closedLocal: {x: 0.035041828, y: -0.010481757, z: -0.6285551, w: 0.7769046}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_Ctrl_01.R_022/middle_Ctrl_02.R_023/middle_Ctrl_03.R_024/middle_Ctrl_03.R_end_055
+    name: middle_Ctrl_03.R_end_055
+    openLocal: {x: -5.2041704e-18, y: -1.3877788e-17, z: 1.6132928e-16, w: 1}
+    closedLocal: {x: -5.2041704e-18, y: -1.3877788e-17, z: 1.6132928e-16, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025
+    name: middle_01.R_025
+    openLocal: {x: -0.073933, y: -0.0035972588, z: 0.01699344, w: 0.9971119}
+    closedLocal: {x: -0.050231654, y: -0.042073634, z: -0.43164733, w: 0.8996595}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025/middle_02.R_026
+    name: middle_02.R_026
+    openLocal: {x: 0.034858707, y: -0.026656063, z: -0.014347874, w: 0.9989337}
+    closedLocal: {x: 0.0439541, y: 0.030068062, z: -0.74353915, w: 0.6665685}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025/middle_02.R_026/middle_03.R_027
+    name: middle_03.R_027
+    openLocal: {x: -0.003641638, y: 0.034941226, z: -0.07312084, w: 0.9967042}
+    closedLocal: {x: 0.035041846, y: -0.010481749, z: -0.62855524, w: 0.7769044}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025/middle_02.R_026/middle_03.R_027/middle_03.R_end_056
+    name: middle_03.R_end_056
+    openLocal: {x: -8.673617e-18, y: -1.3877788e-17, z: 8.6736174e-19, w: 1}
+    closedLocal: {x: -8.673617e-18, y: -1.3877788e-17, z: 8.6736174e-19, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028
+    name: ring_base.R_028
+    openLocal: {x: -0.22786826, y: 0.0008719907, z: 0.017609585, w: 0.9735324}
+    closedLocal: {x: -0.2267592, y: -0.00081970805, z: -0.083025806, w: 0.9704053}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl.R_029
+    name: ring_Ctrl.R_029
+    openLocal: {x: 0.17888956, y: 0.06181942, z: 0.035696663, w: 0.98127604}
+    closedLocal: {x: 0.17888956, y: 0.06181942, z: 0.035696663, w: 0.98127604}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl.R_029/ring_Ctrl.R_end_057
+    name: ring_Ctrl.R_end_057
+    openLocal: {x: -2.6020852e-18, y: -1.3877788e-17, z: -6.396793e-18, w: 1}
+    closedLocal: {x: -2.6020852e-18, y: -1.3877788e-17, z: -6.396793e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl_01.R_030
+    name: ring_Ctrl_01.R_030
+    openLocal: {x: 0.14853582, y: 0.043716136, z: 0.06489862, w: 0.98580635}
+    closedLocal: {x: 0.1503931, y: 0.15086465, z: -0.45378482, w: 0.8652752}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl_01.R_030/ring_Ctrl_02.R_031
+    name: ring_Ctrl_02.R_031
+    openLocal: {x: 0.00010640861, y: -0.038529243, z: -0.041854907, w: 0.99838054}
+    closedLocal: {x: 0.032464392, y: 0.0019255409, z: -0.6581972, w: 0.7521428}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl_01.R_030/ring_Ctrl_02.R_031/ring_Ctrl_03.R_032
+    name: ring_Ctrl_03.R_032
+    openLocal: {x: 0.062685005, y: -0.025661534, z: -0.07494478, w: 0.9948846}
+    closedLocal: {x: 0.042108692, y: -0.027383346, z: -0.6125076, w: 0.78886724}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_Ctrl_01.R_030/ring_Ctrl_02.R_031/ring_Ctrl_03.R_032/ring_Ctrl_03.R_end_058
+    name: ring_Ctrl_03.R_end_058
+    openLocal: {x: 6.938894e-18, y: 3.469447e-18, z: 1.994932e-17, w: 1}
+    closedLocal: {x: 6.938894e-18, y: 3.469447e-18, z: 1.994932e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033
+    name: ring_01.R_033
+    openLocal: {x: 0.14853582, y: 0.043716148, z: 0.06489862, w: 0.98580635}
+    closedLocal: {x: 0.15039302, y: 0.15086466, z: -0.45378482, w: 0.8652752}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033/ring_02.R_034
+    name: ring_02.R_034
+    openLocal: {x: 0.00010643334, y: -0.038529254, z: -0.041854914, w: 0.99838054}
+    closedLocal: {x: 0.032464504, y: 0.0019256051, z: -0.6581971, w: 0.75214297}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033/ring_02.R_034/ring_03.R_035
+    name: ring_03.R_035
+    openLocal: {x: 0.06268501, y: -0.025661545, z: -0.07494479, w: 0.9948846}
+    closedLocal: {x: 0.04210866, y: -0.02738337, z: -0.6125079, w: 0.78886706}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033/ring_02.R_034/ring_03.R_035/ring_03.R_end_059
+    name: ring_03.R_end_059
+    openLocal: {x: -2.6331073e-34, y: 3.469447e-18, z: 7.589415e-17, w: 1}
+    closedLocal: {x: -2.6331073e-34, y: 3.469447e-18, z: 7.589415e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036
+    name: pinky_base.R_036
+    openLocal: {x: -0.4704073, y: -0.020719215, z: -0.03211106, w: 0.88162154}
+    closedLocal: {x: -0.46819237, y: -0.01210877, z: -0.13216157, w: 0.8736033}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl.R_037
+    name: pinky_Ctrl.R_037
+    openLocal: {x: 0.3661136, y: 0.046713542, z: 0.14475995, w: 0.91805404}
+    closedLocal: {x: 0.3661136, y: 0.046713542, z: 0.14475995, w: 0.91805404}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl.R_037/pinky_Ctrl.R_end_060
+    name: pinky_Ctrl.R_end_060
+    openLocal: {x: -6.938894e-18, y: 1.3877788e-17, z: 5.2041704e-18, w: 1}
+    closedLocal: {x: -6.938894e-18, y: 1.3877788e-17, z: 5.2041704e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl_01.R_038
+    name: pinky_Ctrl_01.R_038
+    openLocal: {x: 0.3396111, y: -0.050084826, z: 0.17109247, w: 0.92351675}
+    closedLocal: {x: 0.33742824, y: 0.25504068, z: -0.38127434, w: 0.8220258}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl_01.R_038/pinky_Ctrl_02.R_039
+    name: pinky_Ctrl_02.R_039
+    openLocal: {x: 0.021425566, y: 0.111916415, z: -0.06801102, w: 0.991156}
+    closedLocal: {x: 0.13970001, y: 0.08557353, z: -0.5224042, w: 0.8368124}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl_01.R_038/pinky_Ctrl_02.R_039/pinky_Ctrl_03.R_040
+    name: pinky_Ctrl_03.R_040
+    openLocal: {x: -0.00011596767, y: -0.10289059, z: -0.21572387, w: 0.97101843}
+    closedLocal: {x: 0.067143925, y: -0.06179172, z: -0.524649, w: 0.84641415}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_Ctrl_01.R_038/pinky_Ctrl_02.R_039/pinky_Ctrl_03.R_040/pinky_Ctrl_03.R_end_061
+    name: pinky_Ctrl_03.R_end_061
+    openLocal: {x: -5.2041704e-18, y: -1.3877788e-17, z: -3.035766e-17, w: 1}
+    closedLocal: {x: -5.2041704e-18, y: -1.3877788e-17, z: -3.035766e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041
+    name: pinky_01.R_041
+    openLocal: {x: 0.3396111, y: -0.050084833, z: 0.17109242, w: 0.92351675}
+    closedLocal: {x: 0.33742824, y: 0.25504068, z: -0.3812743, w: 0.82202584}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041/pinky_02.R_042
+    name: pinky_02.R_042
+    openLocal: {x: 0.021425556, y: 0.11191643, z: -0.06801101, w: 0.991156}
+    closedLocal: {x: 0.13970011, y: 0.085573554, z: -0.5224044, w: 0.8368123}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041/pinky_02.R_042/pinky_03.R_043
+    name: pinky_03.R_043
+    openLocal: {x: -0.000115971474, y: -0.10289055, z: -0.2157238, w: 0.97101843}
+    closedLocal: {x: 0.06714393, y: -0.06179174, z: -0.524649, w: 0.84641415}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041/pinky_02.R_042/pinky_03.R_043/pinky_03.R_end_062
+    name: pinky_03.R_end_062
+    openLocal: {x: 5.2041704e-18, y: 6.938894e-18, z: -7.806256e-18, w: 1}
+    closedLocal: {x: 5.2041704e-18, y: 6.938894e-18, z: -7.806256e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/index_tip.R_044
+    name: index_tip.R_044
+    openLocal: {x: 0.7030902, y: 0.058013704, z: 0.018780075, w: 0.7084815}
+    closedLocal: {x: 0.6936716, y: 0.1845621, z: -0.07720136, w: 0.6919512}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/index_tip.R_044/index_tip.R_end_063
+    name: index_tip.R_end_063
+    openLocal: {x: -3.469447e-18, y: 5.1157514e-35, z: -1.474515e-17, w: 1}
+    closedLocal: {x: -3.469447e-18, y: 5.1157514e-35, z: -1.474515e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/middle_tip.R_045
+    name: middle_tip.R_045
+    openLocal: {x: 0.73013425, y: -0.14250958, z: -0.03825723, w: 0.6671817}
+    closedLocal: {x: 0.7175282, y: -0.027643505, z: -0.14861917, w: 0.6799275}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/middle_tip.R_045/middle_tip.R_end_064
+    name: middle_tip.R_end_064
+    openLocal: {x: 6.938894e-18, y: -4.1633363e-17, z: 1.3877788e-17, w: 1}
+    closedLocal: {x: 6.938894e-18, y: -4.1633363e-17, z: 1.3877788e-17, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/ring_tip.R_046
+    name: ring_tip.R_046
+    openLocal: {x: 0.6748875, y: -0.296957, z: -0.20384881, w: 0.64404124}
+    closedLocal: {x: 0.63020706, y: -0.19951856, z: -0.31700382, w: 0.680103}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/ring_tip.R_046/ring_tip.R_end_065
+    name: ring_tip.R_end_065
+    openLocal: {x: -7.372575e-18, y: -2.7755576e-17, z: 2.1684043e-18, w: 1}
+    closedLocal: {x: -7.372575e-18, y: -2.7755576e-17, z: 2.1684043e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pinky_tip.R_047
+    name: pinky_tip.R_047
+    openLocal: {x: 0.6946741, y: 0.033187687, z: 0.13598843, w: 0.7055733}
+    closedLocal: {x: 0.70743304, y: 0.12213206, z: 0.0051102405, w: 0.69612944}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pinky_tip.R_047/pinky_tip.R_end_066
+    name: pinky_tip.R_end_066
+    openLocal: {x: -1.7347235e-18, y: 4.1633363e-17, z: 4.8246997e-18, w: 1}
+    closedLocal: {x: -1.7347235e-18, y: 4.1633363e-17, z: 4.8246997e-18, w: 1}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/thumb_tip.R_048
+    name: thumb_tip.R_048
+    openLocal: {x: 0.9340998, y: 0.031488627, z: -0.016821498, w: 0.35522255}
+    closedLocal: {x: 0.92624694, y: 0.11533247, z: 0.014077681, w: 0.35856232}
+  - path: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/thumb_tip.R_048/thumb_tip.R_end_067
+    name: thumb_tip.R_end_067
+    openLocal: {x: -3.85186e-34, y: -1.3877788e-17, z: -2.7755576e-17, w: 1}
+    closedLocal: {x: -3.85186e-34, y: -1.3877788e-17, z: -2.7755576e-17, w: 1}
+  bindings:
+  - control: 0
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03
+    centered: 0
+    influence: 1
+  - control: 1
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08
+    centered: 0
+    influence: 1
+  - control: 1
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08/thumb_02.R_09
+    centered: 0
+    influence: 1
+  - control: 2
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03/thumb_01.R_08/thumb_02.R_09/thumb_03.R_010
+    centered: 0
+    influence: 1
+  - control: 3
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/thumb_base.R_03
+    centered: 1
+    influence: 0.5
+  - control: 4
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017
+    centered: 0
+    influence: 1
+  - control: 5
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017/index_02.R_018
+    centered: 0
+    influence: 1
+  - control: 6
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017/index_02.R_018/index_03.R_019
+    centered: 0
+    influence: 1
+  - control: 7
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/index_base.R_012/index_01.R_017
+    centered: 1
+    influence: 1
+  - control: 8
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025
+    centered: 0
+    influence: 1
+  - control: 9
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025/middle_02.R_026
+    centered: 0
+    influence: 1
+  - control: 10
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025/middle_02.R_026/middle_03.R_027
+    centered: 0
+    influence: 1
+  - control: 11
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/middle_base.R_020/middle_01.R_025
+    centered: 1
+    influence: 1
+  - control: 12
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033
+    centered: 0
+    influence: 1
+  - control: 13
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033/ring_02.R_034
+    centered: 0
+    influence: 1
+  - control: 14
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033/ring_02.R_034/ring_03.R_035
+    centered: 0
+    influence: 1
+  - control: 15
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/ring_base.R_028/ring_01.R_033
+    centered: 1
+    influence: 1
+  - control: 16
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041
+    centered: 0
+    influence: 1
+  - control: 17
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041/pinky_02.R_042
+    centered: 0
+    influence: 1
+  - control: 18
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041/pinky_02.R_042/pinky_03.R_043
+    centered: 0
+    influence: 1
+  - control: 19
+    bonePath: Sketchfab_model/f02ee8bcd0644bfa96313f17aa2cca59.fbx/Object_2/RootNode/Armature/Object_11/_rootJoint/pulse.R_01/hand.R_02/hand.R.001_011/pinky_base.R_036/pinky_01.R_041
+    centered: 1
+    influence: 1
+  openControls:
+  - 0
+  - 0
+  - 0
+  - 0.5
+  - 0
+  - 0
+  - 0
+  - 0.5
+  - 0
+  - 0
+  - 0
+  - 0.5
+  - 0
+  - 0
+  - 0
+  - 0.5
+  - 0
+  - 0
+  - 0
+  - 0.5
+  fistControls:
+  - 1
+  - 1
+  - 1
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 0.5
+  - 1
+  - 1
+  - 1
+  - 0.5
+  pinchControls:
+  - 0.22
+  - 0.22
+  - 0.4
+  - 1
+  - 0.55
+  - 0.8
+  - 0.55
+  - 0.5
+  - 0.25
+  - 0.3
+  - 0.25
+  - 0.5
+  - 0.25
+  - 0.3
+  - 0.25
+  - 0.5
+  - 0.25
+  - 0.3
+  - 0.25
+  - 0.5
+  fingerSpheres:
+  - boneIndex: 11
+    thumb: 1
+    center: {x: 0.044771925, y: 0.027506096, z: 0.009354595}
+    radius: 0.08626866
+  - boneIndex: 11
+    thumb: 1
+    center: {x: 0.04879601, y: 0.06367549, z: 0.011067037}
+    radius: 0.0771999
+  - boneIndex: 11
+    thumb: 1
+    center: {x: 0.04478837, y: 0.10016527, z: 0.0088484995}
+    radius: 0.06863325
+  - boneIndex: 11
+    thumb: 1
+    center: {x: 0.03804046, y: 0.13597769, z: 0.009259202}
+    radius: 0.06498926
+  - boneIndex: 12
+    thumb: 1
+    center: {x: 0.034957666, y: 0.024076456, z: 0.0036943555}
+    radius: 0.07051719
+  - boneIndex: 12
+    thumb: 1
+    center: {x: 0.026895054, y: 0.07721834, z: 0.0017056987}
+    radius: 0.072281376
+  - boneIndex: 12
+    thumb: 1
+    center: {x: 0.016154658, y: 0.12996706, z: -0.00091860443}
+    radius: 0.07101965
+  - boneIndex: 12
+    thumb: 1
+    center: {x: 0.0036722235, y: 0.18284726, z: -0.0018117912}
+    radius: 0.06069187
+  - boneIndex: 23
+    thumb: 0
+    center: {x: 0.032068785, y: 0.020351117, z: 0.005541414}
+    radius: 0.0707868
+  - boneIndex: 23
+    thumb: 0
+    center: {x: 0.030696291, y: 0.06356588, z: 0.0057469234}
+    radius: 0.06828449
+  - boneIndex: 23
+    thumb: 0
+    center: {x: 0.02934901, y: 0.10595013, z: 0.005391203}
+    radius: 0.065984026
+  - boneIndex: 23
+    thumb: 0
+    center: {x: 0.028291991, y: 0.14912838, z: 0.005498778}
+    radius: 0.062502064
+  - boneIndex: 24
+    thumb: 0
+    center: {x: 0.028544797, y: 0.025261873, z: 0.0061856583}
+    radius: 0.060985297
+  - boneIndex: 24
+    thumb: 0
+    center: {x: 0.023846552, y: 0.071714416, z: 0.0048317946}
+    radius: 0.061595663
+  - boneIndex: 24
+    thumb: 0
+    center: {x: 0.013755746, y: 0.11754708, z: 0.002526883}
+    radius: 0.059374258
+  - boneIndex: 24
+    thumb: 0
+    center: {x: 0.0022756085, y: 0.16354454, z: -0.0020795763}
+    radius: 0.052815437
+  - boneIndex: 34
+    thumb: 0
+    center: {x: 0.06243201, y: 0.018665848, z: 0.0034132525}
+    radius: 0.069379754
+  - boneIndex: 34
+    thumb: 0
+    center: {x: 0.06147298, y: 0.059317484, z: 0.0032198392}
+    radius: 0.06846395
+  - boneIndex: 34
+    thumb: 0
+    center: {x: 0.058389086, y: 0.10043932, z: 0.0026817806}
+    radius: 0.066327825
+  - boneIndex: 34
+    thumb: 0
+    center: {x: 0.055619344, y: 0.14115429, z: 0.0017898455}
+    radius: 0.06307803
+  - boneIndex: 35
+    thumb: 0
+    center: {x: 0.049410578, y: 0.03451052, z: 0.0017936528}
+    radius: 0.06411908
+  - boneIndex: 35
+    thumb: 0
+    center: {x: 0.039082535, y: 0.095813975, z: 0.0018896051}
+    radius: 0.063537754
+  - boneIndex: 35
+    thumb: 0
+    center: {x: 0.02319866, y: 0.15711543, z: 0.0012393855}
+    radius: 0.06280351
+  - boneIndex: 35
+    thumb: 0
+    center: {x: 0.007460367, y: 0.21838996, z: 0.000052176416}
+    radius: 0.06020445
+  - boneIndex: 45
+    thumb: 0
+    center: {x: 0.038914204, y: 0.005888153, z: 0.001876682}
+    radius: 0.06292589
+  - boneIndex: 45
+    thumb: 0
+    center: {x: 0.037361145, y: 0.0461686, z: 0.0023938231}
+    radius: 0.06202987
+  - boneIndex: 45
+    thumb: 0
+    center: {x: 0.034401, y: 0.08659838, z: 0.0035943538}
+    radius: 0.060243472
+  - boneIndex: 45
+    thumb: 0
+    center: {x: 0.0325385, y: 0.12653793, z: 0.004184518}
+    radius: 0.05832362
+  - boneIndex: 46
+    thumb: 0
+    center: {x: 0.029583294, y: 0.013986852, z: 0.005361747}
+    radius: 0.05889744
+  - boneIndex: 46
+    thumb: 0
+    center: {x: 0.023170771, y: 0.06841634, z: 0.003651727}
+    radius: 0.05631864
+  - boneIndex: 46
+    thumb: 0
+    center: {x: 0.013646206, y: 0.12262909, z: 0.0022757873}
+    radius: 0.055310883
+  - boneIndex: 46
+    thumb: 0
+    center: {x: 0.0030121207, y: 0.1768705, z: 0.0015708879}
+    radius: 0.05208185
+  - boneIndex: 56
+    thumb: 0
+    center: {x: 0.03311642, y: 0.0054167444, z: -0.0073178075}
+    radius: 0.05284956
+  - boneIndex: 56
+    thumb: 0
+    center: {x: 0.033215787, y: 0.035941795, z: -0.0077085234}
+    radius: 0.05302266
+  - boneIndex: 56
+    thumb: 0
+    center: {x: 0.033943992, y: 0.066737786, z: -0.008355014}
+    radius: 0.051892437
+  - boneIndex: 56
+    thumb: 0
+    center: {x: 0.034251895, y: 0.09674056, z: -0.008528225}
+    radius: 0.050443683
+  - boneIndex: 57
+    thumb: 0
+    center: {x: 0.02903776, y: 0.013318388, z: -0.014902536}
+    radius: 0.04999832
+  - boneIndex: 57
+    thumb: 0
+    center: {x: 0.022414831, y: 0.04963073, z: -0.011864752}
+    radius: 0.052965395
+  - boneIndex: 57
+    thumb: 0
+    center: {x: 0.015085023, y: 0.08585489, z: -0.008384924}
+    radius: 0.047932897
+  - boneIndex: 57
+    thumb: 0
+    center: {x: 0.00753271, y: 0.12228122, z: -0.0040071234}
+    radius: 0.039118964

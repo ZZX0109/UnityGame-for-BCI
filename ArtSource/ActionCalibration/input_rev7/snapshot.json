@@ -1,0 +1,38 @@
+{
+  "createdUtc": "2026-11-18T00:42:12.849270+00:00",
+  "scope": "Root-provided read-only rev7 mesh/textures plus A2 rev2 candidate profile for next staged pose work; input/ unchanged; never write canonical assets",
+  "files": [
+    {
+      "file": "Hand_L.fbx",
+      "sha256": "1e5bf721f5aafea0dde9dc3650d47ada906b12861864df7a38c2188ea0c30d52"
+    },
+    {
+      "file": "Hand_L_diffuse.png",
+      "sha256": "2faf64f397f698c93badcd9bdc1f7f8d2137470aec2a5a54237c0bbe1884850e"
+    },
+    {
+      "file": "Hand_L_normal.png",
+      "sha256": "79b3d341e5ba6adcb5349fc3c8b7206ab92bcd7247bfcd33fd0666d8cd4103ce"
+    },
+    {
+      "file": "Hand_L_roughness.png",
+      "sha256": "6704b2bc674b3218c9baa181b0dd435283a3eae0db130ab523683f8beb6107ce"
+    },
+    {
+      "file": "Hand_R.fbx",
+      "sha256": "d705292eb568f9fbda75c29e8054536d75e8fa5239fa62a6ccf725ee364c7ba6"
+    },
+    {
+      "file": "Hand_R_diffuse.png",
+      "sha256": "208b690bd914a9556a3344807c4e535506204176bc8dc7a3ac10bad031f7ab7d"
+    },
+    {
+      "file": "Hand_R_normal.png",
+      "sha256": "c10b0ffc3d669ddf340c83e09ce53aaf52d0ca212df8fc00aa9efe8bb392bd16"
+    },
+    {
+      "file": "Hand_R_roughness.png",
+      "sha256": "eab049d83b8de1856bf063fe3e5e7909089cc1e4189b208a2e0d0b3d5149d95e"
+    }
+  ]
+}

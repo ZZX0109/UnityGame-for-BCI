@@ -1,0 +1,11 @@
+00:00.359  blend            | Read blend: "C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\neutral_adult_seated_pants_candidate.blend"
+GLM_EDIT mask primary=52 buffer=28
+GLM_EDIT protected_reverted=0
+GLM_EDIT total_movement=2.483930 m
+Info: Saved as "neutral_adult_seated_pants_candidate.blend"
+GLM_EDIT sha_before=5b78b94ce0a6a0fe3122d47659a5a3e9604597fa4f8d2219e3c019e9ad5d34e0
+GLM_EDIT sha_after=bd64b13113942d197d542ba70ad772c35f726e846cbc267d0ee7e23c1aba113f
+GLM_EDIT saved=C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\GLMResourceStyling\seated_pants_candidate_20261122\neutral_adult_seated_pants_candidate.blend
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+
+Blender quit

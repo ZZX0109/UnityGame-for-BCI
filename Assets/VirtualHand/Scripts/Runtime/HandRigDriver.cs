@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Neuralife.VirtualHand
@@ -7,12 +8,13 @@ namespace Neuralife.VirtualHand
     /// Drives a skinned hand rig from 20 normalized [0,1] controls (finger-major:
     /// thumb,index,middle,ring,little; thumb block = CMC flexion, MCP flexion, IP flexion,
     /// opposition; other blocks = MCP, PIP, DIP, spread).
-    /// Convention-free: bones are reset to their rest world rotation each frame, then
-    /// rotated incrementally around world-space bend axes, so the visual result does not
-    /// depend on FBX bone roll conventions. Values are visual rig controls, not degrees.
+    /// Bones reset to imported local rest rotations before applying profile-local
+    /// deltas, with explicit FBX basis and anatomical side conversion.
+    /// Values are visual rig controls, not measured joint angles.
     /// </summary>
-    public class HandRigDriver : MonoBehaviour
+    public partial class HandRigDriver : MonoBehaviour
     {
+        static readonly string[] NativeFingerNames = { "index", "middle", "ring", "pinky" };
         static readonly string[] ThumbChain = { "Thumb1", "Thumb2", "Thumb3" };
         static readonly string[][] Chains =
         {
@@ -22,26 +24,56 @@ namespace Neuralife.VirtualHand
             new[] { "Little1", "Little2", "Little3" },
         };
 
-        [Tooltip("Max flexion degrees for MCP/CMC-class controls.")]
+        [Tooltip("Optional calibration profile (Resources/Rig/hand_rig_profile.json). " +
+                 "When present, per-channel bone/axis/scale/sign come from the same " +
+                 "file the Blender build exports; the legacy max fields are ignored.")]
+        public TextAsset profileJson;
+
+        [Tooltip("Optional native-rig profile sampled from the imported Elena FF Open/Close clip. " +
+                 "When assigned, the 20 controls drive sampled bone-local quaternion deltas.")]
+        public ElenaNativeRigProfile nativeProfile;
+
+        [Tooltip("Scales thumb opposition from the centered thumb control. The target is computed " +
+                 "from the current thumb and index bone endpoints.")]
+        [Range(0f, 1f)] public float nativeOppositionStrength = 1f;
+
+        [Tooltip("Legacy fallback scales, used only when no profile is loaded.")]
         public float maxFlexionDeg = 90f;
         [Tooltip("Max spread degrees for the 4th control of each finger block.")]
         public float maxSpreadDeg = 10f;
 
+        HandRigProfile.Channel[] _profile;   // 20 calibrated channels (null = legacy path)
+
+        // Native-clip path (Elena FF). Per-bone control maps are cached at bind
+        // time; ApplyNative reuses them without allocating per frame.
+        Transform[] _nativeTransforms;
+        Quaternion[] _nativeOpen;
+        Quaternion[] _nativeDelta;
+        int[] _nativeFlexControl;
+        int[] _nativeSpreadControl;
+        Vector3[] _nativeSpreadAxisLocal;
+        int _nativeThumbBaseIndex = -1;
+        int _nativeOppositionControl = -1;
+        Transform _nativeThumbEndpoint;
+        Transform _nativeIndexEndpoint;
+
         Transform[] _thumb = new Transform[3];
         Transform[][] _fingers = new Transform[4][];
-        Quaternion[] _restRot;          // world rest rotations, reset each Apply
         Transform[] _allBones;
         float[] _current = new float[20];
         float[] _target = new float[20];
-        bool _hasPose;
 
-        public bool IsMirrored { get; private set; }
+        [SerializeField] bool _isMirrored;
+        public bool IsMirrored { get => _isMirrored; private set => _isMirrored = value; }
 
         void Awake() => CacheBones();
 
         /// <summary>Find bones under this hand root (direct name or name.side suffix).</summary>
         public bool CacheBones()
         {
+            if (nativeProfile != null && CacheNativeBones())
+                return true;
+
             for (int i = 0; i < 3; i++) _thumb[i] = FindBone(ThumbChain[i]);
             for (int f = 0; f < 4; f++)
             {
@@ -50,11 +82,150 @@ namespace Neuralife.VirtualHand
             }
             bool ok = _thumb[0] != null && _fingers[0][0] != null;
             if (!ok)
+            {
                 Debug.LogWarning($"[HandRigDriver] Missing finger bones under {name}. " +
                                  "Expected names like Index1/Index2/Index3 (optionally .R/.L suffix).");
-            else CacheRest();
-            return ok;
+                return false;
+            }
+            LoadProfile();
+            CacheRest();
+            return true;
         }
+
+        /// <summary>Bind the sampled native Elena bones without changing the 20-control contract.</summary>
+        bool CacheNativeBones()
+        {
+            if (!nativeProfile.IsValid)
+            {
+                Debug.LogWarning("[HandRigDriver] native profile is incomplete; ignoring it.");
+                return false;
+            }
+            bool hadNativePose = _nativeTransforms != null;
+            var transforms = new System.Collections.Generic.List<Transform>();
+            var open = new System.Collections.Generic.List<Quaternion>();
+            var delta = new System.Collections.Generic.List<Quaternion>();
+            var all = GetComponentsInChildren<Transform>(true);
+            foreach (var bone in nativeProfile.bones)
+            {
+                Transform t = null;
+                if (!string.IsNullOrEmpty(bone.path)) t = transform.Find(bone.path);
+                if (t == null)
+                    foreach (var candidate in all)
+                        if (candidate.name == bone.name) { t = candidate; break; }
+                if (t == null)
+                {
+                    Debug.LogWarning($"[HandRigDriver] native bone missing: {bone.path ?? bone.name}");
+                    return false;
+                }
+                Quaternion d = Quaternion.Inverse(bone.openLocal) * bone.closedLocal;
+                if (Quaternion.Dot(d, Quaternion.identity) < 0f)
+                    d = new Quaternion(-d.x, -d.y, -d.z, -d.w);
+                transforms.Add(t);
+                open.Add(bone.openLocal);
+                delta.Add(d.normalized);
+            }
+            _nativeTransforms = transforms.ToArray();
+            _nativeOpen = open.ToArray();
+            _nativeDelta = delta.ToArray();
+            _nativeFlexControl = new int[_nativeTransforms.Length];
+            _nativeSpreadControl = new int[_nativeTransforms.Length];
+            _nativeSpreadAxisLocal = new Vector3[_nativeTransforms.Length];
+            _nativeThumbBaseIndex = -1;
+            _nativeOppositionControl = -1;
+            for (int b = 0; b < _nativeTransforms.Length; b++)
+            {
+                string boneName = nativeProfile.bones[b].name;
+                int control = NativeFlexControlForName(boneName);
+                // Preserve any animated native bone not covered by the named
+                // anatomy map. It follows overall flexion and reaches the exact
+                // sampled clip pose when all curl controls are fully closed.
+                if (control == -1 && Quaternion.Angle(Quaternion.identity, _nativeDelta[b]) > 0.01f)
+                    control = -3;
+                _nativeFlexControl[b] = control;
+                _nativeSpreadControl[b] = -1;
+                if (ElenaNativeRigProfile.MatchesBone(boneName, "thumb_base")) _nativeThumbBaseIndex = b;
+            }
+
+            _nativeOppositionControl = -1;
+            for (int i = 0; i < nativeProfile.bindings.Length; i++)
+            {
+                var binding = nativeProfile.bindings[i];
+                if (binding == null) return false;
+                int found = -1;
+                for (int b = 0; b < nativeProfile.bones.Length; b++)
+                    if (nativeProfile.bones[b].path == binding.bonePath) { found = b; break; }
+                if (found < 0)
+                {
+                    Debug.LogWarning("[HandRigDriver] native binding has unknown bone: " + binding.bonePath);
+                    return false;
+                }
+                if (!binding.centered) continue;
+                string boneName = nativeProfile.bones[found].name;
+                if (ElenaNativeRigProfile.MatchesBone(boneName, "thumb_base"))
+                {
+                    _nativeOppositionControl = binding.control;
+                    continue;
+                }
+                // Older generated profiles reference the metacarpal base.
+                // Both profile versions apply lateral rotation at the MCP.
+                int finger = binding.control / 4 - 1;
+                if (finger < 0 || finger >= NativeFingerNames.Length || binding.control % 4 != 3) continue;
+                string stem = NativeFingerNames[finger];
+                if (!ElenaNativeRigProfile.MatchesBone(boneName, stem + "_base") &&
+                    !ElenaNativeRigProfile.MatchesBone(boneName, stem + "_01")) continue;
+                int mcp = FindNativeIndex(stem + "_01");
+                if (mcp >= 0) _nativeSpreadControl[mcp] = binding.control;
+            }
+
+            _nativeThumbEndpoint = FindNativeSegmentTransform("thumb_03.R_end");
+            _nativeIndexEndpoint = FindNativeSegmentTransform("index_03.R_end");
+            // Spread axes must be measured from the authored open pose, including on rebind.
+            for (int b = 0; b < _nativeTransforms.Length; b++)
+                if (_nativeTransforms[b] != null) _nativeTransforms[b].localRotation = _nativeOpen[b];
+            CacheNativeSpreadAxes();
+            CacheThumbClearance();
+            if (_nativeThumbBaseIndex < 0 || _nativeThumbEndpoint == null || _nativeIndexEndpoint == null)
+                Debug.LogWarning("[HandRigDriver] native thumb opposition endpoints are unavailable; " +
+                                 "the centered thumb opposition control cannot align the pads.");
+
+            _profileOpen = nativeProfile.openControls;
+            _profileFist = nativeProfile.fistControls;
+            _profilePinch = nativeProfile.pinchControls;
+            if (!hadNativePose)
+            {
+                Array.Copy(_profileOpen, _current, 20);
+                Array.Copy(_profileOpen, _target, 20);
+            }
+            ApplyNative(_current);
+            Debug.Log("[HandRigDriver] native profile active (" + _nativeTransforms.Length + " bones, " +
+                      nativeProfile.bindings.Length + " control bindings).");
+            return true;
+        }
+
+        /// <summary>Load the shared calibration profile (Blender-exported JSON).</summary>
+        public void LoadProfile()
+        {
+            if (profileJson != null &&
+                HandRigProfile.TryParseText(profileJson.text, out var p))
+            {
+                _profile = p.Channels;
+                _profileOpen = p.Open;
+                _profileFist = p.Fist;
+                _profilePinch = p.Pinch;
+                Debug.Log($"[HandRigDriver] profile loaded ({_profile.Length} channels, " +
+                          "Resources/Rig/hand_rig_profile.json).");
+            }
+            else
+            {
+                _profile = null; // legacy maxFlexionDeg path
+            }
+        }
+
+        public bool HasProfile => _profile != null || _nativeTransforms != null;
+        public float[] ProfileOpen => _profileOpen;
+        public float[] ProfileFist => _profileFist;
+        public float[] ProfilePinch => _profilePinch;
+        float[] _profileOpen, _profileFist, _profilePinch;
 
         Transform FindBone(string name)
         {
@@ -64,8 +235,7 @@ namespace Neuralife.VirtualHand
             return null;
         }
 
-        Vector3[] _bendAxis;   // per-bone curl axis = boneDir x palmNormal (cached at rest)
-        Vector3[] _restHead;
+        Quaternion[] _restLocalRot;  // bone-local rest rotation as imported (FBX axes preserved)
 
         void CacheRest()
         {
@@ -73,30 +243,22 @@ namespace Neuralife.VirtualHand
             list.AddRange(_thumb);
             foreach (var c in _fingers) list.AddRange(c);
             _allBones = list.ToArray();
-            _restRot = new Quaternion[_allBones.Length];
-            _bendAxis = new Vector3[_allBones.Length];
-            _restHead = new Vector3[_allBones.Length];
-            Vector3 palmNormal = -Vector3.up; // rest pose: palm faces down (A-pose forearms)
+            _restLocalRot = new Quaternion[_allBones.Length];
             for (int i = 0; i < _allBones.Length; i++)
             {
                 var t = _allBones[i];
-                _restRot[i] = t != null ? t.rotation : Quaternion.identity;
-                _restHead[i] = t != null ? t.position : Vector3.zero;
-                if (t == null) continue;
-                Vector3 dir = (t.position - _restHead[i]).normalized;
-                if (t.childCount > 0)
-                {
-                    // use child joint for direction (bone points to its child)
-                    Vector3 cp = t.GetChild(0).position;
-                    dir = (cp - t.position).normalized;
-                }
-                Vector3 axis = Vector3.Cross(dir, palmNormal);
-                if (axis.sqrMagnitude < 0.05f) axis = Vector3.Cross(dir, Vector3.forward);
-                _bendAxis[i] = axis.normalized;
+                // bone-LOCAL rest rotation exactly as the FBX import provides it.
+                // Blender authored pose angles in this same local space, so
+                // writing localRotation directly reproduces the preview poses
+                // regardless of any root/armature node rotation or task anchors.
+                _restLocalRot[i] = t != null ? t.localRotation : Quaternion.identity;
             }
         }
 
-        /// <summary>Handedness flips the world bend axes for mirrored hands.</summary>
+        /// <summary>
+        /// Anatomical side for the frozen mirrored rig: X curl keeps its sign;
+        /// Y/Z controls need a separate left-side conversion before FBX conversion.
+        /// </summary>
         public void SetMirrored(bool mirrored) => IsMirrored = mirrored;
 
         /// <summary>Apply 20 controls instantly. Invalid length is rejected visibly.</summary>
@@ -108,8 +270,8 @@ namespace Neuralife.VirtualHand
                 return;
             }
             Array.Copy(c, _target, 20);
-            _hasPose = true;
-            Apply(_target);
+            Array.Copy(c, _current, 20);
+            Apply(_current);
         }
 
         /// <summary>Smooth-approach toward the 20-control target. Call once per frame.</summary>
@@ -120,51 +282,209 @@ namespace Neuralife.VirtualHand
             float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.016f, smooth));
             for (int i = 0; i < 20; i++)
                 _current[i] = Mathf.Lerp(_current[i], _target[i], k);
-            _hasPose = true;
             Apply(_current);
         }
 
         void ResetToRest()
         {
             for (int i = 0; i < _allBones.Length; i++)
-                if (_allBones[i] != null) _allBones[i].rotation = _restRot[i];
+                if (_allBones[i] != null) _allBones[i].localRotation = _restLocalRot[i];
         }
 
 
         void Apply(float[] v)
         {
+            if (_nativeTransforms != null)
+            {
+                ApplyNative(v);
+                return;
+            }
             if (_allBones == null || _thumb[0] == null) return;
             ResetToRest();
-            float s = IsMirrored ? -1f : 1f;
 
-            // Bend each bone about the world-space bend axis. Child bones inherit the
-            // parent's posed delta so flexion compounds down the chain like a real fist.
-            Quaternion[] cur = new Quaternion[_allBones.Length];
-            Quaternion[] delta = new Quaternion[_allBones.Length];
-            for (int i = 0; i < _allBones.Length; i++)
+            if (_profile != null)
             {
-                cur[i] = _restRot[i];
-                delta[i] = Quaternion.identity;
+                // Profile path — bone-local, matching the Blender preview exactly:
+                // each pose bone gets rotation_euler[axis] += radians(deg), with
+                // Blender XYZ euler composition R_local = Rz * Ry * Rx.
+                // Flexion compounds down each chain automatically through the
+                // transform hierarchy (children are local to their posed parent).
+                for (int i = 0; i < _allBones.Length; i++)
+                {
+                    Transform t = _allBones[i];
+                    if (t == null) continue;
+                    t.localRotation = _restLocalRot[i] * ProfileDelta(i, v);
+                }
+                return;
             }
+
+            // legacy fallback: local-space bone-local-X approximation with hard-coded scales
             for (int i = 0; i < _allBones.Length; i++)
             {
                 Transform t = _allBones[i];
                 if (t == null) continue;
-                int pi = ParentIndex(i);
-                if (pi >= 0) cur[i] = delta[pi] * cur[i];
-                cur[i] = BoneDelta(i, v, s) * cur[i];
-                delta[i] = cur[i] * Quaternion.Inverse(_restRot[i]);
-                t.rotation = cur[i];
+                t.localRotation = _restLocalRot[i] * BoneDelta(i, v, IsMirrored ? -1f : 1f);
             }
         }
 
-        /// <summary>Rotation delta for bone i from its controls, about its own curl axis.</summary>
+        /// <summary>Apply native clip deltas while keeping curl, spread, and opposition independent.</summary>
+        void ApplyNative(float[] v)
+        {
+            for (int i = 0; i < _nativeTransforms.Length; i++)
+            {
+                var t = _nativeTransforms[i];
+                if (t == null) continue;
+
+                float weight = NativeFlexWeight(_nativeFlexControl[i], v);
+                Quaternion rotation = _nativeOpen[i];
+
+                int spreadControl = _nativeSpreadControl[i];
+                Vector3 spreadAxis = _nativeSpreadAxisLocal[i];
+                if (spreadControl >= 0 && spreadAxis.sqrMagnitude > 1e-8f)
+                {
+                    float centeredSpread = (Mathf.Clamp01(v[spreadControl]) - 0.5f) * 2f;
+                    rotation *= Quaternion.AngleAxis(centeredSpread * maxSpreadDeg, spreadAxis);
+                }
+                // Spread turns the plane of flexion around the open-palm normal.
+                if (Mathf.Abs(weight) >= 1e-5f)
+                    rotation *= Quaternion.SlerpUnclamped(Quaternion.identity, _nativeDelta[i], weight);
+                t.localRotation = rotation;
+            }
+            ApplyNativeThumbOpposition(v);
+        }
+
+        float NativeFlexWeight(int control, float[] v)
+        {
+            if (control >= 0) return Mathf.Clamp01(v[control]);
+            if (control == -2)
+                return (Mathf.Clamp01(v[4]) + Mathf.Clamp01(v[8]) +
+                        Mathf.Clamp01(v[12]) + Mathf.Clamp01(v[16])) * 0.25f;
+            if (control == -3)
+            {
+                float sum = Mathf.Clamp01(v[0]) + Mathf.Clamp01(v[1]) + Mathf.Clamp01(v[2]);
+                for (int o = 4; o <= 16; o += 4)
+                    sum += Mathf.Clamp01(v[o]) + Mathf.Clamp01(v[o + 1]) + Mathf.Clamp01(v[o + 2]);
+                return sum / 15f;
+            }
+            return 0f;
+        }
+
+        void ApplyNativeThumbOpposition(float[] v)
+        {
+            if (_nativeOppositionControl < 0 || _nativeThumbBaseIndex < 0 ||
+                _nativeThumbEndpoint == null || _nativeIndexEndpoint == null) return;
+
+            float centered = (Mathf.Clamp01(v[_nativeOppositionControl]) - 0.5f) * 2f;
+            float amount = Mathf.Clamp01(Mathf.Abs(centered) * nativeOppositionStrength);
+            if (amount < 1e-5f) return;
+
+            var thumbBase = _nativeTransforms[_nativeThumbBaseIndex];
+            var basis = thumbBase.parent;
+            Vector3 pivot = thumbBase.localPosition;
+            Vector3 thumbVector = basis.InverseTransformPoint(_nativeThumbEndpoint.position) - pivot;
+            Vector3 indexVector = basis.InverseTransformPoint(_nativeIndexEndpoint.position) - pivot;
+            if (thumbVector.sqrMagnitude < 1e-8f || indexVector.sqrMagnitude < 1e-8f) return;
+
+            // Rotate the native thumb chain toward the currently posed index endpoint.
+            // The inverse correction gives a continuous outward motion below neutral.
+            Quaternion align = Quaternion.FromToRotation(thumbVector, indexVector);
+            if (centered < 0f) align = Quaternion.Inverse(align);
+            thumbBase.localRotation = Quaternion.Slerp(Quaternion.identity, align, amount) * thumbBase.localRotation;
+        }
+
+        void CacheNativeSpreadAxes()
+        {
+            string[] mcpParts = { "index_01", "middle_01", "ring_01", "pinky_01" };
+            string[] endParts = { "index_03.R_end", "middle_03.R_end", "ring_03.R_end", "pinky_03.R_end" };
+            var mcps = new Transform[4];
+            var ends = new Transform[4];
+            for (int f = 0; f < 4; f++)
+            {
+                mcps[f] = FindNativeSegmentTransform(mcpParts[f]);
+                ends[f] = FindNativeSegmentTransform(endParts[f]);
+            }
+            var wrist = FindNativeSegmentTransform("hand.R_02");
+            if (wrist == null || mcps.Any(b => b == null) || ends.Any(e => e == null))
+            {
+                Debug.LogWarning("[HandRigDriver] native spread MCP/end transforms are unavailable.");
+                return;
+            }
+
+            Vector3 Local(Transform t) => transform.InverseTransformPoint(t.position);
+            Vector3 palmLongitudinal = Local(mcps[1]) - Local(wrist);
+            Vector3 palmLateral = Local(mcps[3]) - Local(mcps[0]);
+            Vector3 palmNormal = Vector3.Cross(palmLongitudinal, palmLateral);
+            if (palmNormal.sqrMagnitude < 1e-8f) return;
+            palmNormal.Normalize();
+
+            for (int f = 0; f < 4; f++)
+            {
+                Vector3 reference;
+                if (f == 0) reference = Local(ends[1]);
+                else if (f == 1) reference = (Local(ends[0]) + Local(ends[2])) * 0.5f;
+                else if (f == 2) reference = (Local(ends[1]) + Local(ends[3])) * 0.5f;
+                else reference = Local(ends[2]);
+
+                Vector3 awayFromNeighbor = Local(ends[f]) - reference;
+                Vector3 positiveMotion = Vector3.Cross(palmNormal, Local(ends[f]) - Local(mcps[f]));
+                float sign = Vector3.Dot(positiveMotion, awayFromNeighbor) < 0f ? -1f : 1f;
+                int index = FindNativeIndex(mcpParts[f]);
+                if (index >= 0 && mcps[f].parent != null)
+                    _nativeSpreadAxisLocal[index] = mcps[f].worldToLocalMatrix.MultiplyVector(
+                        transform.localToWorldMatrix.MultiplyVector(palmNormal * sign)).normalized;
+            }
+        }
+
+        int FindNativeIndex(string semanticSegment)
+        {
+            for (int i = 0; i < _nativeTransforms.Length; i++)
+                if (_nativeTransforms[i] != null && ElenaNativeRigProfile.MatchesBone(_nativeTransforms[i].name, semanticSegment))
+                    return i;
+            return -1;
+        }
+
+        Transform FindNativeSegmentTransform(string segment)
+        {
+            int index = FindNativeIndex(segment);
+            return index < 0 ? null : _nativeTransforms[index];
+        }
+
+        static int NativeFlexControlForName(string name)
+        {
+            int id = name.IndexOf(".R_", StringComparison.Ordinal);
+            if (id >= 0) name = name.Substring(0, id);
+            if (NativeNameHas(name, "hand.R.001")) return -2; // artist-authored palm closure
+            if (NativeNameHas(name, "thumb"))
+            {
+                if (NativeNameHas(name, "thumb_base") || name.EndsWith("_Ctrl", StringComparison.OrdinalIgnoreCase)) return 0;
+                if (NativeNameHas(name, "thumb_tip") || NativeNameHas(name, "_03")) return 2;
+                if (NativeNameHas(name, "_01") || NativeNameHas(name, "_02")) return 1;
+                return -1;
+            }
+
+            int finger = NativeNameHas(name, "index") ? 0 :
+                         NativeNameHas(name, "middle") ? 1 :
+                         NativeNameHas(name, "ring") ? 2 :
+                         NativeNameHas(name, "pinky") ? 3 : -1;
+            if (finger < 0) return -1;
+            int firstControl = (finger + 1) * 4;
+            if (NativeNameHas(name, "_base") || name.EndsWith("_Ctrl", StringComparison.OrdinalIgnoreCase) ||
+                NativeNameHas(name, "_01")) return firstControl;
+            if (NativeNameHas(name, "_02")) return firstControl + 1;
+            if (NativeNameHas(name, "_03") || NativeNameHas(name, "_tip")) return firstControl + 2;
+            return -1;
+        }
+
+        static bool NativeNameHas(string name, string part) =>
+            !string.IsNullOrEmpty(name) && name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>Legacy fallback: approximate flexion about the bone-local X axis.</summary>
         Quaternion BoneDelta(int i, float[] v, float s)
         {
             Quaternion q = Quaternion.identity;
-            if (i < 3) // thumb chain: flexion about own axis, opposition (i==0) about world-forward
+            if (i < 3)
             {
-                q = AngleAround(_bendAxis[i], Mathf.Clamp01(v[i]) * MaxFlex(i) * s) * q;
+                q = AngleAround(Vector3.right, Mathf.Clamp01(v[i]) * MaxFlex(i) * s) * q;
                 if (i == 0) q = AngleAround(Vector3.forward, Mathf.Clamp01(v[3]) * 60f * s) * q;
                 return q;
             }
@@ -172,7 +492,7 @@ namespace Neuralife.VirtualHand
             if (f < 0 || f > 3) return q;
             int o = (f + 1) * 4;
             float maxF = j == 0 ? maxFlexionDeg : j == 1 ? maxFlexionDeg * 1.15f : maxFlexionDeg * 0.75f;
-            q = AngleAround(_bendAxis[i], Mathf.Clamp01(v[o + j]) * maxF * s) * q;
+            q = AngleAround(Vector3.right, Mathf.Clamp01(v[o + j]) * maxF * s) * q;
             if (j == 1)
                 q = AngleAround(Vector3.up, (Mathf.Clamp01(v[o + 3]) - 0.5f) * 2f * maxSpreadDeg * s) * q;
             return q;
@@ -181,35 +501,89 @@ namespace Neuralife.VirtualHand
         static Quaternion AngleAround(Vector3 axis, float deg) =>
             Quaternion.AngleAxis(deg, axis.normalized);
 
-        int[] _parentIdx;
-
-        int ParentIndex(int i)
-        {
-            if (_parentIdx == null)
-            {
-                _parentIdx = new int[_allBones.Length];
-                for (int a = 0; a < _allBones.Length; a++)
-                {
-                    _parentIdx[a] = -1;
-                    if (_allBones[a] == null) continue;
-                    var p = _allBones[a].parent;
-                    for (int b = 0; b < _allBones.Length; b++)
-                        if (b != a && _allBones[b] == p) { _parentIdx[a] = b; break; }
-                }
-            }
-            return _parentIdx[i];
-        }
-
-
         float MaxFlex(int i) => i == 2 ? maxFlexionDeg * 0.8f : maxFlexionDeg;
 
-        /// <summary>Neutral pose (everything rest). Clears smoothing state.</summary>
+        Transform FindBoneForChannel(string bone)
+        {
+            foreach (var t in _allBones)
+                if (t != null && (t.name == bone || t.name.StartsWith(bone + ".")))
+                    return t;
+            return null;
+        }
+
+        /// <summary>
+        /// Profile-driven BONE-LOCAL euler delta with the FBX-import basis
+        /// conversion. The imported Unity bone basis differs from the Blender
+        /// one by the axis-angle transform (+,−,−) per bone (Codex run14
+        /// correspondence: inverting the Blender-interpreted Y/Z angles makes
+        /// multi-axis poses match open/inder30 exactly). The profile keeps its
+        /// Blender anatomical semantics; here the Y/Z euler components are
+        /// negated before composing in Blender XYZ order Rz*Ry*Rx.
+        /// </summary>
+        Quaternion ProfileDelta(int boneIdx, float[] v)
+        {
+            Vector3 e = Vector3.zero;
+            bool any = false;
+            for (int c = 0; c < _profile.Length; c++)
+            {
+                var ch = _profile[c];
+                Transform t = FindBoneForChannel(ch.bone);
+                if (t == null || t != _allBones[boneIdx]) continue;
+                float deg = (v[c] - ch.rest) * ch.scale * ch.sign;
+                Vector3 add = AxisEuler(ch.axis, deg);
+                e.x += add.x; e.y += add.y; e.z += add.z;
+                any = true;
+            }
+            if (!any) return Quaternion.identity;
+            // FBX basis conversion: X angle keeps its sign, Y and Z negate.
+            float sx = e.x;
+            float anatomicalSide = IsMirrored ? -1f : 1f;
+            float sy = -e.y * anatomicalSide;
+            float sz = -e.z * anatomicalSide;
+            // Composed in Blender XYZ order Rz(sz) * Ry(sy) * Rx(sx).
+            Quaternion rx = Quaternion.Euler(sx, 0, 0);
+            Quaternion ry = Quaternion.Euler(0, sy, 0);
+            Quaternion rz = Quaternion.Euler(0, 0, sz);
+            return rz * ry * rx;
+        }
+
+        static Vector3 AxisEuler(string axis, float deg)
+        {
+            switch (axis)
+            {
+                case "Y": return new Vector3(0, deg, 0);
+                case "Z": return new Vector3(0, 0, deg);
+                default: return new Vector3(deg, 0, 0);
+            }
+        }
+
+        /// <summary>Neutral pose: smoothing state returns to each channel's rest
+        /// (flex=0, twist/spread=0.5) so spread/opposition don't sweep from 0.</summary>
         public void ResetControls()
         {
-            Array.Clear(_current, 0, 20);
-            Array.Clear(_target, 0, 20);
+            if (_nativeTransforms != null)
+            {
+                for (int c = 0; c < 20; c++)
+                {
+                    float rest = nativeProfile.openControls != null &&
+                                 nativeProfile.openControls.Length == 20
+                        ? nativeProfile.openControls[c]
+                        : (c % 4 == 3 ? 0.5f : 0f);
+                    _current[c] = rest;
+                    _target[c] = rest;
+                }
+                ApplyNative(_target);
+                return;
+            }
+            for (int c = 0; c < 20; c++)
+            {
+                float rest = 0f;
+                if (_profile != null) rest = _profile[c].rest;
+                else if (c % 4 == 3) rest = 0.5f; // legacy: spread centered
+                _current[c] = rest;
+                _target[c] = rest;
+            }
             if (_allBones != null) ResetToRest();
-            _hasPose = false;
         }
     }
 }

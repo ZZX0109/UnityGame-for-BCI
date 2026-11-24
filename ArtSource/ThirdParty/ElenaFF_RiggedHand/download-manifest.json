@@ -1,0 +1,32 @@
+{
+  "downloadedUtc": "2026-11-18T04:28:02.100313+00:00",
+  "originalAuthor": "Elena FF",
+  "originalUrl": "https://sketchfab.com/3d-models/rigged-hand-eae97cc2a742413cb5338ab942b12c1e",
+  "distribution": "https://github.com/blechdom/morphazoid/tree/main/assets/gesticulating-hand",
+  "assetLicense": "CC-BY-SA-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "sourceHashConfirmed": true,
+  "files": [
+    {
+      "file": "hand-cdn.glb",
+      "bytes": 3812180,
+      "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58"
+    },
+    {
+      "file": "hand.glb",
+      "bytes": 3812180,
+      "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2769,
+      "sha256": "9b923bdd9c0a86ba664facf5bf80d01a3fc63142e6c1fc3f55b7742d66c74902"
+    },
+    {
+      "file": "source-metadata.json",
+      "bytes": 805,
+      "sha256": "8b844dfb6f83b79dd4b4faf1f119467644be5da5e71e7c4c46df2081aa5a7c5c"
+    }
+  ],
+  "scope": "Unmodified GLB with source animation; candidate integration pending. Retain attribution and CC-BY-SA for derived model and animation."
+}

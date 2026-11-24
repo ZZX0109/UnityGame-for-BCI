@@ -1,0 +1,466 @@
+{
+  "blender": "5.2.3 LTS",
+  "materials": {
+    "Human.body": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.cortu_cargo_pants": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        },
+        {
+          "type": "BUMP",
+          "name": "bumpmap",
+          "strength": 1.0
+        },
+        {
+          "type": "MIX_RGB",
+          "name": "diffuseIntensity"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "diffuseTexture",
+          "image": "cargo_pants_diff.png"
+        },
+        {
+          "type": "NORMAL_MAP",
+          "name": "normalmap"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "normalmapTexture",
+          "image": "cargo_pants_norm.png"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.7,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    },
+    "Human.ears": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.fingernails": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.genitals": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.lips": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.low-poly": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "EnhancedEye"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.mindfront_eyebrows_01": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.7,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    },
+    "Human.nipple": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.toenails": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "GROUP",
+          "name": "Human.body"
+        },
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        }
+      ],
+      "principled": {}
+    },
+    "Human.toigo_blunt_bob": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        },
+        {
+          "type": "BUMP",
+          "name": "bumpmap",
+          "strength": 1.0
+        },
+        {
+          "type": "MIX_RGB",
+          "name": "diffuseIntensity"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "diffuseTexture",
+          "image": "StrawberryBlondHair.png"
+        },
+        {
+          "type": "NORMAL_MAP",
+          "name": "normalmap"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "normalmapTexture",
+          "image": "BakedHairNORMAL.png"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "specularmapTexture",
+          "image": "BakedHair_spec.png"
+        },
+        {
+          "type": "MATH",
+          "name": "specularInvert"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.7,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    },
+    "Human.toigo_fisherman_sweater": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        },
+        {
+          "type": "BUMP",
+          "name": "bumpmap",
+          "strength": 1.0
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "bumpmapTexture",
+          "image": "shirt-knit-NORM.png"
+        },
+        {
+          "type": "MIX_RGB",
+          "name": "diffuseIntensity"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "diffuseTexture",
+          "image": "shirt-knit.png"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.7,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    },
+    "Human.toigo_mj_cloth_shoes": {
+      "users": 1,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        },
+        {
+          "type": "BUMP",
+          "name": "bumpmap",
+          "strength": 1.0
+        },
+        {
+          "type": "MIX_RGB",
+          "name": "diffuseIntensity"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "diffuseTexture",
+          "image": "MJ-shoes3.png"
+        },
+        {
+          "type": "NORMAL_MAP",
+          "name": "normalmap"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "normalmapTexture",
+          "image": "MJ-shoes3-NORM.png"
+        },
+        {
+          "type": "TEX_IMAGE",
+          "name": "specularmapTexture",
+          "image": "MJ-shoes-spec.png"
+        },
+        {
+          "type": "MATH",
+          "name": "specularInvert"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.7,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    },
+    "Material": {
+      "users": 0,
+      "nodes": [
+        {
+          "type": "OUTPUT_MATERIAL",
+          "name": "Material Output"
+        },
+        {
+          "type": "BSDF_PRINCIPLED",
+          "name": "Principled BSDF"
+        }
+      ],
+      "principled": {
+        "Roughness": 0.5,
+        "Specular IOR Level": 0.5,
+        "Metallic": 0.0,
+        "Alpha": 1.0
+      }
+    }
+  },
+  "images": {
+    "BakedHair_spec.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\hair\\toigo_blunt_bob\\BakedHair_spec.png",
+      "size": [
+        3600,
+        3600
+      ],
+      "packed": false,
+      "decoded_pixels": 12960000
+    },
+    "BakedHairNORMAL.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\hair\\toigo_blunt_bob\\BakedHairNORMAL.png",
+      "size": [
+        3600,
+        3600
+      ],
+      "packed": false,
+      "decoded_pixels": 12960000
+    },
+    "cargo_pants_diff.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\cortu_cargo_pants\\cargo_pants_diff.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "cargo_pants_norm.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\cortu_cargo_pants\\cargo_pants_norm.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "MJ-shoes-spec.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_mj_cloth_shoes\\MJ-shoes-spec.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "MJ-shoes3-NORM.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_mj_cloth_shoes\\MJ-shoes3-NORM.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "MJ-shoes3.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_mj_cloth_shoes\\MJ-shoes3.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "Render Result": {
+      "filepath": "",
+      "size": [
+        0,
+        0
+      ],
+      "packed": false,
+      "decoded_pixels": 0
+    },
+    "shirt-knit-NORM.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_fisherman_sweater\\shirt-knit-NORM.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "shirt-knit.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\clothes\\toigo_fisherman_sweater\\shirt-knit.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "sss.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\mpfb2_v2.0.18\\mpfb2-2.0.18\\src\\mpfb\\data\\textures\\sss.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    },
+    "StrawberryBlondHair.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\garments-cc0\\hair\\toigo_blunt_bob\\StrawberryBlondHair.png",
+      "size": [
+        3600,
+        3600
+      ],
+      "packed": false,
+      "decoded_pixels": 12960000
+    },
+    "Viewer Node": {
+      "filepath": "",
+      "size": [
+        256,
+        256
+      ],
+      "packed": false,
+      "decoded_pixels": 65536
+    },
+    "young_lightskinned_male_diffuse_Bronze.png": {
+      "filepath": "//..\\..\\..\\_download\\avatar-resources\\skins02_cc0\\skins\\toigo_light_skin_male_bronze\\young_lightskinned_male_diffuse_Bronze.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": false,
+      "decoded_pixels": 4194304
+    }
+  },
+  "missing_images": []
+}

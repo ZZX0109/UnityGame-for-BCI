@@ -1,0 +1,150 @@
+{
+  "blender_version": "5.2.3 LTS",
+  "objects": [
+    {
+      "name": "AvatarRoot_1m70",
+      "type": "EMPTY",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": null
+    },
+    {
+      "name": "AvatarKey",
+      "type": "LIGHT",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": null
+    },
+    {
+      "name": "AvatarFill",
+      "type": "LIGHT",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": null
+    },
+    {
+      "name": "AvatarRim",
+      "type": "LIGHT",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": null
+    },
+    {
+      "name": "AvatarRenderCamera",
+      "type": "CAMERA",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": null
+    },
+    {
+      "name": "Human",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 19158,
+      "faces": 18486,
+      "materials": [
+        "Human.body",
+        "Human.nipple",
+        "Human.lips",
+        "Human.fingernails",
+        "Human.toenails",
+        "Human.ears",
+        "Human.genitals"
+      ]
+    },
+    {
+      "name": "Human.rig",
+      "type": "ARMATURE",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "AvatarRoot_1m70",
+      "bones": 53
+    },
+    {
+      "name": "Human.low-poly",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 96,
+      "faces": 86,
+      "materials": [
+        "Human.low-poly"
+      ]
+    },
+    {
+      "name": "Human.mindfront_eyebrows_01",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 9468,
+      "faces": 7101,
+      "materials": [
+        "Human.mindfront_eyebrows_01"
+      ]
+    },
+    {
+      "name": "Human.toigo_blunt_bob",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 1510,
+      "faces": 1429,
+      "materials": [
+        "Human.toigo_blunt_bob"
+      ]
+    },
+    {
+      "name": "Human.toigo_fisherman_sweater",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 2126,
+      "faces": 2082,
+      "materials": [
+        "Human.toigo_fisherman_sweater"
+      ]
+    },
+    {
+      "name": "Human.cortu_cargo_pants",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 211,
+      "faces": 196,
+      "materials": [
+        "Human.cortu_cargo_pants"
+      ]
+    },
+    {
+      "name": "Human.toigo_mj_cloth_shoes",
+      "type": "MESH",
+      "mpfb_object_type": "",
+      "asset_source": "",
+      "parents": "Human.rig",
+      "verts": 556,
+      "faces": 502,
+      "materials": [
+        "Human.toigo_mj_cloth_shoes"
+      ]
+    }
+  ],
+  "armatures": [
+    "Human.rig"
+  ],
+  "error": null,
+  "totals": {
+    "objects": 13,
+    "meshes": 7,
+    "materials": 14,
+    "images": 14,
+    "armatures": 1
+  },
+  "reopen": "OK"
+}

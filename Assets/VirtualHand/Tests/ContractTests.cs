@@ -68,19 +68,61 @@ namespace Neuralife.VirtualHand.Tests
         }
 
         [Test]
+        public void HandRigProfile_OpenSampleIsTrueRest()
+        {
+            // Regression: pose20_open once returned all-0.5 while flex channels
+            // have rest=0, turning the "open" sample into a half-fist.
+            string path = "Assets/VirtualHand/Resources/Rig/hand_rig_profile.json";
+            if (!File.Exists(path)) Assert.Ignore("profile not exported yet");
+            var json = File.ReadAllText(path);
+            Assert.IsTrue(HandRigProfile.TryParseText(json, out var p), "profile parses");
+            Assert.AreEqual(20, p.Channels.Length, "20 channels");
+            for (int i = 0; i < 20; i++)
+            {
+                bool isFlex = i % 4 != 3; // 4th of each block is twist/spread
+                float rest = p.Channels[i].rest;
+                if (isFlex)
+                    Assert.AreEqual(0f, p.Open[i], 1e-4f,
+                        $"open sample flex channel {i} must be 0 (rest), got {p.Open[i]}");
+                Assert.AreEqual(isFlex ? 0f : 0.5f, rest, 1e-4f,
+                    $"channel {i} rest offset");
+            }
+            // Fist sample: every finger flexion must be clearly above the open rest
+            // sample. DIP calibration targets are anatomical angles divided by a
+            // per-joint scale, so they are intentionally below 1.0; do not require
+            // control=1.0 or the rig over-flexes.
+            for (int f = 1; f < 5; f++)
+                for (int j = 0; j < 3; j++)
+                {
+                    int idx = f * 4 + j;
+                    Assert.GreaterOrEqual(p.Fist[idx], 0.25f, $"fist finger {f} joint {j} must be flexed");
+                    Assert.Greater(p.Fist[idx], p.Open[idx] + 0.2f,
+                                   $"fist finger {f} joint {j} must exceed open pose");
+                    Assert.LessOrEqual(p.Fist[idx], 1f, $"fist finger {f} joint {j} must stay in range");
+                }
+        }
+
+        [Test]
         public void TruthReference_IsSeparatedFromPredictions()
         {
             // Exported files: eeg_S00X_predictions.jsonl (source=prediction) and
             // eeg_S00X_truth.jsonl (source=labels) are separate files by construction.
             // This test pins the invariant that prediction frames never carry labels source.
-            string dir = "Assets/StreamingAssets/Replays";
-            if (!Directory.Exists(dir)) Assert.Ignore("Replays not exported yet");
-            foreach (var pred in Directory.GetFiles(dir, "eeg_*_predictions.jsonl"))
+            string dir = Path.Combine("Assets", "StreamingAssets", "Replays", "eeg");
+            if (!Directory.Exists(dir)) Assert.Ignore("EEG replays not exported yet");
+            var predictions = Directory.GetFiles(dir, "eeg_*_predictions.jsonl");
+            Assert.IsNotEmpty(predictions, "prediction replay files must exist");
+            foreach (var pred in predictions)
             {
                 string truth = pred.Replace("_predictions", "_truth");
                 Assert.IsTrue(File.Exists(truth), "truth file missing for " + pred);
                 foreach (var line in File.ReadLines(pred))
-                    StringAssert.DoesNotContain("\"labels\"", line, "prediction file must not embed label source");
+                {
+                    StringAssert.DoesNotContain("\"source\":\"labels\"", line,
+                        "prediction file must not embed label source");
+                    Assert.IsTrue(ReplayData.TryParseFrame(line, out var frame, out var err), err);
+                    Assert.AreEqual("prediction", frame.source);
+                }
             }
         }
     }

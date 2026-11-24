@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/VirtualHand/Scenes/Demo.unity
+    guid: 4b0d80a88a376084ca358b0d8fb59a31
   m_configObjects: {}

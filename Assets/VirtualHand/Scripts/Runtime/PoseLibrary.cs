@@ -77,6 +77,36 @@ namespace Neuralife.VirtualHand
             for (int i = 0; i < 20; i++) r[i] = Mathf.Lerp(a[i], b[i], t);
             return r;
         }
+
+        /// <summary>Authored grip pose used when a frame lacks a per-hand pose.</summary>
+        public static float[] GripPose() => Fist();
+
+        /// <summary>Authored open/rest pose used when a frame lacks a per-hand pose.</summary>
+        public static float[] OpenPose() => Rest();
+
+        // ---- profile-aware defaults (A's unified Blender/Unity 20-way poses) ----
+        // Used only when a driver has a loaded rig profile; fall back to the
+        // authored poses otherwise. No angle compensation is done here.
+
+        static float[] ProfileOr(HandRigDriver driver, float[] profiled, float[] authored)
+        {
+            if (driver != null && driver.HasProfile && profiled != null &&
+                profiled.Length == 20)
+                return profiled;
+            return authored;
+        }
+
+        /// <summary>Default rest/open pose for this driver (profile sample when available).</summary>
+        public static float[] OpenPose(HandRigDriver driver) =>
+            ProfileOr(driver, driver?.ProfileOpen, Rest());
+
+        /// <summary>Default fist/grip pose for this driver (profile sample when available).</summary>
+        public static float[] FistPose(HandRigDriver driver) =>
+            ProfileOr(driver, driver?.ProfileFist, Fist());
+
+        /// <summary>Default pinch pose for this driver (profile sample when available).</summary>
+        public static float[] PinchPose(HandRigDriver driver) =>
+            ProfileOr(driver, driver?.ProfilePinch, Pinch());
     }
 
     /// <summary>
@@ -95,8 +125,5 @@ namespace Neuralife.VirtualHand
                 default: return false; // rest
             }
         }
-
-        public static float[] GripPose() => Fist();
-        public static float[] OpenPose() => Rest();
     }
 }

@@ -10,11 +10,11 @@ namespace Neuralife.VirtualHand.Editor
     /// Editor automation entry points per implementation brief:
     ///   Neuralife.VirtualHand.Editor.VirtualHandBuild.GenerateProject
     ///   Neuralife.VirtualHand.Editor.VirtualHandBuild.BuildWindows
-    /// Build output: Builds/Windows/VirtualHand.exe; compact results in Results/.
+    /// Build output: Builds/Windows-Elena/VirtualHand.exe; compact results in Results/.
     /// </summary>
     public static class VirtualHandBuild
     {
-        const string OutputDir = "Builds/Windows";
+        const string OutputDir = "Builds/Windows-Elena";
         const string ExeName = "VirtualHand.exe";
         const string ScenesPath = "Assets/VirtualHand/Scenes";
 
@@ -54,9 +54,18 @@ namespace Neuralife.VirtualHand.Editor
             string summary = $"Build result: {report.summary.result}, size {report.summary.totalSize / 1024 / 1024}MB, " +
                              $"errors {report.summary.totalErrors}, warnings {report.summary.totalWarnings}";
             Debug.Log("[VirtualHandBuild] " + summary);
-            File.WriteAllText("Results/build_summary.txt", summary + "\n" + DateTime.Now + "\n");
+            File.WriteAllText("Results/Windows-Elena-build-summary.txt", summary + "\n" + DateTime.Now + "\n");
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new InvalidOperationException("Build failed: " + summary);
+        }
+
+        [UnityEditor.Callbacks.PostProcessBuild]
+        static void IncludeHandAttribution(BuildTarget target, string playerPath)
+        {
+            if (target != BuildTarget.StandaloneWindows64 && target != BuildTarget.StandaloneWindows) return;
+            const string notice = "Assets/VirtualHand/Models/ElenaFF/ATTRIBUTION.md";
+            var output = Path.GetDirectoryName(Path.GetFullPath(playerPath));
+            File.Copy(notice, Path.Combine(output, "Elena-hand-attribution.txt"), true);
         }
 
         static void EnsureFolders()

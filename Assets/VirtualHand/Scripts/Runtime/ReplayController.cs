@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Neuralife.VirtualHand
 {
     /// <summary>
-    /// Owns the single replay clock. Pausing stops both pose playback and any
-    /// task motion that also ticks from this component. Reset clears pose,
-    /// attachment state, clock and source label.
+    /// Owns the single replay clock and the validity of the active input. Pauses freeze
+    /// both pose smoothing and task motion. Expired frames become "rest" visually but are
+    /// explicitly marked invalid so a task never treats an input gap as a release command.
     /// </summary>
     public class ReplayController : MonoBehaviour
     {
@@ -26,28 +26,42 @@ namespace Neuralife.VirtualHand
         public float CurrentConfidence { get; private set; } = 1f;
         public string SubjectRun { get; private set; } = "";
         public string LastWarning { get; private set; } = "";
+        public bool HasValidInput { get; private set; } = true;
+        public bool IsMirroredDisplay { get; private set; }
+        public double Position => source != null ? source.Position : 0;
+        public double Duration => source != null ? source.Duration : 0;
 
         double _lastFrameTime = -1;
+        double _validUntil = double.MaxValue;
         float[] _leftTarget;
         float[] _rightTarget;
+        bool _manualMode;
+        public bool IsManualPreview => _manualMode;
 
         public event Action<HandMotionFrame> OnFrameApplied;
+        public event Action OnReset;
+
+        TaskController _tasks;
 
         void Awake()
         {
+            _tasks = GetComponent<TaskController>();
             if (source == null) source = GetComponent<ReplaySource>();
             if (source != null) source.FrameReady += ApplyFrame;
         }
 
         void OnDestroy() { if (source != null) source.FrameReady -= ApplyFrame; }
 
-        /// <summary>Wire contract: prediction frame time must not precede its window end.</summary>
+        /// <summary>Apply one decoded frame; validity expires after duration+gap.</summary>
         public void ApplyFrame(HandMotionFrame f)
         {
             if (f == null) return;
             if (f.source == "prediction" && f.time < _lastFrameTime)
                 Debug.LogWarning($"[Replay] prediction frame at t={f.time:0.00} precedes previous frame; applying anyway.");
             _lastFrameTime = f.time;
+            _validUntil = f.time + Math.Max(0, f.duration) + Math.Max(0, gapExpiry);
+            HasValidInput = true;
+            _manualMode = false;
             CurrentIntent = f.intent;
             CurrentSource = f.source;
             CurrentConfidence = f.confidence;
@@ -55,14 +69,18 @@ namespace Neuralife.VirtualHand
 
             _leftTarget = f.leftJoints;
             _rightTarget = f.rightJoints;
+            // DB8 glove is left-hand only; the right-hand display is an explicit mirror.
+            IsMirroredDisplay = f.source == "glove" && f.leftJoints != null && f.rightJoints == null;
+            if (IsMirroredDisplay) _rightTarget = f.leftJoints;
 
-            // Missing per-hand pose falls back to authored intent poses.
             bool gripL = IntentMapper.HandShouldGrip(f.intent, isLeftHand: true);
             bool gripR = IntentMapper.HandShouldGrip(f.intent, isLeftHand: false);
             if (_leftTarget == null)
-                _leftTarget = gripL ? PoseLibrary.GripPose() : PoseLibrary.OpenPose();
+                _leftTarget = gripL ? PoseLibrary.FistPose(leftHand)
+                                    : PoseLibrary.OpenPose(leftHand);
             if (_rightTarget == null)
-                _rightTarget = gripR ? PoseLibrary.GripPose() : PoseLibrary.OpenPose();
+                _rightTarget = gripR ? PoseLibrary.FistPose(rightHand)
+                                     : PoseLibrary.OpenPose(rightHand);
 
             OnFrameApplied?.Invoke(f);
         }
@@ -70,38 +88,91 @@ namespace Neuralife.VirtualHand
         void Update()
         {
             double dt = Time.deltaTime;
-            source?.Tick(dt);
-            float smooth = (float)smoothTime;
+            if (source != null && source.IsPlaying)
+            {
+                source.Tick(dt);
+                if (HasValidInput && source.Position > _validUntil)
+                {
+                    HasValidInput = false;
+                    CurrentIntent = "rest";       // open visually, but not a valid release command
+                    _leftTarget = PoseLibrary.OpenPose(leftHand);
+                    _rightTarget = PoseLibrary.OpenPose(rightHand);
+                }
+            }
+            // Manual preview is the sole exception that may animate while playback is paused.
+            if (source != null && !source.IsPlaying && !_manualMode) return;
+            if (_tasks != null && _tasks.ControlsTaskHands) return;
+            float smooth = smoothTime;
             if (leftHand != null && _leftTarget != null)
-            {
                 leftHand.UpdateControls(_leftTarget, smooth, (float)dt);
-                if (leftHand.IsMirrored == false) leftHand.SetMirrored(true);
-            }
             if (rightHand != null && _rightTarget != null)
-            {
                 rightHand.UpdateControls(_rightTarget, smooth, (float)dt);
-                if (rightHand.IsMirrored) rightHand.SetMirrored(false);
-            }
+            ResolveGloveContact((float)dt);
         }
 
         public void Pause() => source?.Pause();
         public void Play() => source?.Play();
 
-        public void Restart()
+        /// <summary>Restore the latest unmodified replay targets after task-only visual assistance ends.</summary>
+        public void RestoreCurrentTargets()
         {
-            source?.ResetPlayback();
-            CurrentIntent = "rest"; CurrentSource = "manual"; CurrentConfidence = 1f;
-            SubjectRun = ""; _lastFrameTime = -1;
-            _leftTarget = PoseLibrary.OpenPose();
-            _rightTarget = PoseLibrary.OpenPose();
-            leftHand?.ResetControls();
-            rightHand?.ResetControls();
+            if (leftHand != null)
+            {
+                if (_leftTarget != null && _leftTarget.Length == 20) leftHand.SetControls(_leftTarget);
+                else leftHand.ResetControls();
+            }
+            if (rightHand != null)
+            {
+                if (_rightTarget != null && _rightTarget.Length == 20) rightHand.SetControls(_rightTarget);
+                else rightHand.ResetControls();
+            }
+            ResolveGloveContact(-1f);
         }
 
+        void ResolveGloveContact(float deltaTime)
+        {
+            if (CurrentSource != "glove") return;
+            if (leftHand != null) leftHand.ResolveGloveThumbContact(deltaTime);
+            if (rightHand != null) rightHand.ResolveGloveThumbContact(deltaTime);
+        }
+
+        public void Restart()
+        {
+            leftHand?.ResetGloveThumbContact();
+            rightHand?.ResetGloveThumbContact();
+            source?.ResetPlayback();
+            CurrentIntent = "rest";
+            CurrentSource = "manual";
+            CurrentConfidence = 1f;
+            SubjectRun = "";
+            LastWarning = "";
+            HasValidInput = true;
+            IsMirroredDisplay = false;
+            _manualMode = false;
+            _lastFrameTime = -1;
+            _validUntil = double.MaxValue;
+            _leftTarget = PoseLibrary.OpenPose(leftHand);
+            _rightTarget = PoseLibrary.OpenPose(rightHand);
+            leftHand?.ResetControls();
+            rightHand?.ResetControls();
+            OnReset?.Invoke();
+        }
+
+        /// <summary>Explicit manual entry: stop and clear replay instead of mixing sources.</summary>
         public void SetManualPose(float[] leftPose, float[] rightPose)
         {
-            _leftTarget = leftPose; _rightTarget = rightPose;
+            Restart();
+            source?.Pause();
+            _manualMode = true;
+            CurrentIntent = "rest";
             CurrentSource = "manual";
+            CurrentConfidence = 1f;
+            SubjectRun = "";
+            HasValidInput = true;
+            IsMirroredDisplay = false;
+            _validUntil = double.MaxValue;
+            _leftTarget = leftPose;
+            _rightTarget = rightPose;
         }
 
         public void Warn(string msg)

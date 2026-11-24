@@ -1,0 +1,41 @@
+{
+ "source": {
+  "title": "Rigged hand",
+  "author": "Elena FF",
+  "license": "CC-BY-SA-4.0",
+  "file": "ArtSource/ThirdParty/ElenaFF_RiggedHand/hand.glb",
+  "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58",
+  "action": "Open/Close",
+  "times_seconds": {
+   "open": 0.0,
+   "closed": 1.333333,
+   "reopen": 3.208333
+  }
+ },
+ "basis": "per listed bone: local rotation = artist-open * (open->closed delta)^f; all other bones keep the artist's open pose. Fractions are of the artist's own Open/Close rotation.",
+ "pinch_fractions": {
+  "thumb_base.R_03": 1.0,
+  "thumb_01.R_08": 1.0,
+  "thumb_02.R_09": 0.65,
+  "thumb_03.R_010": 0.0,
+  "index_01.R_017": 1.0,
+  "index_02.R_018": 1.0,
+  "index_03.R_019": 0.345,
+  "middle_01.R_025": 0.25,
+  "middle_02.R_026": 0.3,
+  "middle_03.R_027": 0.25,
+  "ring_01.R_033": 0.25,
+  "ring_02.R_034": 0.3,
+  "ring_03.R_035": 0.25,
+  "pinky_01.R_041": 0.25,
+  "pinky_02.R_042": 0.3,
+  "pinky_03.R_043": 0.25,
+  "index_base.R_012": 0.3,
+  "middle_base.R_020": 0.3,
+  "ring_base.R_028": 0.3,
+  "pinky_base.R_036": 0.3
+ },
+ "measured_skin_gap_m_native_units": 0.21086,
+ "contact_claim": false,
+ "license": "Derivative animation data - CC-BY-SA-4.0, Elena FF"
+}

@@ -1,0 +1,91 @@
+{
+  "context": "5.2.3 LTS",
+  "scenarios": {
+    "thigh-80_calf70": {
+      "body_pants": {
+        "meshA": {
+          "vertices": 11880,
+          "triangles": 23520
+        },
+        "meshB": {
+          "vertices": 211,
+          "triangles": 392
+        },
+        "broadphase": 277,
+        "counts": {
+          "crossing": 277,
+          "touch_or_coplanar": 0,
+          "separated_sat": 0
+        },
+        "crossingPairCountInBand": 277,
+        "outsideRegionCount": 0,
+        "uniqueTrianglesA": 147,
+        "uniqueTrianglesB": 69
+      },
+      "sweater_pants": {
+        "meshA": {
+          "vertices": 2126,
+          "triangles": 4164
+        },
+        "meshB": {
+          "vertices": 211,
+          "triangles": 392
+        },
+        "broadphase": 405,
+        "counts": {
+          "crossing": 401,
+          "touch_or_coplanar": 4,
+          "separated_sat": 0
+        },
+        "crossingPairCountInBand": 401,
+        "outsideRegionCount": 0,
+        "uniqueTrianglesA": 268,
+        "uniqueTrianglesB": 67
+      }
+    },
+    "thigh-80_calf80": {
+      "body_pants": {
+        "meshA": {
+          "vertices": 11880,
+          "triangles": 23520
+        },
+        "meshB": {
+          "vertices": 211,
+          "triangles": 392
+        },
+        "broadphase": 335,
+        "counts": {
+          "crossing": 335,
+          "touch_or_coplanar": 0,
+          "separated_sat": 0
+        },
+        "crossingPairCountInBand": 335,
+        "outsideRegionCount": 0,
+        "uniqueTrianglesA": 173,
+        "uniqueTrianglesB": 90
+      },
+      "sweater_pants": {
+        "meshA": {
+          "vertices": 2126,
+          "triangles": 4164
+        },
+        "meshB": {
+          "vertices": 211,
+          "triangles": 392
+        },
+        "broadphase": 405,
+        "counts": {
+          "crossing": 401,
+          "touch_or_coplanar": 4,
+          "separated_sat": 0
+        },
+        "crossingPairCountInBand": 401,
+        "outsideRegionCount": 0,
+        "uniqueTrianglesA": 268,
+        "uniqueTrianglesB": 67
+      }
+    }
+  },
+  "regionRadiusMeters": 0.14,
+  "regionSource": "run-04 repair-influence-mask.json posedWorldMeters (mask union per pose)"
+}

@@ -1,0 +1,132 @@
+{
+  "camera": "AvatarRenderCamera",
+  "lights": [
+    "AvatarKey",
+    "AvatarFill",
+    "AvatarRim"
+  ],
+  "resolution": [
+    1000,
+    1500
+  ],
+  "view_transform": "AgX",
+  "views": [
+    {
+      "file": "front.png",
+      "camera_position": [
+        0.0,
+        -4.262435057759285,
+        0.8500000233761966
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "front full body, baseline camera"
+    },
+    {
+      "file": "three_quarter.png",
+      "camera_position": [
+        2.075,
+        -3.7064404677592853,
+        0.8800000233761966
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "three-quarter front, baseline camera"
+    },
+    {
+      "file": "side.png",
+      "camera_position": [
+        -4.15,
+        -0.11243505775928497,
+        0.85
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "left profile full body, baseline camera"
+    },
+    {
+      "file": "eye_level_chest_waist.png",
+      "camera_position": [
+        0.15,
+        -0.862435057759285,
+        1.62
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 35.0,
+      "note": "eye-height camera looking down at chest and waist"
+    },
+    {
+      "file": "feet_oblique_side.png",
+      "camera_position": [
+        0.9,
+        -1.212435057759285,
+        0.45
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "oblique side view of both feet and trouser hems"
+    },
+    {
+      "file": "oblique_front_left_armraised.png",
+      "camera_position": [
+        -2.075,
+        -3.7064404677592853,
+        0.8800000233761966
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "oblique front with l arm raised ~52 deg"
+    },
+    {
+      "file": "oblique_front_right_armraised.png",
+      "camera_position": [
+        2.075,
+        -3.7064404677592853,
+        0.8800000233761966
+      ],
+      "target": [
+        0.0,
+        -0.11243505775928497,
+        0.8500000233761966
+      ],
+      "focal_length_mm": 50.0,
+      "note": "oblique front with r arm raised ~52 deg"
+    }
+  ],
+  "posed_views": [
+    {
+      "side": "l",
+      "file": "oblique_front_left_armraised.png",
+      "pose": "upperarm rotated 0.9 rad about world Y (arm raised)"
+    },
+    {
+      "side": "r",
+      "file": "oblique_front_right_armraised.png",
+      "pose": "upperarm rotated 0.9 rad about world Y (arm raised)"
+    }
+  ]
+}

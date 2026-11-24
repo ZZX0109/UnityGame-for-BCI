@@ -1,0 +1,83 @@
+C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\build_mpfb_avatar_patched.py:404: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:08.828  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\front.png'
+00:11.250  render           | Saved: 'C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\three_quarter.png'
+[INFO ] services.locationservice ...............: Not adding link to MakeHuman user data, since neither explicit path nor auto-discovery is set in preferences.
+[INFO ] mpfb.init ..............................: Build info FROM_SOURCE
+[INFO ] mpfb.init ..............................: Online access preference is not enabled. Not checking if MakeHuman is online.
+[INFO ] mpfb.init ..............................: MPFB initialization has finished.
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['DistanceFromCenter'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Exponent
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Smoothness
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: W
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['IrisMain'].nodes["Voronoi Texture"], [('Vector', 'VECTOR'), ('W', 'VALUE'), ('Scale', 'VALUE'), ('Detail', 'VALUE'), ('Roughness', 'VALUE'), ('Lacunarity', 'VALUE'), ('Smoothness', 'VALUE'), ('Exponent', 'VALUE'), ('Randomness', 'VALUE')])
+[ERROR] services.nodeservice ...................: Found an input name which didn't exist as socket: Scale
+[ERROR] services.nodeservice ...................: The following input sockets exist on node (bpy.data.node_groups['RadiatingFromCoord'].nodes["Vector Math"], [('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Vector', 'VECTOR'), ('Scale', 'VALUE')])
+[WARN ] material.mhmaterial ....................: Patching input material line to cater for non-normalized key ('bumpTexture', 'bumpmapTexture')
+
+FBX export starting... 'C:\\Users\\Ait\\Desktop\\Neuralife\\Unity\\Game04-VirtualHand\\ArtSource\\Avatar\\generated\\neutral_adult\\neutral_adult_avatar.fbx'
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+(bpy.data.armatures['Human.rig'], 'POSE')
+export finished in 0.1775 sec.
+INFO Draco is available, use library at D:\SoftwareManagement\apps\Blender\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at D:\SoftwareManagement\apps\Blender\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+20:56:41 | INFO: Starting glTF 2.0 export
+20:56:41 | INFO: Extracting primitive: base
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:41 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:42 | INFO: Primitives created: 6
+20:56:42 | WARNING: There are more than 4 joint vertex influences.The 4 with highest weight will be used (and normalized).
+20:56:42 | INFO: Extracting primitive: cargo_pants
+20:56:42 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:42 | INFO: Primitives created: 1
+20:56:42 | INFO: Extracting primitive: low-poly
+20:56:42 | INFO: Primitives created: 1
+20:56:42 | INFO: Extracting primitive: mind_eyebrows_01
+20:56:42 | INFO: Primitives created: 1
+20:56:42 | INFO: Extracting primitive: bob_blunt
+20:56:42 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:43 | INFO: Primitives created: 1
+20:56:43 | INFO: Extracting primitive: sweater_fisherman
+20:56:43 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:43 | INFO: Primitives created: 1
+20:56:43 | INFO: Extracting primitive: mj_shoes
+20:56:43 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:56:43 | INFO: Primitives created: 1
+20:56:43 | INFO: Finished glTF 2.0 export in 2.176713705062866 s
+00:13.672  reports          | WARNING Path 'D:\SoftwareManagement\apps\Blender\5.2\datafiles\assets\brushes\essentials_brushes-gp_draw.blend' cannot be made relative for Material 'Material'
+Blender 5.2.3 LTS (hash e13b728c6880 built 2026-10-22 01:37:16)
+OBJ import of 'base.obj' took 9.70 ms
+OBJ import of 'low-poly.obj' took 0.41 ms
+OBJ import of 'mind_eyebrows_01.obj' took 3.59 ms
+OBJ import of 'bob_blunt.obj' took 1.19 ms
+OBJ import of 'sweater_fisherman.obj' took 1.61 ms
+OBJ import of 'cargo_pants.obj' took 0.44 ms
+OBJ import of 'mj_shoes.obj' took 0.59 ms
+
+Info: Saved as "neutral_adult_avatar.blend"
+Avatar outputs written to C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult
+Manifest: C:\Users\Ait\Desktop\Neuralife\Unity\Game04-VirtualHand\ArtSource\Avatar\generated\neutral_adult\avatar_manifest.json
+
+Blender quit

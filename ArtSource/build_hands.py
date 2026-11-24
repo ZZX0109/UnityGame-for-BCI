@@ -50,10 +50,19 @@ TIP_SEEDS_R = {
 def mirror(p):  # right->left coordinate mirror
     return [-p[0], p[1], p[2]]
 
+def bake_x90(p):
+    """OBJ-import object rotation (+90deg X) baked into coordinates:
+    (x,y,z) -> (x,-z,y). JOINTS_R/TIP_SEEDS_R are in Y-up OBJ space;
+    the mesh data is in the baked Z-up world after unifying binding space."""
+    return [p[0], -p[2], p[1]]
+
 # ---------------------------------------------------------------- mesh extraction
-def fit_axis(V):
-    """PCA on the right-arm cloud; axis points elbow->fingertips."""
-    M = V[(V[:, 0] <= -3.0) & (V[:, 1] >= 0.5)]
+def fit_axis(V, side):
+    """PCA on the arm cloud of `side`; axis points elbow->fingertips.
+    Baked mesh: MakeHuman stands along -Y (arms at |x|>=3, arm band y<=-0.5),
+    fingertips toward +Z."""
+    sgn = -1.0 if side == "R" else 1.0
+    M = V[(V[:, 0] * sgn >= 3.0) & (V[:, 1] >= 0.5)]
     c = M.mean(axis=0)
     _, _, vt = np.linalg.svd(M - c, full_matrices=False)
     axis = vt[0]
@@ -61,39 +70,91 @@ def fit_axis(V):
         axis = -axis
     return c, axis
 
-def extract_arm(obj):
-    me = obj.data
-    V = np.array([list(v.co) for v in me.vertices])
-    c, axis = fit_axis(V)
+def load_obj_body_faces(path):
+    """Parse the OBJ and return (verts, faces, group_names) where faces carries
+    the group of each face. base.obj contains the skin under `g body` plus many
+    `joint-*` cube boxes and `helper-*` groups that must never reach render/skin."""
+    verts = []
+    faces = []  # (tuple of 1-based vert indices, group)
+    group = "body"
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            if line.startswith("v "):
+                p = line.split()
+                verts.append((float(p[1]), float(p[2]), float(p[3])))
+            elif line.startswith("g "):
+                group = line.strip()[2:]
+            elif line.startswith("f "):
+                idx = [int(tok.split("/")[0]) for tok in line.split()[1:]]
+                faces.append((idx, group))
+    return verts, faces
+
+
+def extract_arm(obj, side):
+    """Keep only `g body` skin faces inside the arm-region spatial mask.
+    Joint/helper boxes are never imported (they are numeric markers only).
+    Mask runs in raw Y-up OBJ space; verts are baked to world at the end."""
+    sgn = -1.0 if side == "R" else 1.0
+    verts, faces = load_obj_body_faces(os.path.join(DOWNLOAD, "base.obj"))
+    V = np.array(verts)
+    c, axis = fit_axis(V, side)
     rel = V - c
     d = rel @ axis
     radial = rel - np.outer(d, axis)
     r = np.linalg.norm(radial, axis=1)
-    keep = (d >= -1.55) & (d <= 1.35) & (r <= 1.8) & (V[:, 0] <= -2.6)
-    bad = np.where(~keep)[0]
-    # delete via bmesh directly (mode-independent, reliable in 5.2)
+    # raw OBJ space: Y-up, R arm at x<=-2.6, arm band y>=0.5
+    keep_v = (d >= -1.55) & (d <= 1.35) & (r <= 1.8) & (V[:, 0] * sgn >= 2.6)
+
     bm = bmesh.new()
-    bm.from_mesh(me)
-    bm.verts.ensure_lookup_table()
-    bmesh.ops.delete(bm, geom=[bm.verts[i] for i in bad], context="VERTS")
+    vmap = {}
+    body_faces = [f for f in faces if f[1] == "body"]
+    for idx, grp in body_faces:
+        loop = []
+        for vi in idx:
+            key = vi - 1
+            if not keep_v[key]:
+                loop = None
+                break
+            if key not in vmap:
+                vmap[key] = bm.verts.new(V[key])
+            loop.append(vmap[key])
+        if loop and len(set(loop)) == len(loop):
+            try:
+                bm.faces.new(loop)
+            except ValueError:
+                pass  # duplicate face in source
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0005)
-    ring = [e for e in bm.edges if e.is_boundary]
-    bmesh.ops.holes_fill(bm, edges=ring)
-    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # seal the forearm cut with an n-gon cap (open tube backfaces otherwise
+    # show as a flared sleeve from behind) and orient all normals outward
+    ring = [e for e in bm.edges if e.is_boundary]
+    if ring:
+        bmesh.ops.holes_fill(bm, edges=ring)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # bake to world space (same +90degX as the importer object transform)
+    for v in bm.verts:
+        v.co = Vector(bake_x90(v.co[:]))
+    me = obj.data
     bm.to_mesh(me)
     bm.free()
     me.update()
+
+    # UV: fresh smart projection (source OBJ vt indices don't survive remap)
     bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.smart_project(angle_limit=66.0)
+    bpy.ops.object.mode_set(mode="OBJECT")
     bpy.ops.object.shade_smooth()
     tris = sum(len(p.vertices) - 2 for p in me.polygons)
-    log(f"extracted verts={len(me.vertices)} tris={tris}")
+    log(f"body-only skin: verts={len(me.vertices)} tris={tris}")
 
-def fingertip_positions(me):
+def fingertip_positions(me, side):
     V = np.array([list(v.co) for v in me.vertices])
     tips = {}
     for key, seed in TIP_SEEDS_R.items():
-        g = np.array(seed)
+        seed_baked = bake_x90(seed)  # same space as baked mesh data
+        g = np.array(mirror(seed_baked) if side == "L" else seed_baked)
         dd = np.linalg.norm(V - g, axis=1)
         cand = V[dd < 0.3]
         if len(cand) == 0:
@@ -107,6 +168,10 @@ def build_armature(side, tips):
     flip = side == "L"
     def m(p):
         return mirror(p) if flip else list(p)
+    # all joint constants are authored in Y-up OBJ space; the mesh data lives in
+    # the baked Z-up world, so bring the joints into the same space exactly once.
+    J = {k: bake_x90(v) for k, v in JOINTS_R.items()}
+    ELBOW = bake_x90(ELBOW_R)
     name = f"Armature.{side}"
     arm = bpy.data.armatures.new(name)
     ao = bpy.data.objects.new(name, arm)
@@ -121,9 +186,21 @@ def build_armature(side, tips):
             b.parent = ed[parent + "." + side]
             b.use_connect = False
         return b
-    bone("Forearm", ELBOW_R, JOINTS_R["wrist"])
-    palm = [(JOINTS_R["index_mcp"][i] + JOINTS_R["little_mcp"][i]) / 2 for i in range(3)]
-    bone("Wrist", JOINTS_R["wrist"], palm, "Forearm")
+    bone("Forearm", ELBOW, J["wrist"])
+    palm = [(J["index_mcp"][i] + J["little_mcp"][i]) / 2 for i in range(3)]
+    bone("Wrist", J["wrist"], palm, "Forearm")
+    # metacarpal segments (official mhskel geometry): wrist-tail -> MCP, covering the palm
+    palm_root = [(J["index_mcp"][i] + J["little_mcp"][i]) / 2 for i in range(3)]
+    palm_root = [(palm_root[0] + J["wrist"][0]) / 2, palm_root[1], palm_root[2]]
+    metas = {
+        "IndexMeta":  (J["wrist"], J["index_mcp"]),
+        "MiddleMeta": (J["wrist"], J["middle_mcp"]),
+        "RingMeta":   (palm_root, J["ring_mcp"]),
+        "LittleMeta": (palm_root, J["little_mcp"]),
+        "ThumbMeta":  (J["wrist"], J["thumb_cmc"]),
+    }
+    for nm, (h, t) in metas.items():
+        bone(nm, h, t, "Wrist")
     chains = {
         "thumb":  [("thumb_cmc", "Thumb1"), ("thumb_mcp", "Thumb2"), ("thumb_ip", "Thumb3")],
         "index":  [("index_mcp", "Index1"), ("index_pip", "Index2"), ("index_dip", "Index3")],
@@ -131,16 +208,39 @@ def build_armature(side, tips):
         "ring":   [("ring_mcp", "Ring1"), ("ring_pip", "Ring2"), ("ring_dip", "Ring3")],
         "little": [("little_mcp", "Little1"), ("little_pip", "Little2"), ("little_dip", "Little3")],
     }
+    meta_of = {"thumb": "ThumbMeta", "index": "IndexMeta", "middle": "MiddleMeta",
+               "ring": "RingMeta", "little": "LittleMeta"}
     for key, joints in chains.items():
-        pts = [JOINTS_R[jn] for jn, _ in joints] + [tips[key]]
+        # tips come in side-local baked coords; joints are baked R coords, and
+        # m() applies the single side mirror on both consistently
+        tip_side = mirror(tips[key]) if flip else tips[key]
+        pts = [J[jn] for jn, _ in joints] + [tip_side]
         for i, (_, bn) in enumerate(joints):
-            parent = "Wrist" if i == 0 else joints[i - 1][1]
+            parent = meta_of[key] if i == 0 else joints[i - 1][1]
             bone(bn, pts[i], pts[i + 1], parent)
+    # Align each finger/thumb bone with EditBone.align_roll so its local Z
+    # points along the TRUE palm normal, derived from geometry IN THE SAME
+    # armature space as the bones: normal = normalize((wrist->indexMCP) x
+    # (wrist->littleMCP)) using the baked+joint-mirrored coordinates (J/m),
+    # computed per side — never reuse the raw R vector for L.
+    bpy.ops.object.mode_set(mode="OBJECT")
+    bpy.ops.object.mode_set(mode="EDIT")
+    iw = Vector(m(J["index_mcp"])) - Vector(m(J["wrist"]))
+    lw = Vector(m(J["little_mcp"])) - Vector(m(J["wrist"]))
+    palm_normal = (iw.cross(lw)).normalized()
+    if flip:
+        # Keep the frozen rig basis that passed the real Unity index-flex check.
+        # Anatomical side differences are handled by the driver, not by rebuilding it.
+        palm_normal = -palm_normal
+    for b in arm.edit_bones:
+        if b.name.startswith(("Forearm", "Wrist")):
+            continue
+        b.align_roll(palm_normal)
     bpy.ops.object.mode_set(mode="OBJECT")
     return ao
 
 # ---------------------------------------------------------------- skinning
-def skin(obj, arm):
+def skin(obj, arm, side):
     """Deterministic programmatic skinning: object parent + distance-based
     vertex groups + armature modifier. (ops ARMATURE_AUTO is unreliable headless.)"""
     import numpy as _np
@@ -150,6 +250,8 @@ def skin(obj, arm):
     n_v = len(obj.data.vertices)
     names = [b[0] for b in bones]
     wmat = _np.zeros((n_v, len(bones)), dtype=_np.float64)
+    # pure distance weights: metacarpal bones now cover the palm, so nearest-bone
+    # assignment is continuous across the wrist->MCP span (no hard partition needed)
     for vi, v in enumerate(obj.data.vertices):
         p = Vector(v.co)
         ds = []
@@ -159,10 +261,19 @@ def skin(obj, arm):
             d = (ap - ab * tt).length
             ds.append((d, bi))
         ds.sort()
-        top = ds[:2]  # max 2 bones per vertex: crisper deformation, no cross-finger pull
-        total = sum((1.0 / max(d, 0.010)) ** 8 for d, _ in top)
-        for d, bi in top:
-            wmat[vi, bi] = ((1.0 / max(d, 0.010)) ** 8) / total
+        # tip vertices beyond the last knuckle get a 50/50 blend with the parent
+        # segment so a 200-degree DIP curl cannot fling them across the scene.
+        far_tip = ds[0][0] > 0.25 and len(ds) > 1
+        if far_tip:
+            d0, b0 = ds[0]
+            b1 = ds[1][1]
+            wmat[vi, b0] = 0.6
+            wmat[vi, b1] = 0.4
+        else:
+            top = ds[:3]
+            total = sum((1.0 / max(d, 0.02)) ** 3 for d, _ in top)
+            for d, bi in top:
+                wmat[vi, bi] = ((1.0 / max(d, 0.02)) ** 3) / total
     for bi, bn in enumerate(names):
         g = obj.vertex_groups.new(name=bn)
         idx = [vi for vi in range(n_v) if wmat[vi, bi] > 1e-4]
@@ -239,26 +350,17 @@ def _bend_axis(pb, arm):
     return Vector((1.0, 0.0, 0.0))
 
 def apply_pose(arm, side, name):
-    """Geometry-driven curl: reset to rest, rotate each bone about its own
-    curl axis (bone dir x palm normal), parent-first so flexion compounds."""
+    """Local-euler curl: Blender bone local X is the curl axis; negative = flexion
+    toward the palm (verified by render probe)."""
     sfx = "." + side
     angles = POSE_ANGLES[(side, name)]
-    for bn in angles:
-        pb = arm.pose.bones.get(bn + sfx)
-        if pb is None: continue
-        pb.rotation_mode = "XYZ"
-        pb.rotation_euler = (0, 0, 0)
-    bpy.context.view_layer.update()
     for bn, (x, y, z) in angles.items():
         pb = arm.pose.bones.get(bn + sfx)
         if pb is None: continue
-        head = arm.matrix_world @ Vector(pb.head)
-        axis = _bend_axis(pb, arm)
-        M = Matrix.Translation(head) @ Matrix.Rotation(math.radians(x), 4, axis) @ Matrix.Translation(-head)
-        pb.matrix = M @ pb.matrix
+        pb.rotation_mode = "XYZ"
+        # sign is authored per pose (positive X curls palm-ward in this roll state)
+        pb.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
     bpy.context.view_layer.update()
-
-
 
 def clear_pose(arm):
     for pb in arm.pose.bones:
@@ -273,11 +375,14 @@ def pose_actions(arm, side):
         POSE_ANGLES[(side, name)] = dict(angles)
     a = {}
     for f in F:
-        a[f+"1"] = (85,0,0); a[f+"2"] = (105,0,0); a[f+"3"] = (60,0,0)
+        a[f+"1"] = (75,0,0); a[f+"2"] = (85,0,0); a[f+"3"] = (50,0,0)
     a["Thumb1"] = (30,0,25); a["Thumb2"] = (55,0,0); a["Thumb3"] = (40,0,0)
     act("fist", a)
-    a = {"Index1": (55,0,0), "Index2": (35,0,0), "Index3": (20,0,0),
-         "Thumb1": (35,20,40), "Thumb2": (45,0,0), "Thumb3": (25,0,0),
+    # pinch: thumb pad meets index pad. Thumb1 y-twist (about bone axis) swings
+    # the thumb pad to face the palm; index curls to meet it.
+    # pinch: IK-solved contact re-expressed in the Unity-FBX sign convention
+    a = {"Index1": (45,0,0), "Index2": (86,0,0), "Index3": (22,0,0),
+         "Thumb1": (30,80,20), "Thumb2": (71,0,0), "Thumb3": (110,0,0),
          "Middle1": (25,0,0), "Middle2": (35,0,0), "Middle3": (20,0,0),
          "Ring1": (30,0,0), "Ring2": (40,0,0), "Ring3": (25,0,0),
          "Little1": (35,0,0), "Little2": (45,0,0), "Little3": (30,0,0)}
@@ -308,7 +413,7 @@ def studio(scene):
         d = tgt - Vector(ob.location)
         ob.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
 
-def render_at(filepath, focus, direction, dist=10.0, lens=85, res=(1280, 960)):
+def render_at(filepath, focus, direction, dist=8.5, lens=85, res=(1280, 960)):
     sc = bpy.context.scene
     sc.render.filepath = os.path.join(REVIEW, os.path.basename(filepath) + ".png") \
         if not os.path.isabs(filepath) else filepath
@@ -349,16 +454,18 @@ def main():
     if sc.render.engine == "CYCLES": sc.cycles.samples = 32
     hands = {}
     for side in ("R", "L"):
+        # body-only skin mesh built directly from the OBJ `g body` group; the
+        # imported placeholder object is discarded (joint/helper boxes never load)
         bpy.ops.wm.obj_import(filepath=os.path.join(DOWNLOAD, "base.obj"))
         o = bpy.context.selected_objects[0]
         bpy.context.view_layer.objects.active = o
-        if side == "L":
-            for v in o.data.vertices:
-                v.co.x = -v.co.x
-        extract_arm(o)
-        tips = fingertip_positions(o.data)
+        # extract_arm rebuilds obj.data as body-only skin in baked world space
+        # and the object transform is zeroed there; no extra bake needed here.
+        o.matrix_world.identity()
+        extract_arm(o, side)
+        tips = fingertip_positions(o.data, side)
         arm = build_armature(side, tips)
-        skin(o, arm)
+        skin(o, arm, side)
         mat, nt, bsdf = skin_material(side)
         o.data.materials.clear(); o.data.materials.append(mat)
         bake_textures(o, side, nt, bsdf)
@@ -368,6 +475,7 @@ def main():
         log(side, "tips", {k: [round(x, 2) for x in t] for k, t in tips.items()})
     # ---- review renders ----
     studio(sc)
+    # rest-state review renders
     for side in ("R", "L"):
         o, arm = hands[side]
         bb = [o.matrix_world @ Vector(c) for c in o.bound_box]
@@ -378,43 +486,109 @@ def main():
         render_at(f"hand_{side.lower()}_palm", focus, (0.0, -1, 0.05))
         render_at(f"hand_{side.lower()}_back", focus, (0.0, 1, 0.05))
         render_at(f"hand_{side.lower()}_side", focus, (1*sx, -0.3, 0.1))
-        for pose in ("fist", "pinch"):
-            set_action(arm, f"pose_{pose}_{side}")
-            render_at(f"hand_{side.lower()}_{pose}", focus, (0.3*sx, -1, 0.2))
-            clear_action(arm)
-    # ---- save + export at REST, before any compositing ----
+    # ---- save at REST ----
     for side in ("R", "L"):
         reset_pose(hands[side][1])
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BUILD, "hands_source.blend"))
     log("saved hands_source.blend")
+
+def export_wrist_local_fbx(side):
+    """Export an identity root; capture both worlds before moving the parent."""
+    o = bpy.data.objects[f"Hand.{side}"]
+    arm = bpy.data.objects[f"Armature.{side}"]
+    arm_world, mesh_world = arm.matrix_world.copy(), o.matrix_world.copy()
+    wrist_w = arm_world @ Vector(arm.data.bones["Wrist." + side].head_local)
+    tip_w = arm_world @ Vector(arm.data.bones["Middle3." + side].tail_local)
+    metric = 0.19 / (tip_w - wrist_w).length
+    bake = Matrix.Scale(metric, 4) @ Matrix.Translation(-wrist_w)
+    root = bpy.data.objects.new(f"HandRoot.{side}", None)
+    bpy.context.collection.objects.link(root)
+    root.matrix_world = Matrix.Identity(4)
+    arm.parent = root
+    arm.matrix_parent_inverse = Matrix.Identity(4)
+    arm.matrix_world = bake @ arm_world
+    o.parent = arm
+    o.matrix_parent_inverse = Matrix.Identity(4)
+    o.matrix_world = bake @ mesh_world
+    bpy.context.view_layer.update()
+    wrist_after = arm.matrix_world @ Vector(arm.data.bones["Wrist." + side].head_local)
+    if wrist_after.length > 1e-6:
+        raise RuntimeError(f"{side} wrist is not at component origin: {wrist_after}")
+    for selected in bpy.context.selected_objects:
+        selected.select_set(False)
+    for selected in (root, arm, o):
+        selected.select_set(True)
+    bpy.context.view_layer.objects.active = root
+    path = os.path.join(ASSETS, f"Hand_{side}.fbx")
+    bpy.ops.export_scene.fbx(
+        filepath=path, use_selection=True, apply_unit_scale=True,
+        object_types={"ARMATURE", "MESH", "EMPTY"}, add_leaf_bones=False,
+        bake_anim=False, mesh_smooth_type="OFF", path_mode="ABSOLUTE")
+    log("exported wrist-local FBX", side, list(wrist_after), "metric", metric)
+    return {"side": side, "file": path, "wristAtComponentOrigin": list(wrist_after),
+            "metresPerSourceUnit": metric, "wristToMiddleBoneTipMetres": 0.19}
+
+
+def render_posed_and_composite():
+    """Reopen the clean saved .blend and do every posed render + FBX export there.
+    (Pose-renders from the freshly-built in-memory scene exhibited artifacts that
+    the same operations on a freshly-opened file do not; keep the verified path.)"""
+    bpy.ops.wm.open_mainfile(filepath=os.path.join(BUILD, "hands_source.blend"))
+    sc = bpy.context.scene
     for side in ("R", "L"):
-        o, arm = hands[side]
-        for oo in bpy.context.selected_objects: oo.select_set(False)
-        o.select_set(True); arm.select_set(True)
-        bpy.context.view_layer.objects.active = arm
-        bpy.ops.export_scene.fbx(
-            filepath=os.path.join(ASSETS, f"Hand_{side}.fbx"),
-            use_selection=True, global_scale=0.1, apply_unit_scale=True,
-            object_types={"ARMATURE", "MESH"}, add_leaf_bones=False,
-            bake_anim=False, mesh_smooth_type="OFF", path_mode="ABSOLUTE")
-        log("exported FBX", side)
-    # ---- two-hand composites (post-export): rotate L about its own wrist pivot ----
+        o = bpy.data.objects[f"Hand.{side}"]
+        arm = bpy.data.objects[f"Armature.{side}"]
+        bb = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        focus = sum(bb, Vector()) / 8.0
+        sx = 1 if side == "R" else -1
+        for pose in ("fist", "pinch"):
+            set_action(arm, f"pose_{pose}_{side}")
+            render_at(f"hand_{side.lower()}_{pose}", focus, (0.3*sx, -1, 0.2))
+            clear_pose(arm)
     for side in ("R", "L"):
-        o, arm = hands[side]
-        wrist = Vector(mirror(JOINTS_R["wrist"]) if side == "L" else JOINTS_R["wrist"])
+        export_wrist_local_fbx(side)
+    # two-hand composites: rotate/move L about its own wrist pivot
+    for side in ("R", "L"):
+        arm = bpy.data.objects[f"Armature.{side}"]
+        wrist = Vector(mirror(bake_x90(JOINTS_R["wrist"])) if side == "L" else bake_x90(JOINTS_R["wrist"]))
         target = Vector((-1.05, 0, 2.4)) if side == "R" else Vector((1.05, 0, 2.4))
         T = Matrix.Translation(target)
         if side == "L":
-            Rz = Matrix.Rotation(math.pi, 4, 'Z')
-            T = T @ Rz @ Matrix.Translation(-wrist)
+            T = T @ Matrix.Rotation(math.pi, 4, 'Z') @ Matrix.Translation(-wrist)
         else:
             T = T @ Matrix.Translation(-wrist)
         arm.matrix_world = T @ arm.matrix_world
     bpy.context.view_layer.update()
-    mid = Vector((0, 0, 2.9))
-    render_at("hand_two_open", mid, (0.35, -1, 0.5), dist=7.5, lens=60)
+    deps = bpy.context.evaluated_depsgraph_get()
+    allcoords = []
     for side in ("R", "L"):
-        set_action(hands[side][1], f"pose_fist_{side}")
-    render_at("hand_two_fist", mid, (0.35, -1, 0.5), dist=7.5, lens=60)
+        ev = bpy.data.objects[f"Hand.{side}"].evaluated_get(deps)
+        for c in ev.bound_box:
+            allcoords.append(ev.matrix_world @ Vector(c))
+    mn = Vector((min(p.x for p in allcoords), min(p.y for p in allcoords), min(p.z for p in allcoords)))
+    mx = Vector((max(p.x for p in allcoords), max(p.y for p in allcoords), max(p.z for p in allcoords)))
+    mid = (mn + mx) / 2
+    span = max(mx.x - mn.x, mx.y - mn.y, mx.z - mn.z)
+    two_dist = max(4.0, span * 1.35)
+    render_at("hand_two_open", mid, (0.35, -1, 0.5), dist=two_dist, lens=60)
+    for side in ("R", "L"):
+        set_action(bpy.data.objects[f"Armature.{side}"], f"pose_fist_{side}")
+    bpy.context.view_layer.update()
+    allcoords = []
+    for side in ("R", "L"):
+        ev = bpy.data.objects[f"Hand.{side}"].evaluated_get(deps)
+        for c in ev.bound_box:
+            allcoords.append(ev.matrix_world @ Vector(c))
+    mn = Vector((min(p.x for p in allcoords), min(p.y for p in allcoords), min(p.z for p in allcoords)))
+    mx = Vector((max(p.x for p in allcoords), max(p.y for p in allcoords), max(p.z for p in allcoords)))
+    mid = (mn + mx) / 2
+    span = max(mx.x - mn.x, mx.y - mn.y, mx.z - mn.z)
+    two_dist = max(4.0, span * 1.35)
+    render_at("hand_two_fist", mid, (0.35, -1, 0.5), dist=two_dist, lens=60)
 
-main()
+def main2():
+    pass
+
+if __name__ == "__main__":
+    main()
+    render_posed_and_composite()

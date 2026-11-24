@@ -1,0 +1,48 @@
+{
+  "source": {
+    "file": "ArtSource/ThirdParty/ElenaFF_RiggedHand/hand.glb",
+    "sha256": "3eb51d0b612fb4b5f3b63c9e32ac145be191abcfd38ca7d3c5cf4fe0a7ee2d58",
+    "author": "Elena FF (elenaferfor)",
+    "origin": "https://sketchfab.com/3d-models/rigged-hand-eae97cc2a742413cb5338ab942b12c1e",
+    "license": "CC-BY-SA 4.0",
+    "attribution": "Modified derivative of 'Rigged hand' by Elena FF; redistribution requires author credit, this modification note, and CC-BY-SA 4.0."
+  },
+  "units": {
+    "targetHandLengthMetres": 0.19,
+    "metricFactor": 0.03237594,
+    "wristBone": "hand.R_02",
+    "wristAtOrigin": true
+  },
+  "animation": {
+    "actionName": "Open/Close",
+    "fps": 24,
+    "frames": {
+      "open": 0,
+      "mostClosed": 32,
+      "last": 77
+    },
+    "seconds": {
+      "open": 0.0,
+      "mostClosed": 1.333333,
+      "reopen": 3.208333
+    }
+  },
+  "mirror": {
+    "method": "per-bone top-down numeric bake; posed_L = M posed_R M (armature space)",
+    "verifiedMaxWorldDelta": 0.0
+  },
+  "mesh": {
+    "triangles": 28994,
+    "vertices": 16330
+  },
+  "renders": [
+    "Elena_R_open_sideA.png",
+    "Elena_R_open_sideB.png",
+    "Elena_R_closed_sideA.png",
+    "Elena_R_closed_sideB.png",
+    "Elena_L_open_sideA.png",
+    "Elena_L_open_sideB.png",
+    "Elena_L_closed_sideA.png",
+    "Elena_L_closed_sideB.png"
+  ]
+}
