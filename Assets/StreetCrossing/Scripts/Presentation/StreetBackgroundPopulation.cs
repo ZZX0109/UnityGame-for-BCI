@@ -88,7 +88,10 @@ namespace StreetCrossing.Presentation
             public Animator animator;
             public float restYaw;
         }
-        private const float WalkClipSpeed = .8f;
+        // Authored in-place speed of the Walk take in StreetPedestrian_Trimmed.fbx,
+        // measured by FK over the clip: cycle = 1.0667 s, stride 0.865/0.816 m
+        // (L/R) -> 0.811/0.765 m/s, mean 0.788 m/s (BuildOutput/fbx_speed.py).
+        private const float WalkClipSpeed = .788f;
         private readonly List<Actor> actors = new List<Actor>();
         private StreetGameManager game;
         private bool animatorsFrozen;
