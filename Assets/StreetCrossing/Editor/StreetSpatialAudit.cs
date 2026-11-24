@@ -92,11 +92,12 @@ namespace StreetCrossing.Editor
 
         // check 5: ground/roadway bodies never count as corridor intrusions.
         private static readonly string[] CorridorExemptNames = { "kerb", "footway", "sidewalk", "paving", "road", "crossing" };
-        // check 5: kerbside fixtures deliberately placed just past the kerb line (bus shelter, gate,
-        // hydrant, security light). They still intrude on paper, so instead of skipping them the
-        // finding is downgraded to "info": the JSON keeps the evidence while the error count stays
-        // meaningful for genuinely misplaced props. Repositioning, not exemption, fixes real cases.
-        private static readonly string[] CorridorFixtureNames = { "shelter", "bus seat", "bus stop", "bus sign", "maintenance", "security light", "hydrant" };
+        // check 5: kerbside fixtures deliberately placed just past the kerb line (bus shelter and its
+        // signage parts, gate, hydrant, security light, kerb bollards). They still intrude on paper,
+        // so instead of skipping them the finding is downgraded to "info": the JSON keeps the
+        // evidence while the error count stays meaningful for genuinely misplaced props.
+        // Repositioning, not exemption, fixes real cases.
+        private static readonly string[] CorridorFixtureNames = { "shelter", "bus seat", "bus stop", "bus sign", "maintenance", "security light", "hydrant", "bollard", "information panel", "timetable" };
         // check 4: deliberate overhangs are exempt from the ground-gap check.
         private static readonly string[] OverhangNames = { "signal", "arm", "roof", "shelter_top", "awning" };
         // check 6: connector parts whose overlaps are structural, not erroneous.
