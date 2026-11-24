@@ -125,6 +125,52 @@ namespace StreetCrossing.Tests.PlayMode
                 LogAssert.NoUnexpectedReceived();
             }
         }
+        [UnityTest, Category("StreetCourse")]
+        public IEnumerator CourseSidewalkLessonsRequireRealKerbAndVisibleTarget()
+        {
+            game.StartCourse(0);
+            input.yaw = -80;
+            yield return new WaitForSeconds(1);
+            Assert.IsTrue(game.IsPlaying); Assert.IsFalse(game.IsAtKerb);
+            var kerb = new Vector3(0, 0, -game.scenario.roadHalfWidth - .48f);
+            yield return Walk(kerb);
+            var farSignal = Object.FindObjectOfType<TrafficSignalView>().transform.GetChild(0);
+            var direction = farSignal.TransformPoint(new Vector3(0, 2.2f, -.18f)) - game.Player.View.transform.position;
+            input.yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+            input.pitch = -Mathf.Atan2(direction.y, new Vector2(direction.x, direction.z).magnitude) * Mathf.Rad2Deg;
+            yield return new WaitForSeconds(1.4f);
+            Assert.IsTrue(game.SidewalkPassed); Assert.AreEqual(0,game.SegmentResults.Count);
+            game.StartCourse(1);
+            yield return Walk(kerb);
+            yield return Observe(false);
+            Assert.IsTrue(game.IsPlaying, "Looking right cannot complete the left-side exercise.");
+            yield return Observe(true);
+            Assert.IsTrue(game.SidewalkPassed); Assert.AreEqual(StreetGameState.Result,game.State);
+            Assert.IsFalse(game.MissionSafetySuccess);
+            game.StartCourse(2);
+            Assert.IsTrue(game.IsPlaying && !game.SidewalkLesson);
+            Assert.AreEqual("S01-T1", game.Mission.missionId);
+        }
+
+        [UnityTest, Category("StreetCourse")]
+        public IEnumerator CourseEnteringRoadEndsSidewalkExerciseWithoutCrossingCredit()
+        {
+            game.StartCourse(1);
+            game.Player.ResetPose(Vector3.zero, 0); Physics.SyncTransforms();
+            yield return new WaitForSeconds(.3f);
+            Assert.AreEqual(StreetGameState.Result, game.State);
+            Assert.IsFalse(game.SidewalkPassed); Assert.IsFalse(game.MissionSafetySuccess);
+            game.ReturnToMenu();
+            foreach (int stage in new[]{ 3, 4, 5 })
+            {
+                game.StartCourse(stage);
+                Assert.AreEqual(new[]{"S02-T2","S03-T2","S03-T3"}[stage-3], game.Mission.missionId);
+                Assert.AreEqual(stage==5 ? 2 : 1, game.SegmentCount);
+                game.ReturnToMenu();
+            }
+            game.StartPractice(); Assert.AreEqual(-1,game.CourseIndex);
+        }
+
         [UnityTest, Category("MissionAcceptance")] public IEnumerator S01T1AllThreeTrafficConfigurations() { yield return CompleteMission(0, 0); }
         [UnityTest, Category("MissionAcceptance")] public IEnumerator S01T2AllThreeTrafficConfigurations() { yield return CompleteMission(0, 1); }
         [UnityTest, Category("MissionAcceptance")] public IEnumerator S01T3AllThreeReverseConfigurations() { yield return CompleteMission(0, 2); }

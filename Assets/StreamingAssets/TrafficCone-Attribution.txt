@@ -1,0 +1,5 @@
+# Traffic Cone attribution
+
+Street maintenance cone geometry and base colour texture © 2024 hinndia, used under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). Original author and licensing details appear in the [Khronos Traffic Cone model credits](https://github.com/KhronosGroup/glTF-Sample-Assets/blob/f0920f5b32d172a30efe3f9257e965918831e6ea/Models/TrafficCone/README.md).
+
+This game uses the first cone mesh from [TrafficCone.gltf and TrafficCone.bin](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/f0920f5b32d172a30efe3f9257e965918831e6ea/Models/TrafficCone/glTF) and its base colour texture. Changes include vertex clustering, axis and UV conversion, OBJ export, a resized 512 px texture and a Unity Standard material. The original cameras, lights, retroreflection sample, ground and ground textures were omitted. The author and Khronos do not endorse this game.

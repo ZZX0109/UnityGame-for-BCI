@@ -1,0 +1,6 @@
+{
+  "name": "Neuralife.PicoXR",
+  "rootNamespace": "Neuralife.XR",
+  "references": ["Unity.InputSystem", "Unity.XR.Management", "Unity.XR.OpenXR", "Unity.ugui"],
+  "autoReferenced": true
+}

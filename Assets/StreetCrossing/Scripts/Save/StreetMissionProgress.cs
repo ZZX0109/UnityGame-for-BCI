@@ -45,6 +45,13 @@ namespace StreetCrossing.Save
             return ReadStars(definition, variant);
         }
 
+        public static bool StageCompleted(int index) => store.GetInt("StreetCrossing.Course.v1." + index, 0) == 1;
+        public static void CompleteStage(int index)
+        {
+            if (index < 0 || index >= StreetCourse.Stages.Count || StageCompleted(index)) return;
+            store.SetInt("StreetCrossing.Course.v1." + index, 1);
+            store.Save();
+        }
         public static int CompletedVariantCount(StreetMissionDefinition definition)
         {
             RequireDefinition(definition);

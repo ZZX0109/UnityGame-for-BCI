@@ -24,11 +24,13 @@ namespace StreetCrossing.Presentation
         private sealed class Actor
         {
             public StreetBackgroundRoute route;
-            public Transform root, leftLeg, rightLeg, leftArm, rightArm;
+            public Transform root;
+            public Animator animator;
+            public float restYaw;
         }
+        private const float WalkClipSpeed = .8f;
         private readonly List<Actor> actors = new List<Actor>();
         private StreetGameManager game;
-        private float previousTime = -1;
         public int Count => actors.Count;
         public static StreetBackgroundRoute[] Routes(int seed, int count)
         {
@@ -47,7 +49,9 @@ namespace StreetCrossing.Presentation
                 if (!(band == 0 && side > 0)) z += (i / 6) * .55f;
                 // Four separated standing positions fit inside the bus-shelter waiting area without sharing walking paths.
                 Vector3 start = waiting ? new Vector3(6.0f + (i / 4) * .66f, 0, StreetLayout.SidewalkZ(4.65f)) : new Vector3(minX, 0, StreetLayout.SidewalkZ(z));
-                routes[i] = new StreetBackgroundRoute { start = start, end = waiting ? start : new Vector3(maxX, 0, start.z), waiting = waiting,
+                // The east-side walking and waiting routes stay outside all dropped kerbs.
+                start.y = StreetFootwayMesh.HeightAtDepth(.10f, Mathf.Abs(start.z) - StreetLayout.RoadHalfWidth);
+                routes[i] = new StreetBackgroundRoute { start = start, end = waiting ? start : new Vector3(maxX, start.y, start.z), waiting = waiting,
                     speed = .65f + (float)random.NextDouble() * .30f, phase = (float)random.NextDouble() };
             }
             return routes;
@@ -57,50 +61,49 @@ namespace StreetCrossing.Presentation
             game = owner;
             int count = scenario.visualProfile.backgroundPeople;
             StreetBackgroundRoute[] routes = Routes(scenario.seed, count);
-            string[] clothes = { "5F7380", "9B7560", "70846C", "A28D65", "6A637B" };
             for (int i = 0; i < routes.Length; i++)
             {
-                Transform person = new GameObject(routes[i].waiting ? "Waiting neighbour" : "Sidewalk pedestrian").transform; person.SetParent(transform, false);
-                float scale = .94f + (i % 3) * .045f; person.localScale = Vector3.one * scale;
-                Body(world, person, "Jacket", new Vector3(0, 1.10f, 0), new Vector3(.40f, .56f, .25f), clothes[i % clothes.Length], .10f);
-                Body(world, person, "Head", new Vector3(0, 1.56f, 0), new Vector3(.24f, .29f, .24f), i % 2 == 0 ? "C69E80" : "AF8A6D", .115f);
-                Body(world, person, "Hair", new Vector3(0, 1.70f, .025f), new Vector3(.25f, .10f, .24f), "55483F", .05f);
-                Transform leftLeg = Limb(world, person, "Left leg", new Vector3(-.11f, .83f, 0), new Vector3(.15f, .74f, .16f), "4B5352");
-                Transform rightLeg = Limb(world, person, "Right leg", new Vector3(.11f, .83f, 0), new Vector3(.15f, .74f, .16f), "4B5352");
-                Body(world, leftLeg, "Left shoe", new Vector3(0, -.74f, .035f), new Vector3(.17f, .11f, .29f), "343E3B", .035f);
-                Body(world, rightLeg, "Right shoe", new Vector3(0, -.74f, .035f), new Vector3(.17f, .11f, .29f), "343E3B", .035f);
-                Transform leftArm = Limb(world, person, "Left arm", new Vector3(-.26f, 1.35f, 0), new Vector3(.13f, .57f, .14f), clothes[i % clothes.Length]);
-                Transform rightArm = Limb(world, person, "Right arm", new Vector3(.26f, 1.35f, 0), new Vector3(.13f, .57f, .14f), clothes[i % clothes.Length]);
+                Transform person = new GameObject(routes[i].waiting ? "Waiting neighbour" : "Sidewalk pedestrian").transform;
+                person.SetParent(transform, false);
+                (Transform model, Animator animator) = world.CreatePedestrian(person, i);
+                if (animator != null)
+                {
+                    // Controller Motion: 0 idle, 1 walk, 2 texting, 3 phone call.
+                    animator.SetInteger("Motion", routes[i].waiting ? (i % 2 == 0 ? 2 : 3) : 1);
+                    if (!routes[i].waiting)
+                    {
+                        // Cadence matched to travel speed (walk clip authored at ~0.8 m/s) so feet stay planted.
+                        animator.speed = routes[i].speed / WalkClipSpeed;
+                    }
+                }
                 world.AddVisualLod(person, .018f);
-                actors.Add(new Actor { route = routes[i], root = person, leftLeg = leftLeg, rightLeg = rightLeg, leftArm = leftArm, rightArm = rightArm });
+                actors.Add(new Actor { route = routes[i], root = person, animator = animator,
+                    restYaw = 165f + (i % 3) * 15f });
             }
             Apply(0);
         }
-        private static void Body(StreetWorld world, Transform parent, string name, Vector3 p, Vector3 s, string colour, float radius)
-        { world.VisualRounded(parent, name, p, s, colour, radius); }
-        private static Transform Limb(StreetWorld world, Transform parent, string name, Vector3 anchor, Vector3 size, string colour)
-        {
-            Transform joint = new GameObject(name + " joint").transform; joint.SetParent(parent, false); joint.localPosition = anchor;
-            Body(world, joint, name, Vector3.down * (size.y * .5f), size, colour, .06f); return joint;
-        }
         private void LateUpdate()
         {
-            if (game == null || !game.IsPlaying || Mathf.Approximately(previousTime, game.WorldTime)) return;
-            Apply(game.WorldTime);
+            if (game == null || !game.IsPlaying) return;
+            // The simulation advances on a fixed 50 Hz step while this pose pass runs every rendered
+            // frame; snapping to WorldTime read as one jump per step (sliding feet + VR judder).
+            // Routes are analytic in time, so sample the trajectory at the fractionally blended
+            // render time instead - equivalent to blending the previous and current fixed-step poses.
+            float seconds = game.WorldTime - (1f - game.StepAlpha) * StreetGameManager.SimulationStep;
+            Apply(seconds);
         }
         private void Apply(float seconds)
         {
-            previousTime = seconds;
             foreach (Actor actor in actors)
             {
                 Vector3 p = actor.route.Position(seconds);
                 Vector3 tangent = actor.route.Position(seconds + .04f) - p;
                 actor.root.localPosition = p;
                 if (tangent.sqrMagnitude > .000001f) actor.root.localRotation = Quaternion.LookRotation(tangent);
-                else if (actor.route.waiting) actor.root.localRotation = Quaternion.Euler(0, 180, 0);
-                float swing = actor.route.waiting ? 0 : Mathf.Sin((seconds * actor.route.speed * 7 + actor.route.phase * 6.28f)) * 22;
-                actor.leftLeg.localRotation = Quaternion.Euler(swing, 0, 0); actor.rightLeg.localRotation = Quaternion.Euler(-swing, 0, 0);
-                actor.leftArm.localRotation = Quaternion.Euler(-swing * .7f, 0, -5); actor.rightArm.localRotation = Quaternion.Euler(swing * .7f, 0, 5);
+                else if (actor.route.waiting) actor.root.localRotation = Quaternion.Euler(0, actor.restYaw, 0);
+                if (actor.animator != null)
+                    actor.animator.SetInteger("Motion", actor.route.waiting
+                        ? (actor.root.GetSiblingIndex() % 2 == 0 ? 2 : 3) : 1);
             }
         }
     }

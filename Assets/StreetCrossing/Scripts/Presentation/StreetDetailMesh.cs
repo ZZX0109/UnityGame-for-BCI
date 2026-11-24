@@ -37,6 +37,37 @@ namespace StreetCrossing.Presentation
             Mesh mesh = new Mesh { name = "Original chamfered street corner" }; mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0);
             mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); return mesh;
         }
+        /// <summary>A rectangular frame ring: outer width×height, a centred opening, extruded through depth.
+        /// Lets glazing read through real window frames instead of hiding behind a solid surround slab.</summary>
+        public static Mesh RectFrame(float width, float height, float depth, float frame)
+        {
+            frame = Mathf.Clamp(frame, .005f, Mathf.Min(width, height) * .45f);
+            float ow = width * .5f, oh = height * .5f, iw = ow - frame, ih = oh - frame, d = depth * .5f;
+            var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var triangles = new List<int>();
+            // Four outer and four inner corners, duplicated front (-z) and back (+z); CCW seen from -z.
+            Vector3[] o = { new Vector3(-ow, -oh, -d), new Vector3(ow, -oh, -d), new Vector3(ow, oh, -d), new Vector3(-ow, oh, -d),
+                            new Vector3(-ow, -oh, d), new Vector3(ow, -oh, d), new Vector3(ow, oh, d), new Vector3(-ow, oh, d) };
+            Vector3[] i = { new Vector3(-iw, -ih, -d), new Vector3(iw, -ih, -d), new Vector3(iw, ih, -d), new Vector3(-iw, ih, -d),
+                            new Vector3(-iw, -ih, d), new Vector3(iw, -ih, d), new Vector3(iw, ih, d), new Vector3(-iw, ih, d) };
+            for (int k = 0; k < 4; k++)
+            {
+                int k1 = (k + 1) % 4, k4 = k + 4, k14 = k1 + 4;
+                int first = vertices.Count;
+                vertices.Add(o[k]); vertices.Add(i[k]); vertices.Add(i[k1]); vertices.Add(o[k1]);      // front ring quad
+                vertices.Add(o[k4]); vertices.Add(o[k14]); vertices.Add(i[k14]); vertices.Add(i[k4]);  // back ring quad
+                vertices.Add(o[k]); vertices.Add(o[k1]); vertices.Add(o[k14]); vertices.Add(o[k4]);    // outer wall
+                vertices.Add(i[k]); vertices.Add(i[k4]); vertices.Add(i[k14]); vertices.Add(i[k1]);    // inner wall
+                for (int v = 0; v < 16; v++) uv.Add(new Vector2(vertices[first + v].x / width + .5f, vertices[first + v].y / height + .5f));
+                for (int quad = 0; quad < 4; quad++)
+                {
+                    int a = first + quad * 4;
+                    triangles.AddRange(new[] { a, a + 1, a + 2, a, a + 2, a + 3 });
+                }
+            }
+            var mesh = new Mesh { name = "Original rectangular window frame" };
+            mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds(); return mesh;
+        }
         public static Mesh RoundedBox(Vector3 size, float radius)
         {
             radius = Mathf.Clamp(radius, 0.001f, Mathf.Min(size.x, size.y) * 0.49f);

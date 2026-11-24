@@ -130,12 +130,11 @@ namespace StreetCrossing.Validation
             public string file, missionId, state, assistance, destination;
             public int width, height, variant, segment;
             public Vector3 playerPosition, goal, navigationTarget;
-            public bool helpRequested;
         }
         [Serializable]
         private sealed class GalleryManifest
         {
-            public string renderer, evidence = "Actual standalone backbuffer captures; nine task HUDs, on-demand help and three district menus. Human layout review is separate.";
+            public string renderer, evidence = "Actual standalone backbuffer captures: nine task HUDs and three district menus. Human layout review is separate.";
             public List<GalleryShot> screenshots = new List<GalleryShot>();
         }
         private IEnumerator CaptureMissionGallery(string directory)
@@ -151,11 +150,6 @@ namespace StreetCrossing.Validation
                 {
                     game.ReturnToMenu(); game.SelectMission(tier); game.SelectVariant(0); game.StartPractice();
                     yield return CaptureGalleryShot(directory, game.Mission.missionId + "-hud.png", manifest);
-                    if (game.Mission.assistance == StreetAssistance.OnDemand)
-                    {
-                        game.RequestHelp();
-                        yield return CaptureGalleryShot(directory, game.Mission.missionId + "-help.png", manifest);
-                    }
                 }
             }
             File.WriteAllText(Path.Combine(directory, "gallery-manifest.json"), JsonUtility.ToJson(manifest, true) + "\n", new System.Text.UTF8Encoding(false));
@@ -173,7 +167,7 @@ namespace StreetCrossing.Validation
                     file = file, missionId = game.Mission.missionId, state = game.State.ToString(), assistance = game.Mission.assistance.ToString(),
                     destination = game.DestinationName, width = capture.width, height = capture.height, variant = game.SelectedVariant,
                     segment = game.CurrentSegmentIndex, playerPosition = game.PlayerPosition, goal = game.Destination,
-                    navigationTarget = game.NavigationTarget, helpRequested = game.HelpRequested
+                    navigationTarget = game.NavigationTarget
                 });
             }
             finally { Object.Destroy(capture); }

@@ -2,6 +2,7 @@ using StreetCrossing.Core;
 using StreetCrossing.Save;
 using StreetCrossing.Traffic;
 using UnityEngine;
+using Neuralife.XR;
 
 namespace StreetCrossing.Player
 {
@@ -13,9 +14,10 @@ namespace StreetCrossing.Player
         private StreetScenarioDefinition scenario;
         private IStreetInput input;
         private float yaw, pitch, gravity;
+        private PicoRig xrRig;
         public Camera View { get; private set; }
-        public float Heading => yaw;
-        public float Pitch => pitch;
+        public float Heading => PicoXR.Requested && View ? View.transform.eulerAngles.y : yaw;
+        public float Pitch => PicoXR.Requested && View ? Mathf.DeltaAngle(0, View.transform.eulerAngles.x) : pitch;
         public void Initialize(StreetGameManager owner, StreetScenarioDefinition definition, IStreetInput source)
         {
             game = owner; scenario = definition; input = source;
@@ -26,8 +28,11 @@ namespace StreetCrossing.Player
             cameraObject.transform.localPosition = new Vector3(0, 1.65f, 0);
             View = cameraObject.AddComponent<Camera>(); cameraObject.tag = "MainCamera";
             View.nearClipPlane = 0.06f; View.farClipPlane = 160; View.fieldOfView = StreetPreferences.FieldOfView;
-            View.clearFlags = CameraClearFlags.SolidColor; View.backgroundColor = new Color(0.74f, 0.84f, 0.88f);
+            // Use the procedural sky when the world supplied one; the warm solid tone stays as the fallback.
+            View.clearFlags = RenderSettings.skybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            View.backgroundColor = new Color(0.74f, 0.84f, 0.88f);
             cameraObject.AddComponent<AudioListener>(); ResetPose();
+            xrRig = PicoRig.Attach(View, transform);
         }
         public void SetInputSource(IStreetInput source) { input = source; }
         public void ResetPose() => ResetPose(scenario.playerSpawn, 0);
@@ -38,11 +43,13 @@ namespace StreetCrossing.Player
             body.enabled = false; transform.position = position;
             yaw = Mathf.Repeat(heading, 360); pitch = gravity = 0;
             transform.rotation = Quaternion.Euler(0, yaw, 0); body.enabled = true;
-            if (View != null) View.transform.localRotation = Quaternion.identity;
+            if (View != null && !PicoXR.Requested) View.transform.localRotation = Quaternion.identity;
+            if (xrRig) xrRig.Recenter();
         }
         private void Update()
         {
             if (View == null || game == null) return;
+            if (PicoXR.Requested) { UpdateVR(); return; }
             View.fieldOfView = StreetPreferences.FieldOfView;
             if (!game.IsPlaying || input == null) return;
             Vector2 look = input.Look * StreetPreferences.Sensitivity;
@@ -66,6 +73,21 @@ namespace StreetCrossing.Player
         {
             VehicleController vehicle = hit.collider.GetComponentInParent<VehicleController>();
             if (vehicle != null && game.IsPlaying) game.RegisterContact(vehicle.EncounterId, vehicle.Motion.Speed);
+        }
+        private void UpdateVR()
+        {
+            if (!game.IsPlaying || input == null || !PicoXR.MovementAllowed) return;
+            if (xrRig) xrRig.SnapTurn(PicoXR.Controls.TurnDegrees);
+            Vector3 displacement = PicoControls.PlanarMotion(View.transform, input.Movement) * Mathf.Min(1.2f, scenario.comfortableSpeed);
+            if (body.isGrounded && gravity < 0) gravity = -2;
+            gravity = Mathf.Max(-20, gravity - 9.81f * Time.deltaTime);
+            displacement.y = gravity; body.Move(displacement * Mathf.Min(Time.deltaTime, 0.1f));
+            if (transform.position.y < -2) game.RequestRestart();
+            if (input.InteractPressed && Physics.Raycast(View.transform.position, View.transform.forward, out RaycastHit hit, 3))
+            {
+                StreetInspectable sign = hit.collider.GetComponentInParent<StreetInspectable>();
+                if (sign != null) game.Inspect(sign);
+            }
         }
     }
 }

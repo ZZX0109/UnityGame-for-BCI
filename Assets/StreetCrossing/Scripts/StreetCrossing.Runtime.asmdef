@@ -3,7 +3,8 @@
   "rootNamespace": "StreetCrossing",
   "references": [
     "Unity.TextMeshPro",
-    "Unity.ugui"
+    "Unity.ugui",
+    "Neuralife.PicoXR"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -44,7 +44,7 @@ def main():
     if not stack or stack.pop()!=pairs[c]:errors.append('Delimiter mismatch: '+str(path));break
   if stack:errors.append('Unclosed delimiter: '+str(path))
  refs=json.loads((GAME/'Scripts/StreetCrossing.Runtime.asmdef').read_text(encoding="utf-8"))['references']
- if set(refs)!={'Unity.TextMeshPro','Unity.ugui'}:errors.append('Unexpected runtime assembly dependency.')
+ if set(refs)!={'Unity.TextMeshPro','Unity.ugui','Neuralife.PicoXR'}:errors.append('Unexpected runtime assembly dependency.')
  manifest=json.loads((ROOT/'Packages/manifest.json').read_text(encoding="utf-8"));lock=json.loads((ROOT/'Packages/packages-lock.json').read_text(encoding="utf-8"))
  if manifest['dependencies'].get('com.unity.textmeshpro')!='3.0.6' or lock['dependencies']['com.unity.textmeshpro']['version']!='3.0.6':errors.append('TMP must be pinned consistently at3.0.6.')
  settings=list((ROOT/'Assets').rglob('TMP Settings.asset'))

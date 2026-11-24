@@ -1,4 +1,12 @@
-# 当前验证状态 · 2026-11-17 九任务已实现
+# 当前验证状态
+
+2026-11-23 · 建模整体精细：真实行人（70 MB 原 FBX 精简为 4 MB / 4 动画）、加密松树、错缝混凝土铺装、无菱形灰泥立面、程序化渐变天空均已接入 S01–S03；EditMode 147/147。PlayMode 当前 `39 passed / 5 failed / 3 skipped`（维护门碰撞 ×2、S03 转弯包络、任务入口、VR 菜单），**未全绿**；未重新打包，未做完整游玩/帧率验收。证据见 `ArtSource/Game03VisualUpgrade/RESULTS.md` 与 `Results/visual-upgrade-test/overall-refined-S01-*.png`。下面 2026-11-20/17 的 34/34 是历史运行快照，不代表当前工作树。
+
+2026-11-20 11 时 · 课程观察时效修复。Windows 键鼠包与 5 项课程专项、9 项兼容回归见 BuildOutput/CourseRefresh-20261120-1110/。更新版 PCVR 在 PICO-PCVR-20261120T033812599，已验签 APK 在 PICO-Android-20261120T033842199。PICO 头显未实测。
+
+2026-11-20 · 六阶段课程、GitHub 街景模型与街道几何已经集成。[设计与出处](../docs/DESIGN_DIVERSITY_AND_DIFFICULTY.md)。本轮原生证据位于 BuildOutput/StreetUpgrade-20261120-095425，edit.xml 为 147/147，regression.xml 为 28/28（含旧九任务的 27 组车流配置），release.xml 为最终资源快照专项 16/16。Windows 普通包在该目录的 Windows/；PCVR 为 PICO-PCVR-20261120T024044015，已验签的 ARM64 APK 为 PICO-Android-20261120T024114650。三种包均检查了路锥署名。未在头显测量帧时或做实际过街试玩。
+
+## 2026-11-17 九任务记录
 
 三个街区、九任务、每任务A/B/C三配置、真实目的地、渐进辅助与反向/往返已实现。Final2运行版指纹 **`873d40206c5f0711c1053f319fb317ced75ac075adffcab39579ffa5f62c7156`** 的原生、实际行走、Windows、路线图、UI gallery与正常时间600秒均已完成。源码可复现收尾已完成：交付源码指纹 **`141b2c1e341a2c75150cf742c8a58ffd24289fa5413a40aa84ef5a2f6e09b877`**。Root只移除两个历史测试末尾闭合大括号后的各一个CR（无代码token/行数变化），生产源码、资产、包/设置及原146 Windows负载保持字节相同。完整147/34、27配置行走及600原始记录仍属于运行快照873d，当前141b另外通过受影响原生Edit9/9、Play1/1及全SourceChecks5命令/69；两组不相加、不伪称全套在不同运行版本重跑。桥接及原测试字节保存在`BuildOutput/Missions-20261117-LFVerification/normalization-bridge.json`。
 

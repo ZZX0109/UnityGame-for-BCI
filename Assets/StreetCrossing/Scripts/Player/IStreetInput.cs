@@ -1,4 +1,5 @@
 using UnityEngine;
+using Neuralife.XR;
 
 namespace StreetCrossing.Player
 {
@@ -14,11 +15,11 @@ namespace StreetCrossing.Player
     }
     public sealed class LegacyStreetInput : IStreetInput
     {
-        public Vector2 Movement => new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        public Vector2 Look => new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-        public bool FastWalk => Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-        public bool InteractPressed => Input.GetKeyDown(KeyCode.E);
-        public bool PausePressed => Input.GetKeyDown(KeyCode.Escape);
-        public bool RestartPressed => Input.GetKeyDown(KeyCode.R);
+        public Vector2 Movement => PicoXR.Requested ? PicoXR.Controls.Move : new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        public Vector2 Look => PicoXR.Requested ? Vector2.zero : new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        public bool FastWalk => !PicoXR.Requested && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
+        public bool InteractPressed => PicoXR.Requested ? PicoXR.PrimaryPressed : Input.GetKeyDown(KeyCode.E);
+        public bool PausePressed => PicoXR.Requested ? PicoXR.Controls.Pause.Pressed : Input.GetKeyDown(KeyCode.Escape);
+        public bool RestartPressed => PicoXR.Requested ? PicoXR.Controls.Reset.Pressed : Input.GetKeyDown(KeyCode.R);
     }
 }

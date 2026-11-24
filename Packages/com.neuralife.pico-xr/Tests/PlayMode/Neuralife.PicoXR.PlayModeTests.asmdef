@@ -1,0 +1,6 @@
+{
+  "name": "Neuralife.PicoXR.PlayModeTests",
+  "references": ["Neuralife.PicoXR", "Unity.ugui", "Unity.InputSystem", "Unity.XR.OpenXRPico"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

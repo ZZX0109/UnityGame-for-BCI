@@ -32,10 +32,87 @@ class Mesh:
   out += ['s 1']
   out += ['f '+' '.join(f'{i}/{i}' for i in f) for f in self.f];p.write_text('\n'.join(out)+'\n', encoding="utf-8", newline="\n");return p
 meshes={}
-for kind,L,W,H in [('Sedan',4.2,1.75,1.5),('Hatchback',3.7,1.65,1.42),('Van',4.8,1.9,2.02)]:
- m=Mesh();m.loft([(-L/2,W*.38,.35,.68,W*.43),(-L*.38,W*.49,.3,.86,W*.47),(L*.3,W*.49,.3,.84,W*.46),(L/2,W*.37,.36,.62,W*.4)]);meshes[kind+'Body']=m.save(kind+'Body')
- cabin=Mesh();cabin.loft([(-L*.28,W*.44,.81,H-.12,W*.36),(-L*.16,W*.46,.81,H,W*.36),(L*.16,W*.45,.81,H-.04,W*.34),(L*.28,W*.42,.81,1.03,W*.37)]);meshes[kind+'Glass']=cabin.save(kind+'Glass')
- roof=Mesh();roof.box((0,H-.01,-L*.04),(W*.7,.09,L*.31));meshes[kind+'Roof']=roof.save(kind+'Roof')
+def connect_sections(mesh, sections):
+    count = len(sections[0])
+    start = len(mesh.v) + 1
+    for ring in sections:
+        mesh.v.extend(ring)
+    mesh.f.append(tuple(start+i for i in reversed(range(count))))
+    for row in range(len(sections)-1):
+        a = start+row*count
+        for i in range(count):
+            j = (i+1)%count
+            mesh.f.append((a+i, a+j, a+count+j, a+count+i))
+    mesh.f.append(tuple(start+(len(sections)-1)*count+i for i in range(count)))
+
+def panel(mesh, points, normal):
+    # Winding remains outward on both sides of the cabin.
+    a,b,c = points[:3]
+    u = [b[i]-a[i] for i in range(3)]
+    v = [c[i]-a[i] for i in range(3)]
+    cross = (u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+    first = len(mesh.v)+1
+    mesh.v.extend(points)
+    indices = tuple(range(first,first+len(points)))
+    mesh.f.append(indices if sum(x*y for x,y in zip(cross,normal))>0 else indices[::-1])
+
+def vehicle(kind,length,width,height,cabin_z):
+    body,roof,glass = Mesh(),Mesh(),Mesh()
+    # Arched sills follow the actual wheel centres used by each vehicle prefab.
+    # Cross sections round the bumpers and pick up a highlight along the shoulder.
+    axles = [-length*.3,length*.3]
+    stations = [-length*.5,-length*.46,0,length*.46,length*.5]
+    for axle in axles:
+        stations.extend(axle+delta for delta in (-.40,-.35,-.25,0,.25,.35,.40))
+    sections=[]
+    for z in sorted(stations):
+        end = max(0,(abs(z/length)-.4)/.1)
+        w = width*(.5-.06*end)
+        dist = min(abs(z-axle) for axle in axles)
+        sill = .34+math.sqrt(max(0,.39**2-dist**2))
+        top = .93-.22*end
+        sections.append([(x,y,z) for x,y in ((-w*.89,sill),(w*.89,sill),
+            (w,sill+.035),(w,top-.09),(w*.94,top),(-w*.94,top),(-w,top-.09),(-w,sill+.035))])
+    connect_sections(body,sections)
+    # The van has a tall, mostly solid cargo side; the hatch has an upright tail;
+    # the sedan has a separate boot and long rear windscreen.
+    z0,z1,z2,z3=[length*n for n in cabin_z]
+    rings=[]
+    for z,h in ((z0,.935),(z1,height),(z2,height),(z3,.935)):
+        w = width*(.46 if h<1 else .38)
+        rings.append((z,h,w))
+    roof.loft([(z,width*.46,.90,h,w) for z,h,w in rings])
+    def blend(a,b,t): return a+(b-a)*t
+    # Inset windscreens leave narrow strips of visible body paint at the pillars.
+    for index,normal in ((0,(0,1,-1)),(2,(0,1,1))):
+        a,b = rings[index:index+2]
+        points=[]
+        for t,side in ((.07,-1),(.07,1),(.91,1),(.91,-1)):
+            points.append((side*(blend(a[2],b[2],t)-.048),blend(a[1],b[1],t)+.006,blend(a[0],b[0],t)))
+        panel(glass,points,normal)
+    for side in (-1,1):
+        def sidepoint(z,y):
+            w = blend(width*.46,width*.38,(y-.90)/(height-.90))+.005
+            return (side*w,y,z)
+        split = z1+(z2-z1)*(.74 if kind=='Van' else .49)
+        for left,right,lowleft,lowright in ((z1+.055,split-.044,z0+.12,split-.044),
+                                            (split+.044,z2-.055,split+.044,z3-.12)):
+            if kind=='Van' and left<split: continue
+            panel(glass,[sidepoint(lowleft,.99),sidepoint(lowright,.99),
+                         sidepoint(right,height-.07),sidepoint(left,height-.07)],(side,0,0))
+        for z in (split-.18,z2-.10):
+            body.box((side*width*.50,.83,z),(.024,.035,.15))
+    # Front and rear bumper inserts and a low air intake reuse the cabin material.
+    for end in (-1,1):
+        glass.box((0,.42,end*length*.502),(width*.68,.09,.025))
+        body.box((0,.57,end*length*.505),(.36,.11,.025))
+    glass.box((0,.56,length*.502),(width*.52,.12,.02))
+    for suffix,mesh in [('Body',body),('Roof',roof),('Glass',glass)]:
+        meshes[kind+suffix] = mesh.save(kind+suffix)
+
+vehicle('Sedan',4.2,1.75,1.5,(-.33,-.17,.13,.33))
+vehicle('Hatchback',3.7,1.65,1.46,(-.44,-.38,.12,.35))
+vehicle('Van',4.8,1.9,2.02,(-.46,-.44,.12,.32))
 wheel=Mesh();wheel.wheel();meshes['Wheel']=wheel.save('Wheel');hub=Mesh();hub.wheel(.19,.025);meshes['Hub']=hub.save('Hub')
 walls=Mesh();walls.box((0,3.6,0),(10.3,7.2,4));meshes['ResidentialWalls']=walls.save('ResidentialWalls')
 trim=Mesh();glass=Mesh()

@@ -45,10 +45,12 @@ namespace StreetCrossing.Tests.PlayMode
                 }
                 if (index == 2)
                 {
-                    Transform blocker = environment.Find("Opaque bus information shelter - changes visibility");
-                    Assert.That(blocker, Is.Not.Null); Assert.That(blocker.localPosition, Is.EqualTo(new Vector3(-2.7f, 1.1f, StreetLayout.SidewalkZ(-4.1f))));
-                    Assert.That(blocker.localScale, Is.EqualTo(new Vector3(.9f, 2.2f, 1.4f)));
-                    Assert.That(blocker.GetComponent<Collider>().enabled, Is.True);
+                    Transform blocker = environment.Find("Corner bus stop/Opaque route board");
+                    Assert.That(blocker, Is.Not.Null);
+                    var obstacle = blocker.GetComponent<Collider>();
+                    Assert.IsTrue(obstacle.enabled);
+                    Assert.Less(obstacle.bounds.max.z, -game.scenario.roadHalfWidth);
+                    Assert.Greater(obstacle.bounds.max.y, 1.65f, "The opaque route board must block an adult eye line.");
                 }
             }
             game.AutoPauseOnFocusLoss = true; LogAssert.NoUnexpectedReceived();

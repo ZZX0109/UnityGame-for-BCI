@@ -29,6 +29,10 @@ namespace StreetCrossing.Evaluation
         public int Collisions => MovingCollisions;
         public bool LeftObserved { get; private set; }
         public bool RightObserved { get; private set; }
+        public bool LeftObservationInvalidated { get; private set; }
+        public bool RightObservationInvalidated { get; private set; }
+        public string LeftObservationInvalidationReason { get; private set; } = "";
+        public string RightObservationInvalidationReason { get; private set; } = "";
         public bool ObservationRequirementsSatisfied => (!requireLeft || leftAtEntry) && (!requireRight || rightAtEntry);
         public bool SafetySuccess { get; private set; }
         public bool IsCrossing => active;
@@ -44,8 +48,18 @@ namespace StreetCrossing.Evaluation
         public void Observe(bool left)
         {
             if (!MayRecordPreEntryObservation || (left ? LeftObserved : RightObserved)) return;
-            if (left) LeftObserved = true; else RightObserved = true;
+            if (left) { LeftObserved = true; LeftObservationInvalidated = false; LeftObservationInvalidationReason = ""; }
+            else { RightObserved = true; RightObservationInvalidated = false; RightObservationInvalidationReason = ""; }
             Event?.Invoke(left ? "LeftLook" : "RightLook", "Visible road target held at kerb before entry; camera visibility, not eye gaze.");
+        }
+        /// <summary>Withdraws one course observation when its pre-entry road evidence expires or materially changes.</summary>
+        public bool InvalidateObservation(bool left, string reason)
+        {
+            if (!MayRecordPreEntryObservation || !(left ? LeftObserved : RightObserved)) return false;
+            if (left) { LeftObserved = false; LeftObservationInvalidated = true; LeftObservationInvalidationReason = reason ?? "Pre-entry observation is no longer current."; }
+            else { RightObserved = false; RightObservationInvalidated = true; RightObservationInvalidationReason = reason ?? "Pre-entry observation is no longer current."; }
+            Event?.Invoke(left ? "LeftObservationInvalidated" : "RightObservationInvalidated", reason ?? "Pre-entry observation is no longer current.");
+            return true;
         }
         public void Tick(CrossingRegion region, TrafficPhase phase, bool withinRoute, bool vehicleConflict, float dt)
         {

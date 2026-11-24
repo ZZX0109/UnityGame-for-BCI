@@ -1,0 +1,7 @@
+{
+  "name": "Neuralife.PicoXR.Editor",
+  "rootNamespace": "Neuralife.XR.Editor",
+  "references": ["Neuralife.PicoXR", "Unity.XR.Management", "Unity.XR.Management.Editor", "Unity.XR.OpenXR", "Unity.XR.OpenXR.Editor"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

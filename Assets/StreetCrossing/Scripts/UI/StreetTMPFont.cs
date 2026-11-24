@@ -25,6 +25,11 @@ namespace StreetCrossing.UI
             Asset.name = "Street UI Sans Dynamic";
             Asset.material.name = "Street UI Bitmap Runtime";
             Asset.material.shader = shader;
+            if (Neuralife.XR.PicoXR.Requested)
+            {
+                Asset.material.SetFloat("_StrokeWidth", 1.2f);
+                Asset.material.SetInt("_ZTest", 8);
+            }
             if (Asset.material.HasProperty("_FaceColor")) Asset.material.SetColor("_FaceColor", Color.white);
             Asset.TryAddCharacters(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
         }

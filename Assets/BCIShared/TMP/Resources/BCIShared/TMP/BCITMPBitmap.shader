@@ -6,6 +6,8 @@ Shader "TextMeshPro/Mobile/Bitmap"
     {
         [PerRendererData] _MainTex ("Glyph atlas", 2D) = "white" {}
         _FaceColor ("Face color", Color) = (1,1,1,1)
+        _StrokeWidth ("VR stroke in atlas texels", Float) = 0
+        _ZTest ("Depth comparison", Float) = 8
         _VertexOffsetX ("Vertex offset X", Float) = 0
         _VertexOffsetY ("Vertex offset Y", Float) = 0
         _TextureWidth ("Atlas width", Float) = 1024
@@ -29,7 +31,7 @@ Shader "TextMeshPro/Mobile/Bitmap"
         Cull [_CullMode]
         Lighting Off
         ZWrite Off
-        ZTest [unity_GUIZTestMode]
+        ZTest [_ZTest]
         Blend SrcAlpha OneMinusSrcAlpha
         ColorMask [_ColorMask]
         Pass
@@ -38,6 +40,7 @@ Shader "TextMeshPro/Mobile/Bitmap"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_instancing
             #pragma target 2.0
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
@@ -46,6 +49,8 @@ Shader "TextMeshPro/Mobile/Bitmap"
             struct appdata { float4 vertex : POSITION; fixed4 color : COLOR; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct v2f { float4 vertex : SV_POSITION; fixed4 color : COLOR; float2 uv : TEXCOORD0; float2 local : TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
+            float _StrokeWidth;
             fixed4 _FaceColor;
             float4 _ClipRect;
             float _VertexOffsetX, _VertexOffsetY;
@@ -63,8 +68,15 @@ Shader "TextMeshPro/Mobile/Bitmap"
             }
             fixed4 frag(v2f i) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 fixed4 color = i.color;
-                color.a *= tex2D(_MainTex, i.uv).a;
+                float2 d = _MainTex_TexelSize.xy * _StrokeWidth;
+                fixed alpha = tex2D(_MainTex, i.uv).a;
+                alpha = max(alpha, tex2D(_MainTex, i.uv + float2(d.x, 0)).a);
+                alpha = max(alpha, tex2D(_MainTex, i.uv - float2(d.x, 0)).a);
+                alpha = max(alpha, tex2D(_MainTex, i.uv + float2(0, d.y)).a);
+                alpha = max(alpha, tex2D(_MainTex, i.uv - float2(0, d.y)).a);
+                color.a *= alpha;
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(i.local, _ClipRect);
                 #endif

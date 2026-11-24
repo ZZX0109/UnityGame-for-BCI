@@ -108,16 +108,49 @@ namespace StreetCrossing.Tests.PlayMode
         public IEnumerator S03OpaqueKerbShelterRequiresSafeForwardRepositioning()
         {
             game.SelectScenario(2); game.SetInputSource(input); game.StartPractice();
-            yield return WalkTo(-game.scenario.roadHalfWidth - .75f, 10);
+            yield return WalkTo(-game.scenario.roadHalfWidth - .97f, 10);
+            Collider panel = GameObject.Find("Corner bus stop/Opaque route board").GetComponent<Collider>();
+            Vector3 eye = game.Player.View.transform.position;
+            foreach (Vector3 target in game.LeftRoadTargets)
+                Assert.IsTrue(panel.Raycast(new Ray(eye, (target - eye).normalized), out _, Vector3.Distance(eye, target)), "The visible timetable must hide the approach lane itself.");
+            Assert.That(game.Notice, Does.Not.Contain("站牌挡住"), "Facing forward is not a failed look to the left.");
             Vector3 delta = game.LeftRoadTargets[0] - game.Player.View.transform.position;
             input.yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg; input.pitch = 2;
             float start = game.WorldTime, realtime = Time.realtimeSinceStartup;
             while (game.IsPlaying && game.WorldTime - start < .6f && Time.realtimeSinceStartup - realtime < 4) yield return null;
             Assert.That(game.IsAtKerb, Is.True); Assert.That(game.Evaluation.LeftObserved, Is.False, "Opaque shelter must prevent fabricated left-road observation.");
-            yield return WalkTo(-game.scenario.roadHalfWidth - .12f, 3);
+            Assert.That(game.Notice, Does.Contain("公交站牌"));
+            CaptureSightline("01-blocked");
+            yield return WalkTo(-game.scenario.roadHalfWidth - .45f, 3);
             yield return Observe(true);
+            eye = game.Player.View.transform.position;
+            foreach (Vector3 target in game.LeftRoadTargets)
+                Assert.IsFalse(panel.Raycast(new Ray(eye, (target - eye).normalized), out _, Vector3.Distance(eye, target)), "All three sightlines must clear the same physical panel.");
+            Assert.That(game.Notice, Does.Not.Contain("站牌挡住"));
+            CaptureSightline("02-clear");
             Assert.That(game.IsPlayerInRoadwayHazard, Is.False); Assert.That(game.Evaluation.Attempts, Is.Zero);
             LogAssert.NoUnexpectedReceived();
+        }
+        private void CaptureSightline(string name)
+        {
+            string directory = System.Environment.GetEnvironmentVariable("STREET_SIGHTLINE_CAPTURE");
+            if (string.IsNullOrEmpty(directory)) return;
+            Camera view = game.Player.View;
+            var target = RenderTexture.GetTemporary(960, 540, 24);
+            RenderTexture previous = view.targetTexture, active = RenderTexture.active;
+            var frame = new Texture2D(960, 540, TextureFormat.RGB24, false);
+            try
+            {
+                view.targetTexture = target; view.Render(); RenderTexture.active = target;
+                frame.ReadPixels(new Rect(0, 0, 960, 540), 0, 0); frame.Apply();
+                System.IO.Directory.CreateDirectory(directory);
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, name + ".png"), frame.EncodeToPNG());
+            }
+            finally
+            {
+                view.targetTexture = previous; RenderTexture.active = active;
+                RenderTexture.ReleaseTemporary(target); Object.Destroy(frame);
+            }
         }
         [UnityTest]
         public IEnumerator S03ProtectedPedestrianHoldsAllRedAndCanFinishAfterFlashing()

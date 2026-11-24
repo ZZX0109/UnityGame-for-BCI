@@ -99,37 +99,65 @@ namespace StreetCrossing.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator OnDemandHidesStepsUntilHelpActionAndCountsOnlyFirstOpen()
+        public IEnumerator GuidanceSharesTopLeftCardAndOnlyControlsOccupyTheBottom()
         {
-            game.SelectMission(2); Assert.AreEqual(StreetAssistance.OnDemand, game.Mission.assistance);
-            game.StartPractice(); yield return RefreshUI();
-            Assert.IsEmpty(game.Notice, "This safe starting-sidewalk fixture must not have a live risk notice.");
-            Assert.IsFalse(ui.GuidancePanel.gameObject.activeSelf);
-            Assert.IsFalse(ui.DestinationMarker.gameObject.activeSelf);
-            Assert.IsTrue(ui.HelpButton.gameObject.activeInHierarchy);
-            Assert.AreEqual(0, game.AssistanceRequests);
-            ui.HelpButton.onClick.Invoke(); yield return RefreshUI();
-            Assert.IsTrue(game.HelpRequested); Assert.IsTrue(ui.GuidancePanel.gameObject.activeSelf);
-            Assert.IsTrue(ui.DestinationMarker.gameObject.activeInHierarchy);
-            Assert.AreEqual(1, game.AssistanceRequests); Assert.AreEqual(StreetGameState.Playing, game.State);
-            ui.HelpButton.onClick.Invoke(); yield return null;
-            Assert.AreEqual(1, game.AssistanceRequests); Assert.AreEqual(0, game.Evaluation.Violations);
+            game.SelectMission(0); game.StartPractice(); yield return RefreshUI();
+            Transform hud = ui.RuntimeCanvas.transform.Find("First person HUD");
+            RectTransform card = (RectTransform)hud.Find("Objective card");
+            RectTransform bar = (RectTransform)hud.Find("Controls contrast bar");
+            Assert.AreEqual(new Vector2(0, 1), card.anchorMax);
+            Assert.AreEqual(0, bar.anchorMax.y);
+            Transform detail = card.Find("Guidance detail");
+            Assert.IsTrue(detail.gameObject.activeInHierarchy);
+            Assert.IsTrue(RectTransformUtility.CalculateRelativeRectTransformBounds(card, detail).min.y >= card.rect.yMin - 1);
+            Assert.AreEqual(3, hud.childCount, "Only the objective and guidance card, controls and destination marker belong on the HUD.");
+            Assert.IsEmpty(hud.GetComponentsInChildren<Button>(true));
+            string controls = bar.GetComponentInChildren<TMPro.TextMeshProUGUI>().text;
+            StringAssert.Contains("Esc", controls); StringAssert.DoesNotContain("F1", controls);
+            CaptureHudIfRequested();
+            game.ReturnToMenu(); game.SelectMission(2); game.StartPractice(); yield return RefreshUI();
+            Assert.IsFalse(detail.gameObject.activeSelf); Assert.IsFalse(ui.DestinationMarker.gameObject.activeSelf);
             LogAssert.NoUnexpectedReceived();
         }
 
         [UnityTest]
-        public IEnumerator PauseHelpAndSettingsKeepTheAlreadyPausedSimulation()
+        public IEnumerator PauseAndSettingsKeepTheAlreadyPausedSimulation()
         {
             game.SelectMission(2); game.StartPractice(); game.Pause(); yield return RefreshUI();
             float pausedClock = game.WorldTime;
-            FindButton("Pause request help").onClick.Invoke(); yield return RefreshUI();
-            Assert.IsTrue(game.HelpRequested); Assert.AreEqual(1, game.AssistanceRequests);
+            Assert.IsFalse(System.Array.Exists(ui.ModalPanel.GetComponentsInChildren<Button>(true), button => button.name == "Pause request help"));
             Assert.AreEqual(StreetGameState.Paused, game.State); Assert.AreEqual(pausedClock, game.WorldTime);
             ui.ShowSettings(); yield return RefreshUI();
             FindButton("Save settings").onClick.Invoke(); yield return RefreshUI();
             Assert.IsFalse(ui.SettingsVisible); Assert.AreEqual(StreetGameState.Paused, game.State);
-            Assert.AreEqual(pausedClock, game.WorldTime); Assert.AreEqual(1, game.AssistanceRequests);
+            Assert.AreEqual(pausedClock, game.WorldTime);
             LogAssert.NoUnexpectedReceived();
+        }
+
+        private void CaptureHudIfRequested()
+        {
+            string path = System.Environment.GetEnvironmentVariable("STREET_HUD_SCREENSHOT");
+            if (string.IsNullOrEmpty(path)) return;
+            Camera view = game.Player.View;
+            Canvas canvas = ui.RuntimeCanvas;
+            var target = RenderTexture.GetTemporary(1280, 720, 24);
+            var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+            var previousTarget = view.targetTexture; var previousActive = RenderTexture.active;
+            var mode = canvas.renderMode; var camera = canvas.worldCamera; float distance = canvas.planeDistance;
+            try
+            {
+                view.targetTexture = target; canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = view; canvas.planeDistance = view.nearClipPlane + .05f;
+                Canvas.ForceUpdateCanvases(); view.Render(); RenderTexture.active = target;
+                image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
+                System.IO.File.WriteAllBytes(path, image.EncodeToPNG());
+            }
+            finally
+            {
+                canvas.planeDistance = distance; canvas.worldCamera = camera; canvas.renderMode = mode;
+                view.targetTexture = previousTarget; RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(target); Object.Destroy(image);
+            }
         }
 
         [UnityTest]

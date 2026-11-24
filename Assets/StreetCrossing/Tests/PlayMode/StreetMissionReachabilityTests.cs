@@ -29,12 +29,12 @@ namespace StreetCrossing.Tests.PlayMode
                     environment = new GameObject("Isolated mission route geometry");
                     world = new StreetWorld(environment.transform, scenario.surfaceMaterial, font); world.Build(scenario);
                     yield return null; yield return null; Physics.SyncTransforms();
-                    int objectCount = environment.GetComponentsInChildren<Transform>().Length;
+                    var originalObjects = environment.GetComponentsInChildren<Transform>(true);
                     foreach (StreetMissionDefinition mission in StreetMissionCatalog.ForDistrict(scenario.scenarioId))
                     for (int leg = 0; leg < (mission.roundTrip ? 2 : 1); leg++)
                     {
                         world.ApplyMission(mission, leg); Physics.SyncTransforms();
-                        Assert.AreEqual(objectCount, environment.GetComponentsInChildren<Transform>().Length, "Applying or reversing a mission cannot rebuild the street.");
+                        CollectionAssert.AreEquivalent(originalObjects, environment.GetComponentsInChildren<Transform>(true), "Applying or reversing a mission cannot rebuild the street.");
                         Assert.AreEqual(mission.reverse ^ (leg > 0) ? -1 : 1, world.MissionForwardSign);
                         Assert.AreEqual(world.MissionForwardSign > 0 ? 0 : 180, world.MissionHeading);
                         int sign = world.MissionForwardSign;

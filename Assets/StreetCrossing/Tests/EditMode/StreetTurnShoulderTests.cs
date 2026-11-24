@@ -26,15 +26,64 @@ namespace StreetCrossing.Tests.EditMode
             Assert.That(aprons.Count, Is.GreaterThan(0), "The right turn has an actual inner-corner shoulder outside the old road union.");
             Vector2 southOpening = StreetJunctionGeometry.CurbOpening(scenario, -1, aprons);
             Assert.That(southOpening.y, Is.GreaterThan(-4.75f), "The old -5.6m curb end cuts through the van's inner wheels.");
+            float junction = -9 * scenario.DirectionForLane(0);
             foreach (Vector2[] apron in aprons)
             {
                 foreach (Vector2 p in apron)
                     Assert.That(Mathf.Abs(p.x), Is.GreaterThan(scenario.conflictHalfWidth + .5f), "Do not expand the protected-crosswalk corridor.");
-                Mesh surface = StreetJunctionGeometry.Surface(apron, .021f);
-                try { foreach (Vector3 normal in surface.normals) Assert.That(normal.y, Is.GreaterThan(.99f)); }
+                Assert.That(StreetJunctionGeometry.CornerRamp(apron, junction, scenario.roadHalfWidth, out Vector2 corner, out Vector2 axis), Is.True,
+                    "Every apron must share a corner with the main-road and side-street seams.");
+                Mesh surface = StreetJunctionGeometry.Surface(apron, corner, axis);
+                try
+                {
+                    Vector3[] vertices = surface.vertices; Vector2[] uvs = surface.uv; int[] triangles = surface.triangles;
+                    for (int t = 0; t < triangles.Length; t += 3)
+                    {
+                        Vector3 a = vertices[triangles[t]], b = vertices[triangles[t + 1]], c = vertices[triangles[t + 2]];
+                        Vector3 cross = Vector3.Cross(b - a, c - a);
+                        Assert.That(cross.y, Is.GreaterThan(0f), "Every apron triangle must wind upward.");
+                        Assert.That(cross.magnitude * .5f, Is.GreaterThan(1e-8f), "Zero-area apron triangles are not allowed.");
+                        Assert.That(Mathf.Sqrt(cross.x * cross.x + cross.z * cross.z) / cross.y,
+                            Is.LessThanOrEqualTo(StreetJunctionGeometry.MaxSlopeRiseRun + 1e-5f), "The ramp slope must stay within 3.2%.");
+                    }
+                    for (int i = 0; i < vertices.Length; i++)
+                    {
+                        Vector2 xz = new Vector2(vertices[i].x, vertices[i].z);
+                        // The split-and-merge triangulation reorders vertices, so match by XZ, not by index:
+                        // every mesh vertex must sit on a hull edge (XZ unchanged) and obey the height field.
+                        float best = float.MaxValue;
+                        for (int k = 0; k < apron.Length; k++)
+                        {
+                            Vector2 e = apron[k], f = apron[(k + 1) % apron.Length];
+                            Vector2 ab = f - e, t = xz - e;
+                            float parameter = Mathf.Clamp01(Vector2.Dot(t, ab) / ab.sqrMagnitude);
+                            best = Mathf.Min(best, Vector2.Distance(xz, e + ab * parameter));
+                        }
+                        Assert.That(best, Is.LessThanOrEqualTo(1e-4f), "The height field must not move the XZ envelope.");
+                        Assert.That(Mathf.Abs(uvs[i].x - xz.x / StreetWorld.AsphaltTileSizeMetres)
+                                + Mathf.Abs(uvs[i].y - xz.y / StreetWorld.AsphaltTileSizeMetres),
+                            Is.LessThanOrEqualTo(1e-4f), "UVs stay world XZ / 3 m.");
+                        Assert.That(vertices[i].y, Is.InRange(StreetJunctionGeometry.MainRoadTopY - .001f, StreetJunctionGeometry.SideStreetTopY + .001f),
+                            "The apron must live between the two existing road tops.");
+                        float rampDistance = Vector2.Dot(xz - corner, axis);
+                        // The side-street seam line stays flush along its whole length: height must not
+                        // decay with distance from the corner (a radial cone would re-tilt this edge).
+                        if (Mathf.Abs(Mathf.Abs(xz.x - junction) - StreetLayout.SideRoadHalfWidth) < .001f)
+                            Assert.That(vertices[i].y, Is.EqualTo(StreetJunctionGeometry.SideStreetTopY).Within(.001f),
+                                "The entire side-street seam line must sit flush with the side-street top.");
+                        if (rampDistance >= StreetJunctionGeometry.TransitionMetres)
+                            Assert.That(vertices[i].y, Is.EqualTo(StreetJunctionGeometry.MainRoadTopY).Within(.001f),
+                                "Vertices beyond the ramp must sit flush with the road top.");
+                        else if (rampDistance <= 0f)
+                            Assert.That(vertices[i].y, Is.EqualTo(StreetJunctionGeometry.SideStreetTopY).Within(.001f),
+                                "Corner-region vertices must sit flush with the covered side-street top.");
+                        else
+                            Assert.That(vertices[i].y, Is.EqualTo(StreetJunctionGeometry.SideStreetTopY - rampDistance / StreetJunctionGeometry.TransitionMetres * (StreetJunctionGeometry.SideStreetTopY - StreetJunctionGeometry.MainRoadTopY)).Within(.001f),
+                                "Ramp vertices must follow the 3.2% linear field.");
+                    }
+                }
                 finally { Object.DestroyImmediate(surface); }
             }
-            float junction = -9 * scenario.DirectionForLane(0);
             for (int routeIndex = scenario.StraightLaneCount; routeIndex < scenario.StraightLaneCount + 2; routeIndex++)
             {
                 var path = new VehicleLanePath(scenario, routeIndex);

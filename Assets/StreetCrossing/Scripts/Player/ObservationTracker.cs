@@ -17,6 +17,21 @@ namespace StreetCrossing.Player
         public bool Right { get; private set; }
         public event Action<bool> Observed;
         public bool NeedsRefresh(float maximumAge) => (Left && clock - leftLastSeen > maximumAge) || (Right && clock - rightLastSeen > maximumAge);
+        public bool NeedsRefresh(bool left, float maximumAge) => (left ? Left : Right) && clock - (left ? leftLastSeen : rightLastSeen) > maximumAge;
+        public bool Invalidate(bool left)
+        {
+            if (left)
+            {
+                if (!Left) return false;
+                Left = false; leftTime = 0;
+            }
+            else
+            {
+                if (!Right) return false;
+                Right = false; rightTime = 0;
+            }
+            return true;
+        }
         public ObservationTracker(float dwell = 0.35f) { dwellSeconds = Mathf.Max(0.2f, dwell); }
         public void Tick(RoadObservationEvidence evidence, float dt)
         {

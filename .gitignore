@@ -25,3 +25,30 @@ obj/
 # Python tooling caches
 __pycache__/
 *.py[cod]
+
+# Large regenerable Blender / MakeHuman intermediates (>40 MB each, regenerate with the
+# scripts in ArtSource/Game03VisualUpgrade/scripts). Shipping variants stay tracked.
+ArtSource/Game03VisualUpgrade/output/Athletic_man.fbx
+ArtSource/Game03VisualUpgrade/output/Businesswoman.fbx
+ArtSource/Game03VisualUpgrade/output/Elder.fbx
+ArtSource/Game03VisualUpgrade/output/StreetPlane.fbx
+ArtSource/Game03VisualUpgrade/output/StreetGinkgo.fbx
+ArtSource/Game03VisualUpgrade/output/StreetConifer.fbx
+ArtSource/Game03VisualUpgrade/output/StreetPlane_opt.fbx
+
+# Original 70 MB MakeHuman pedestrian. The shipping rig is StreetPedestrian_Trimmed.fbx
+# (4 MB, four clips) and the Unity prefab references that file only.
+Assets/StreetCrossing/Art/External/Pedestrians/Athletic_man.fbx
+Assets/StreetCrossing/Art/External/Pedestrians/Athletic_man.fbx.meta
+
+# Runtime logs and captures; only the accepted 1080p evidence frames are versioned.
+Results/*
+!Results/visual-upgrade-test/
+Results/visual-upgrade-test/*
+!Results/visual-upgrade-test/overall-refined-S01-final-1080p.png
+!Results/visual-upgrade-test/overall-refined-S01-sidewalk-final.png
+TestResults/
+
+# Unity test-run scratch scenes
+Assets/InitTestScene*.unity
+Assets/InitTestScene*.unity.meta

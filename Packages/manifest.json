@@ -10,6 +10,20 @@
     "com.unity.modules.physics": "1.0.0",
     "com.unity.modules.ui": "1.0.0",
     "com.unity.modules.uielements": "1.0.0",
-    "com.unity.textmeshpro": "3.0.6"
-  }
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.inputsystem": "1.8.2",
+    "com.unity.xr.management": "4.4.0",
+    "com.unity.xr.openxr": "1.11.0",
+    "com.unity.xr.openxr.picoxr": "https://github.com/Pico-Developer/PICO-Unity-OpenXR-SDK.git#3aa3e62bff41df618529eeb60ff02c29a515dafe",
+    "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.androidjni": "1.0.0",
+    "com.unity.modules.assetbundle": "1.0.0",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.modules.unitywebrequesttexture": "1.0.0",
+    "com.unity.xr.core-utils": "2.5.2",
+    "com.unity.xr.legacyinputhelpers": "2.1.12"
+  },
+  "testables": [
+    "com.neuralife.pico-xr"
+  ]
 }

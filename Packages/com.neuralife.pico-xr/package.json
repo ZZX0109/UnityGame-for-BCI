@@ -1,0 +1,13 @@
+{
+  "name": "com.neuralife.pico-xr",
+  "version": "1.0.0",
+  "displayName": "Neuralife PICO XR",
+  "unity": "2022.3",
+  "description": "Shared OpenXR tracking, controller safety, world UI and PICO build tools for the three standalone games.",
+  "dependencies": {
+    "com.unity.inputsystem": "1.8.2",
+    "com.unity.xr.management": "4.4.0",
+    "com.unity.xr.openxr": "1.11.0",
+    "com.unity.ugui": "1.0.0"
+  }
+}

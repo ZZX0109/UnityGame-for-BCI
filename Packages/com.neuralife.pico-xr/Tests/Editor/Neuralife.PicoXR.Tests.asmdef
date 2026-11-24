@@ -1,0 +1,7 @@
+{
+  "name": "Neuralife.PicoXR.Tests",
+  "references": ["Neuralife.PicoXR", "Neuralife.PicoXR.Editor", "Unity.InputSystem", "Unity.InputSystem.TestFramework", "Unity.XR.OpenXR", "Unity.XR.OpenXRPico", "Unity.ugui"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

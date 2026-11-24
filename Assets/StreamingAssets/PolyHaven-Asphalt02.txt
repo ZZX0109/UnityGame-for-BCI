@@ -1,0 +1,22 @@
+# Poly Haven Asphalt 02 source
+
+- Asset: [Asphalt 02](https://polyhaven.com/a/asphalt_02)
+- Author: Rob Tuytel
+- License: CC0 1.0 Universal (asset page/license: https://polyhaven.com/license). Attribution is not required; provenance is retained here.
+- Physical texture width: 3 metres. The material uses one repeat per 3 metres.
+- Downloaded 2026-11-20 from the official Poly Haven CDN (the repository at https://github.com/Poly-Haven/Public-API provides the API/index; these image files are hosted at dl.polyhaven.org).
+
+## Original 2K JPEG maps
+
+| Map | Source URL | API MD5 | Local SHA-256 |
+|---|---|---|---|
+| Albedo (diffuse) | https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_diff_2k.jpg | 336af399fd98a39ab986d8b3bf73b4ff | 28F5BA8690553F192C0E5E1A5FF40F34765B4B93F4CC7059B1A3E9C795B6C28C |
+| OpenGL tangent normal | https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_nor_gl_2k.jpg | 77ebd1cc0b020ccaa1c6b58f103d1f75 | FFE49DB71A0FD34C1E259625DF66A302A237597D6EF655307987EC4E45BC6F21 |
+| Roughness | https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_rough_2k.jpg | 6fe669ab38640ef2009d6a28d1ad5ee9 | B9A516B61B7040A9245AC206642D5F767AD9589A0169C4A1668221429E8A998C |
+
+## Unity mapping and mobile import
+
+- `Asphalt.mat` uses the albedo JPG as sRGB, the OpenGL normal as a linear normal map, and the generated smoothness-alpha PNG as linear metallic/gloss input.
+- The Standard shader expects smoothness in `_MetallicGlossMap.a`; the PNG is generated as `alpha = 255 - roughness`, with RGB set to zero. The source roughness JPEG remains alongside it unchanged. Generated PNG SHA-256: BA2069DA09AC8DFBD476C30679B5A0B5A0A4D55F64DB8C8779ED4C90AC72B750.
+- Mipmaps are enabled; Android texture overrides use ASTC 6x6 at max 2048, anisotropic filtering 8, trilinear filtering. Normal and data maps are linear.
+- Asphalt UVs in the main road, route aprons, and distant continuation use root-local metres divided by `StreetWorld.AsphaltTileSizeMetres` (3.0), with material texture scale 1.
