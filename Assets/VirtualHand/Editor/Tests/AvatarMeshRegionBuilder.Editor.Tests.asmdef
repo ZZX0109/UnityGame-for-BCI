@@ -1,0 +1,21 @@
+{
+  "name": "VirtualHand.AvatarMeshRegionBuilder.Editor.Tests",
+  "rootNamespace": "VirtualHand.Editor.Tests",
+  "references": [
+    "VirtualHand.AvatarMeshRegionBuilder.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
