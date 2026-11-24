@@ -56,6 +56,7 @@ namespace FirstPersonSokoban.Integration
         float _lastYaw;
         FullBodyAppearanceMode _appearance = FullBodyAppearanceMode.Realistic;
         int _lastPushFrame = -1;
+        bool _pushPoseActive;   // 推箱被接受后置位,动画（Animating）一结束即回位
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -119,6 +120,19 @@ namespace FirstPersonSokoban.Integration
 
             if (_game == null) _game = FindObjectOfType<PuzzleGameManager>();
             var player = _game != null && _game.Loader != null ? _game.Loader.Player : null;
+
+            // 推箱姿态回收:动画一结束（回到 Playing/Victory）立即恢复站立姿态。
+            // 以 Phase 相位边沿为准,不依赖 locomotion 反馈（Animating 期间游戏
+            // 自身仍在 MoveControlled 移动玩家,步态照常驱动）。
+            if (_pushPoseActive && (_game == null || _game.Phase != GamePhase.Animating))
+            {
+                _pushPoseActive = false;
+                if (_bodyAdapter != null && _bodyAdapter.poseController != null)
+                {
+                    _bodyAdapter.gesturePosesEnabled = true; // 恢复手势姿态映射
+                    _bodyAdapter.poseController.ApplyPose(FullBodyPoseController.PoseStanding);
+                }
+            }
             float dt = Time.deltaTime;
 
             if (player == null)
@@ -143,6 +157,8 @@ namespace FirstPersonSokoban.Integration
                 _lastPlayerPos = pos;
                 _lastYaw = yaw;
                 _bodyInstance.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw, 0f));
+                _pushPoseActive = false;                  // SetSeated(false) 已回站立,推箱标志随之清除
+                _bodyAdapter.gesturePosesEnabled = true;  // 推箱窗口若被关卡重建截断,同样恢复手势姿态
                 _bodyAdapter.SetSeated(false);            // 站立为默认姿态
                 _bodyAdapter.SetFirstPerson(true);        // 只隐藏头部渲染,身体可见
                 _bodyAdapter.SetAppearanceMode(_appearance);
@@ -229,6 +245,19 @@ namespace FirstPersonSokoban.Integration
 
             // 仅调用公开入口:内部自检瞄准/对齐/推送状态,不触碰箱子与规则数据。
             _game.TryPush();
+
+            // TryPush 的所有失败路径都会提前返回,只有成功路径会把 Phase 置为
+            // Animating（TryPush 内唯一的 Animating 赋值）,因此该检测可靠。
+            // 推箱被接受 → 双臂前伸;Update 在动画结束后回位（见 _pushPoseActive 回收）。
+            if (_game.Phase == GamePhase.Animating
+                && _bodyAdapter != null && _bodyAdapter.poseController != null)
+            {
+                // 推箱窗口内挂起手势→姿态映射:Open/Release/Point 手势帧会覆盖推箱姿态
+                //（仅 Fist/Pinch/Grasp 落空保留）,结束后在 Update 回收时一并恢复。
+                _bodyAdapter.gesturePosesEnabled = false;
+                _pushPoseActive = true; // 先置位再应用,ApplyPose 万一抛异常,Update 回收块仍能兜底恢复
+                _bodyAdapter.poseController.ApplyPose(FullBodyPoseController.PoseBothArmsForward);
+            }
         }
 
         // ------------------------------------------------------------------
