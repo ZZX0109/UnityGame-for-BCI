@@ -182,8 +182,13 @@ namespace StreetCrossing.Presentation
         }
         public void AddVisualLod(Transform group, float cullHeight)
         {
+            // A second LODGroup on the same object is rejected by Unity, so keep the first one.
+            if (group.gameObject.GetComponent<LODGroup>() != null) return;
             LODGroup lod = group.gameObject.AddComponent<LODGroup>();
-            lod.SetLODs(new[] { new LOD(cullHeight, group.GetComponentsInChildren<Renderer>()) }); lod.RecalculateBounds();
+            // Single-level distance culling. Cross-fading needs real lower-detail levels; forcing it
+            // on a one-level group only ghosts objects, which is uncomfortable in VR.
+            lod.SetLODs(new[] { new LOD(cullHeight, group.GetComponentsInChildren<Renderer>()) });
+            lod.RecalculateBounds();
         }
         public Renderer VisualRounded(Transform parent, string name, Vector3 position, Vector3 size, string color, float radius = .07f, float smoothness = .18f)
         {
@@ -510,6 +515,10 @@ namespace StreetCrossing.Presentation
             foreach (Vector2 at in new[] { new Vector2(-24, 4.95f), new Vector2(17, -4.95f), new Vector2(26, -1.65f), new Vector2(-19, 1.65f) })
             {
                 if (s.turningTraffic && Mathf.Abs(at.x + 9 * s.DirectionForLane(0)) < 5.2f) continue;
+                Vector3 manholePos = new Vector3(at.x, -.008f, at.y);
+                // Prefer the imported CC0 manhole model; fall back to the procedural cylinder pair.
+                Transform manhole = modules.SpawnImported(root, "water_manhole_cover", manholePos, .02f);
+                if (manhole != null) { AddVisualLod(manhole, .004f); continue; }
                 // Rim sits 1 mm below the cover so the lid reads seated in its frame.
                 GameObject rim = Shape(PrimitiveType.Cylinder, "Manhole rim", root, new Vector3(at.x, -.0084f, at.y), new Vector3(.84f, .0016f, .84f), "3B3D39", false);
                 rim.GetComponent<Renderer>().sharedMaterial = Material("3B3D39", .30f);
@@ -661,9 +670,14 @@ namespace StreetCrossing.Presentation
             else if (side < 0 && bay == 0)
                 block = modules.CreateRefinedBuilding(root, p, side, height);
             else block = StreetDistrictBuilder.Building(root, this, profile, p, side, height, profile.FacadeAt(type));
+            // Refined facades carry their own unscaled "Collision proxy" child; every other facade
+            // still needs the shared envelope collider on the block root.
             BoxCollider collider = block.gameObject.GetComponent<BoxCollider>();
-            if (collider == null) collider = block.gameObject.AddComponent<BoxCollider>();
-            collider.center = Vector3.up * (height * .5f); collider.size = new Vector3(10.3f, height, 4);
+            if (collider == null && block.Find("Collision proxy") == null)
+            {
+                collider = block.gameObject.AddComponent<BoxCollider>();
+                collider.center = Vector3.up * (height * .5f); collider.size = new Vector3(10.3f, height, 4);
+            }
         }
         private static void Inspectable(GameObject target, string title, string description)
         { Player.StreetInspectable sign = target.AddComponent<Player.StreetInspectable>(); sign.title = title; sign.description = description; }
@@ -733,7 +747,8 @@ namespace StreetCrossing.Presentation
             // primitive trunk and low-poly crown with the refined procedural tree model.
             Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 1.4f), "9D967C");
             int variant = Mathf.Abs(Mathf.RoundToInt(p.x * 13f + p.z * 7f)) % 3;
-            modules.CreateRefinedTree(root, p, variant);
+            Transform tree = modules.CreateRefinedTree(root, p, variant);
+            AddVisualLod(tree, .006f);
         }
         private void Lamp(Vector3 p)
         {
@@ -826,8 +841,10 @@ namespace StreetCrossing.Presentation
             VisualRounded(model, "Front number plate", new Vector3(0, .40f, length * .5f + .085f), new Vector3(.44f, .14f, .02f), "2456A8", .008f, .40f);
             VisualRounded(model, "Rear number plate", new Vector3(0, .40f, -length * .5f - .085f), new Vector3(.44f, .14f, .02f), "2456A8", .008f, .40f);
             // Plate text sticks to glyphs the street font actually covers (梧桐· + latin digits).
-            Label("梧桐·D0312", new Vector3(0, .40f, length * .5f + .096f), .085f, "FFFFFF", model, 0, .40f, .12f);
-            Label("梧桐·D0312", new Vector3(0, .40f, -length * .5f - .096f), .085f, "FFFFFF", model, 180, .40f, .12f);
+            // Per-variant plate number so every vehicle reads as distinct.
+            string plate = string.Format("梧桐·{0:D4}", Mathf.Abs(variant * 127 + 801) % 10000);
+            Label(plate, new Vector3(0, .40f, length * .5f + .096f), .085f, "FFFFFF", model, 0, .40f, .12f);
+            Label(plate, new Vector3(0, .40f, -length * .5f - .096f), .085f, "FFFFFF", model, 180, .40f, .12f);
             GameObject exhaust = Shape(PrimitiveType.Cylinder, "Exhaust pipe", model,
                 new Vector3(halfWidth * .5f, .26f, -length * .5f - .04f), new Vector3(.07f, .06f, .07f), "55554F", false);
             exhaust.transform.localRotation = Quaternion.Euler(90, 0, 0);

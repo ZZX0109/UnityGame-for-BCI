@@ -162,12 +162,14 @@ namespace StreetCrossing.Presentation
                     for (int post = -1; post <= 1; post++)
                     {
                         Renderer r = Part(world, gate, "Maintenance gate upright", new Vector3(x, .65f, Z(side, 6.3f) + post * 2.85f), new Vector3(.13f, 1.3f, .13f), profile.metal, .02f, .50f);
-                        r.gameObject.AddComponent<BoxCollider>();
+                        BoxCollider uc = r.gameObject.AddComponent<BoxCollider>();
+                        uc.size = new Vector3(.13f, 1.3f, .13f);
                     }
                     for (int rail = 0; rail < 2; rail++)
                     {
                         Renderer r = Part(world, gate, "Maintenance gate rail", new Vector3(x, .55f + rail * .60f, Z(side, 6.3f)), new Vector3(.12f, .08f, 5.8f), profile.metal, .02f, .50f);
-                        r.gameObject.AddComponent<BoxCollider>();
+                        BoxCollider rc = r.gameObject.AddComponent<BoxCollider>();
+                        rc.size = new Vector3(.12f, .08f, 5.8f);
                     }
                     for (int stripe = -3; stripe <= 3; stripe++)
                         Part(world, gate, "Maintenance reflective board", new Vector3(x, .86f, Z(side, 6.3f) + stripe * .72f), new Vector3(.16f, .27f, .70f), (stripe & 1) == 0 ? "D7A15B" : "E8DFBE", .02f, .65f);
@@ -195,6 +197,45 @@ namespace StreetCrossing.Presentation
                     Part(world, hydrant, "Hydrant nozzle", new Vector3(nozzle * .16f, .34f, 0), new Vector3(.07f, .07f, .09f), "C7BFA9", .02f, .5f);
                 Part(world, hydrant, "Hydrant top nut", new Vector3(0, .56f, 0), new Vector3(.06f, .06f, .06f), "C7BFA9", .02f, .5f);
                 Part(world, hydrant, "Hydrant base flange", new Vector3(0, .02f, 0), new Vector3(.26f, .04f, .26f), "8E3529");
+            }
+            // Street-level utility boxes near the service covers, clear of the walking band.
+            for (int boxSide = -1; boxSide <= 1; boxSide += 2)
+            {
+                Vector3 boxPos = new Vector3(boxSide > 0 ? -8.5f : 8.5f, 0, Z(boxSide, 6.2f));
+                Transform box01 = world.Modules.SpawnImported(furniture, "utility_box_01", boxPos, 1.1f);
+                // Imported props carry their own LODGroup: CombineVisuals(furniture) skips renderers
+                // held by a LODGroup, which keeps FBX sub-meshes out of the merged furniture batch.
+                if (box01 != null) world.AddVisualLod(box01, .012f);
+                else
+                {
+                    Part(world, furniture, "Utility box", boxPos + Vector3.up * .25f, new Vector3(.45f, .50f, .30f), "5E6B5A", .04f, .22f);
+                    Part(world, furniture, "Utility box door", boxPos + new Vector3(0, .35f, .16f), new Vector3(.32f, .25f, .015f), "4A5447", .015f, .30f);
+                    Part(world, furniture, "Utility box lock", boxPos + new Vector3(.10f, .35f, .155f), new Vector3(.02f, .04f, .02f), "C1BAA7", .005f, .45f);
+                }
+                Vector3 box2Pos = new Vector3(boxSide > 0 ? -7.5f : 9.5f, 0, Z(boxSide, 6.4f));
+                Transform box02 = world.Modules.SpawnImported(furniture, "utility_box_02", box2Pos, .85f);
+                if (box02 != null) world.AddVisualLod(box02, .012f);
+                else Part(world, furniture, "Secondary utility box", box2Pos + Vector3.up * .20f, new Vector3(.32f, .40f, .22f), "616F5E", .03f, .22f);
+            }
+            // A discarded tyre and a security light beside each maintenance gate, on both footways.
+            for (int side = -1; side <= 1; side += 2)
+            for (int end = -1; end <= 1; end += 2)
+            {
+                float x = end * 38.6f;
+                Transform tyre = world.Modules.SpawnImported(furniture, "old_tyre", new Vector3(x, .03f, Z(side, 6.0f)), .58f);
+                if (tyre != null) world.AddVisualLod(tyre, .012f);
+                else Part(world, furniture, "Old tyre", new Vector3(x, .30f, Z(side, 6.0f)), new Vector3(.56f, .58f, .56f), "282A28", .08f, .15f);
+                // Security light mounted on the gate top rail.
+                Transform lightParent = new GameObject("Gate security light").transform;
+                lightParent.SetParent(furniture, false);
+                lightParent.localPosition = new Vector3(x, .95f, Z(side, 6.3f) + end * 2.1f);
+                Transform securityLight = world.Modules.SpawnImported(lightParent, "security_light", Vector3.zero, .22f);
+                if (securityLight != null) world.AddVisualLod(securityLight, .012f);
+                else
+                {
+                    Part(world, lightParent, "Security light body", new Vector3(0, .08f, .04f), new Vector3(.12f, .16f, .14f), "3B4145", .03f, .18f);
+                    Part(world, lightParent, "Security light lens", new Vector3(0, .08f, -.04f), new Vector3(.08f, .10f, .02f), "D8D4C4", .005f, .50f);
+                }
             }
             if (scenario.turningTraffic)
             {

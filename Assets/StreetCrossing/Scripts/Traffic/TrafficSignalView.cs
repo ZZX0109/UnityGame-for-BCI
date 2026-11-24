@@ -82,9 +82,14 @@ namespace StreetCrossing.Traffic
                 float lateral = (roadside - scenario.LaneZ(lane)) * direction;
                 if (lane == 0 || lane == scenario.StraightLaneCount - 1)
                 {
-                    Body(world, mast, "Vehicle pole", new Vector3(0, 2, 0), new Vector3(.1f, 4, .1f), "626D59", true, .045f);
+                    // The pole runs to 4.2 m so its top overlaps the 4.09-4.19 m cantilever. A 4 m
+                    // pole left a 9 cm gap that read as a signal head floating off its post.
+                    Body(world, mast, "Vehicle pole", new Vector3(0, 2.1f, 0), new Vector3(.1f, 4.2f, .1f), "626D59", true, .045f);
                     float span = Mathf.Abs(roadside - scenario.LaneZ(lane == 0 ? 1 : scenario.StraightLaneCount - 2));
                     Body(world, mast, "Overhead signal arm", new Vector3(Mathf.Sign(lateral) * span * .5f, 4.14f, 0), new Vector3(span + .2f, .10f, .10f), "626D59", false, .045f);
+                    // Diagonal gusset ties the cantilever back into the pole so the joint reads as one bracket.
+                    Renderer gusset = world.VisualRounded(mast, "Signal arm gusset", new Vector3(Mathf.Sign(lateral) * .40f, 3.83f, 0), new Vector3(.06f, .82f, .06f), "626D59", .02f, .45f);
+                    gusset.transform.localRotation = Quaternion.Euler(0, 0, -Mathf.Sign(lateral) * 36f);
                 }
                 // Four overhead heads, two roadside support poles; no support
                 // is placed in a newly occupied vehicle lane.

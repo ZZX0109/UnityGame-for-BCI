@@ -65,6 +65,26 @@ namespace StreetCrossing.Presentation
             foreach (Renderer r in go.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
             return b;
         }
+        /// <summary>Renderer AABB measured in <paramref name="space"/>'s local space. Ground
+        /// alignment must use this instead of world bounds, otherwise a street root that is not
+        /// at the world origin shifts every corrected model by the root offset.</summary>
+        private static Bounds BoundsInSpace(GameObject go, Transform space)
+        {
+            bool any = false;
+            Vector3 min = Vector3.zero, max = Vector3.zero;
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>())
+            {
+                Bounds wb = r.bounds; Vector3 c = wb.center, e = wb.extents;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 p = space.InverseTransformPoint(c + new Vector3(
+                        (corner & 1) == 0 ? -e.x : e.x, (corner & 2) == 0 ? -e.y : e.y, (corner & 4) == 0 ? -e.z : e.z));
+                    if (!any) { min = max = p; any = true; }
+                    else { min = Vector3.Min(min, p); max = Vector3.Max(max, p); }
+                }
+            }
+            return any ? new Bounds((min + max) * .5f, max - min) : new Bounds(Vector3.zero, Vector3.zero);
+        }
 
         /// <summary>Instantiate a refined procedural tree and scale it to the original street tree height.</summary>
         public Transform CreateRefinedTree(Transform parent, Vector3 position, int variant)
@@ -73,15 +93,17 @@ namespace StreetCrossing.Presentation
             GameObject go = Object.Instantiate(prefab, parent);
             go.name = "Refined street tree " + prefab.name;
             go.transform.localPosition = Vector3.zero;
-            Bounds b = BoundsOf(go);
+            // Yaw first, then measure. Rotating after the ground alignment swung the trunk off
+            // its pit whenever the model origin is not the footprint centre (the reported
+            // floating-tree symptom).
+            go.transform.rotation = Quaternion.Euler(0, (position.x * 37f + position.z * 23f) % 360f, 0) * go.transform.rotation;
+            Bounds b = BoundsInSpace(go, parent);
             float target = variant % 3 == 2 ? 7.6f : variant % 3 == 1 ? 6.8f : 7.2f;
             float scale = target / Mathf.Max(0.001f, b.size.y);
             go.transform.localScale *= scale;
-            b = BoundsOf(go);
-            go.transform.position += new Vector3(-b.center.x, -b.min.y, -b.center.z);
-            go.transform.localPosition = position;
-            // Keep the FBX importer's Z-up correction; only add a deterministic yaw.
-            go.transform.rotation = Quaternion.Euler(0, (position.x * 37f + position.z * 23f) % 360f, 0) * go.transform.rotation;
+            b = BoundsInSpace(go, parent);
+            // Footprint centred on the pit with the trunk base resting on the pit surface.
+            go.transform.localPosition = position + new Vector3(-b.center.x, -b.min.y, -b.center.z);
             return go.transform;
         }
 
@@ -93,16 +115,27 @@ namespace StreetCrossing.Presentation
             go.transform.localPosition = Vector3.zero;
             // FBX import maps Blender -Y to Unity +Z; keep the importer's Z-up fix, then face the street.
             go.transform.rotation = Quaternion.Euler(0, side > 0 ? 180f : 0f, 0f) * go.transform.rotation;
-            Bounds b = BoundsOf(go);
+            Bounds b = BoundsInSpace(go, parent);
             float widthScale = 10.3f / Mathf.Max(0.001f, b.size.x);
             go.transform.localScale *= widthScale;
-            b = BoundsOf(go);
+            b = BoundsInSpace(go, parent);
             float heightScale = height / Mathf.Max(0.001f, b.size.y);
             go.transform.localScale *= heightScale;
-            b = BoundsOf(go);
-            go.transform.position += new Vector3(-b.center.x, -b.min.y, -b.center.z);
-            go.transform.localPosition = position;
-            BoxCollider collider = go.AddComponent<BoxCollider>();
+            b = BoundsInSpace(go, parent);
+            go.transform.localPosition = position + new Vector3(-b.center.x, -b.min.y, -b.center.z);
+            // Isolate the display transform from the physics proxy: the facade is scaled to fit
+            // its parcel, so a BoxCollider on `go` would get its world size multiplied by
+            // lossyScale and drift away from collider.size. This unscaled child counter-scales
+            // the parent's lossyScale so it sits at world scale 1 and collider.size/center
+            // below stay world-true (10.3 x height x 4 footprint centred at half height).
+            Vector3 displayScale = go.transform.lossyScale;
+            GameObject proxy = new GameObject("Collision proxy");
+            proxy.transform.SetParent(go.transform, false);
+            proxy.transform.localScale = new Vector3(
+                1f / Mathf.Max(.0001f, displayScale.x),
+                1f / Mathf.Max(.0001f, displayScale.y),
+                1f / Mathf.Max(.0001f, displayScale.z));
+            BoxCollider collider = proxy.AddComponent<BoxCollider>();
             collider.size = new Vector3(10.3f, height, 4f);
             collider.center = Vector3.up * (height * .5f);
             return go.transform;
@@ -136,11 +169,14 @@ namespace StreetCrossing.Presentation
         {
             GameObject go = Object.Instantiate(streetPedestrian, parent);
             go.name = "Animated pedestrian model";
+            go.transform.localPosition = Vector3.zero;
             System.Random random = new System.Random(unchecked(variant ^ PedestrianSeed));
             float scale = .94f + (float)random.NextDouble() * .12f;
             go.transform.localScale *= scale; // scale first: bounds must be measured post-scale or feet drift by h*(1-scale)
-            Bounds b = BoundsOf(go);
-            go.transform.position += new Vector3(-b.center.x, -b.min.y, -b.center.z);
+            Bounds b = BoundsInSpace(go, parent);
+            // Feet on the actor origin, measured in the actor's own space so the yaw applied by
+            // the route follower keeps them planted.
+            go.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
             ApplyVariation(go, random);
             Animator animator = go.GetComponentInChildren<Animator>();
             return (go.transform, animator);
@@ -288,10 +324,22 @@ namespace StreetCrossing.Presentation
                             material.SetFloat("_BumpScale", .85f);
                             material.EnableKeyword("_NORMALMAP");
                         }
-                        // The shipped roughness map is greyscale, so a fixed mid sheen keeps the read
-                        // believable without unpacking channels into a MetallicGlossMap at runtime.
-                        material.SetFloat("_Glossiness", roughness != null ? .42f : .30f);
-                        material.SetFloat("_Metallic", .12f);
+                        if (roughness != null)
+                        {
+                            // Roughness map is greyscale (R = roughness) while Standard expects
+                            // smoothness in _MetallicGlossMap.a, so the map cannot be bound
+                            // directly without a custom shader. Tuning the uniform gloss to a
+                            // balanced midpoint and scale is the best Standard-only compromise;
+                            // per-pixel roughness variation is a known limitation.
+                            material.SetFloat("_Glossiness", .38f);
+                            material.SetFloat("_GlossMapScale", .85f);
+                            material.SetFloat("_Metallic", .08f);
+                        }
+                        else
+                        {
+                            material.SetFloat("_Glossiness", .30f);
+                            material.SetFloat("_Metallic", .12f);
+                        }
                         // One shared material per asset keeps every instance in the same batch and gives
                         // DisposeImported a single owner to release.
                         importedMaterials.Add(assetName, material);
@@ -348,9 +396,19 @@ namespace StreetCrossing.Presentation
                 case "modular_fire_escape": importedModularFireEscape = asset; break;
             }
         }
-        /// <summary>Destroy the runtime material copies built for imported models; safe to call when none loaded.</summary>
+        /// <summary>Destroy every cached pedestrian tint material and clear the session-lifetime
+        /// palette; call on scene unload so repeated Play sessions (domain reload disabled) do not
+        /// accumulate runtime materials.</summary>
+        public static void DisposePedestrianPalette()
+        {
+            foreach (Material material in PedestrianPalette.Values) Object.Destroy(material);
+            PedestrianPalette.Clear();
+        }
+        /// <summary>Destroy the runtime material copies built for imported models and the shared
+        /// pedestrian palette; safe to call when none loaded.</summary>
         public void DisposeImported()
         {
+            DisposePedestrianPalette();
             if (importedMaterials == null) return;
             foreach (Material material in importedMaterials.Values) Object.Destroy(material);
             importedMaterials.Clear();

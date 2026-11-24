@@ -27,10 +27,12 @@ namespace StreetCrossing.Presentation
             public Transform root;
             public Animator animator;
             public float restYaw;
+            public float animOffset;
         }
         private const float WalkClipSpeed = .8f;
         private readonly List<Actor> actors = new List<Actor>();
         private StreetGameManager game;
+        private bool animatorsFrozen;
         public int Count => actors.Count;
         public static StreetBackgroundRoute[] Routes(int seed, int count)
         {
@@ -42,8 +44,8 @@ namespace StreetCrossing.Presentation
                 bool waiting = i % 4 == 0;
                 int side = (i & 1) == 0 ? 1 : -1;
                 int band = i % 3;
-                float minX = band == 0 ? 5.5f : band == 1 ? 10.4f : 28.2f;
-                float maxX = band == 0 ? 7.7f : band == 1 ? 14.7f : 34.5f;
+                float minX = band == 0 ? 4.8f : band == 1 ? 10.4f : 28.2f;
+                float maxX = band == 0 ? 9.5f : band == 1 ? 14.7f : 34.5f;
                 float z = side * (band == 0 ? (side > 0 ? 4.15f : 5.1f) : band == 1 ? 7.55f : 6.0f);
                 // Leave a real body-width gap between opposite walkers and keep the north lane in front of the bus seat.
                 if (!(band == 0 && side > 0)) z += (i / 6) * .55f;
@@ -74,17 +76,31 @@ namespace StreetCrossing.Presentation
                     {
                         // Cadence matched to travel speed (walk clip authored at ~0.8 m/s) so feet stay planted.
                         animator.speed = routes[i].speed / WalkClipSpeed;
+                        // The Motion Int parameter offers no normalizedTime control, so start the walk
+                        // state at the route's random phase to desynchronise pedestrian strides.
+                        animator.Play("Walk", 0, routes[i].phase);
                     }
                 }
                 world.AddVisualLod(person, .018f);
                 actors.Add(new Actor { route = routes[i], root = person, animator = animator,
-                    restYaw = 165f + (i % 3) * 15f });
+                    restYaw = 165f + (i % 3) * 15f, animOffset = routes[i].phase });
             }
             Apply(0);
         }
         private void LateUpdate()
         {
-            if (game == null || !game.IsPlaying) return;
+            if (game == null || !game.IsPlaying)
+            {
+                // Animators follow Time.timeScale, which may stay non-zero while the game is paused;
+                // freeze them explicitly so pedestrians do not keep walking in the background.
+                if (!animatorsFrozen)
+                {
+                    foreach (Actor actor in actors) if (actor.animator != null) actor.animator.speed = 0f;
+                    animatorsFrozen = true;
+                }
+                return;
+            }
+            animatorsFrozen = false;
             // The simulation advances on a fixed 50 Hz step while this pose pass runs every rendered
             // frame; snapping to WorldTime read as one jump per step (sliding feet + VR judder).
             // Routes are analytic in time, so sample the trajectory at the fractionally blended
@@ -96,6 +112,10 @@ namespace StreetCrossing.Presentation
         {
             foreach (Actor actor in actors)
             {
+                // Re-assert cadence every pass so pedestrians unfrozen after a pause resume at their
+                // own walk rate (waiters animate at full speed).
+                if (actor.animator != null)
+                    actor.animator.speed = actor.route.waiting ? 1f : actor.route.speed / WalkClipSpeed;
                 Vector3 p = actor.route.Position(seconds);
                 Vector3 tangent = actor.route.Position(seconds + .04f) - p;
                 actor.root.localPosition = p;
