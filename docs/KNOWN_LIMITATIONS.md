@@ -31,7 +31,7 @@ Unity **2022.3.62f3c1**（中国版）· Built-in RP · Windows x64
 > 但只有后者需要冻结等待重新同步。**共享一个方法看起来省事，代价是把一个 0.3 秒的冻结
 > 强加到了每一次回放加载上。**
 
-**验证：** 修复后 EditMode **100/100**（`Logs/editmode-r8.xml`）、PlayMode **68/71**（`Logs/playmode-r8.xml`，余 3 条为第 1.5 节的配置冲突）。Windows 构建与 UnityPackage 导出**截至本文档最后一次提交时尚未在第 8 轮复跑**（第 8 轮构建尝试因另一个 Unity 实例持有工程锁而中止，`Logs/build-r8.log`），最近一次成功构建/导出属于第 7 轮；推送后将立即重跑这两步，结果以 `Logs/build-r8.log` 与 `Builds/` 为准。
+**验证：** 修复后 EditMode **100/100**（`Logs/editmode-r8.xml`）、PlayMode **68/71**（`Logs/playmode-r8.xml`，余 3 条为第 1.5 节的配置冲突）。Windows 构建与 UnityPackage 导出已在第 8 轮**复跑通过**（2026-11-24 17:21 / 17:23：`Succeeded, size 92MB, errors 0, warnings 0`，`Logs/build-r8.log`；包 5.84 MB，`Logs/export-r8.log`）；Burst AOT 仍为关闭状态（第 5.5 节），任何性能结论须一并披露。
 
 ---
 
@@ -367,6 +367,6 @@ Burst internal compiler error: System.UnauthorizedAccessException: 对路径的�
 
 补充（本文件证据支持）：
 
-- ❌ 不得声明 EditMode / PlayMode 当前通过 —— 结果是过期的
-- ❌ 不得声明当前 Windows 构建包含本轮新模块 —— 构建来自较早版本
-- ❌ 不得声明性能达标 —— 未测量
+- ✅ EditMode **100/100**、PlayMode **68/71** 为第 8 轮实测（`Logs/editmode-r8.xml` / `playmode-r8.xml`）；余 3 条见第 1.5 节
+- ⚠️ Windows 构建/导出包含第 8 轮全部修复（2026-11-24 17:21/17:23 复跑，`Logs/build-r8.log`、`Logs/export-r8.log`）
+- ⚠️ 性能仅限编辑器内测量（`PERFORMANCE.md`）；设备帧率未测，且构建关闭了 Burst AOT（第 5.5 节）

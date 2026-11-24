@@ -297,6 +297,10 @@ Unity.exe -batchmode -projectPath <proj> -executeMethod Neuralife.VirtualHand.Ed
 本轮修复 6 个缺陷后**重新构建通过**，确认运行时改动没有破坏打包。
 产物：`Builds/Windows-Elena/`，170 个文件，约 92.8 MB。
 
+**第 8 轮复跑（2026-11-24 17:21）：** 修复缺陷 #9（切源重同步门）后再次构建，
+`[VirtualHandBuild] Build result: Succeeded, size 92MB, errors 0, warnings 0`（`Logs/build-r8.log`）；
+UnityPackage 同步复导出（17:23，5.84 MB，`Logs/export-r8.log`）。产物含 `FirstPersonHands-Unity2022.zip` 与安装说明。
+
 **⚠️ 该构建使用关闭 Burst AOT 的设置**，原因见 5.5 节；任何性能结论都必须同时披露这一点。
 
 ---
@@ -381,7 +385,7 @@ Unity 采纳了该文件（版本号由 3 归一为 5，`EnableBurstCompilation:
 | Unity 编辑器打开 + 资产导入 + 编译 | 10.1 | ✅ **通过** | 0 错误，`Tundra build success` |
 | Missing Script / 粉色材质全量检查 | 10.1 | ⚠️ 间接覆盖 | Prefab 构建成功 + 渲染截图非粉色即间接证据，未做逐项扫描 |
 | EditMode | 10.1 | ✅ **100 / 100** | — |
-| PlayMode | 10.1 | ⚠️ **56 / 59** | 3 条为配置冲突，见第 3 节 |
+| PlayMode | 10.1 | ⚠️ **68 / 71** | 3 条为配置冲突，见第 3 节 |
 | 手指动作（**骨骼级**） | 10.2 | ✅ **通过** | `HandPoseBonePlayModeTests` 12 条 |
 | 腕部旋转 90° / 180° | 10.2 | ✅ **通过** | 逐骨骼断言 localRotation 变化 < 0.5° |
 | NaN / Infinity / 异常长度拒绝 | 10.2 | ✅ **通过** | 修复后 4 条测试通过 |
@@ -392,8 +396,8 @@ Unity 采纳了该文件（版本号由 3 归一为 5，`EnableBurstCompilation:
 | 视觉模式：Windows 构建中正确显示蓝色 Shader | 10.4 | ⚠️ **部分** | Shader 已通过序列化字段引用（非 `Shader.Find`），降低被剥离风险；**未在 Player 中实机确认** |
 | 模拟 XR：失追 / 恢复 / 独立 / 切源 / 暂停 | 10.5 | ✅ **通过** | 15 条测试 |
 | 模拟 XR：双目 / 真实双目一致性 | 6.3 / 10.6 | 🚫 **无设备** | 需头显 |
-| Windows 构建 | 13 | ✅ **成功**（92 MB / 170 文件 / 0 错误）**但 Burst AOT 关闭**，见 5.5 节 |
-| UnityPackage 重新导出 | 11 | ✅ **成功**（`Builds/FirstPersonHands/FirstPersonHands.unitypackage`，15:53:14） |
+| Windows 构建 | 13 | ✅ **成功**（第 8 轮 2026-11-24 17:21 复跑：`Succeeded, size 92MB, errors 0, warnings 0`，`Logs/build-r8.log`）**但 Burst AOT 关闭**，见 5.5 节 |
+| UnityPackage 重新导出 | 11 | ✅ **成功**（第 8 轮 17:23 复跑：`Builds/FirstPersonHands/FirstPersonHands.unitypackage`，5.84 MB，`Logs/export-r8.log`） |
 | 真实 PICO 设备验证 | 10.6 | 🚫 **HARDWARE_NOT_TESTED** | 无设备 |
 | 性能：几何 / CPU / 外观切换 | 10.7 | ✅ **已测量** | 见 `PERFORMANCE.md`（1 SMR、28,994 三角面、69 骨、姿态更新约 0.009 ms/手） |
 | 性能：设备帧率与帧时间 | 10.7 | 🚫 **HARDWARE_NOT_TESTED** | 需头显；且当前构建关闭 Burst AOT，设备数值本就不可比 |
@@ -406,7 +410,7 @@ Unity 采纳了该文件（版本号由 3 归一为 5，`EnableBurstCompilation:
 1. **Unity 编辑器编译**：当前全部源码在真实 Unity 2022.3.62f3c1 中国版下 **0 错误**（`Tundra build success`）。
 2. **双输入模式编译**：Both 与仅 Legacy 两种宏组合均 0 错误，模块可优雅降级。
 3. **EditMode 测试**：**100 / 100 通过**（当前代码，真实时间与 XML 可查）。
-4. **PlayMode 测试**：**56 / 59**；3 条失败已通过 A/B 实验定位为**配置冲突**（手指比例 vs 任务几何），非代码缺陷。
+4. **PlayMode 测试**：**68 / 71**；3 条失败已通过 A/B 实验定位为**配置冲突**（手指比例 vs 任务几何），非代码缺陷。
 5. **骨骼级姿势验证**（规范 3.1 明确要求）：指向手势只有食指伸直、其余三指收拢；开/握/捏三种姿态在真实骨骼上互不混淆。
 6. **手腕旋转不破坏手指姿态**：腕部转 90° 与 180° 后，每个骨骼 localRotation 变化 < 0.5°，各指尖到腕距离不变。
 7. **无效输入被拒绝**：NaN / Infinity / 超范围 / 错误长度都不会改变最后可信姿态，且不改写调用方数组。
@@ -415,8 +419,8 @@ Unity 采纳了该文件（版本号由 3 归一为 5，`EnableBurstCompilation:
 10. **外观模式**：20 次连续切换无材质实例泄漏；骨骼不重置；物体不掉落（真实测试）。
 11. **外观渲染**：写实与蓝色两种模式均有真实渲染截图，MD5 互不相同，已人工确认效果正确。
 12. **包解析**：Input System 1.7.0 / XR Management 4.4.1 / OpenXR 1.11.0 真实解析成功。
-13. **Windows 构建**：**成功，92 MB / 170 文件 / 0 错误**（Burst AOT 关闭，须一并披露）。
-14. **由测试发现并修复 8 个真实缺陷**，其中 3 个会使功能在成品中完全不可用。
+13. **Windows 构建**：第 8 轮复跑成功（2026-11-24 17:21，`Succeeded, size 92MB, errors 0, warnings 0`，`Logs/build-r8.log`；Burst AOT 关闭，须一并披露）。
+14. **由测试发现并修复 9 个真实缺陷**，其中 3 个会使功能在成品中完全不可用。
 
 ## 9. 明确不得声明的内容
 
