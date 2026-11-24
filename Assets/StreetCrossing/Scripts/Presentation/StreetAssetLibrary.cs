@@ -7,7 +7,6 @@ namespace StreetCrossing.Presentation
     public sealed class StreetAssetLibrary
     {
         private readonly GameObject[] vehicles;
-        private readonly GameObject residential;
         private readonly GameObject[] refinedTrees;
         private readonly GameObject refinedBuilding;
         private readonly GameObject streetPedestrian;
@@ -18,7 +17,6 @@ namespace StreetCrossing.Presentation
         public StreetAssetLibrary()
         {
             vehicles = new[] { Load("SedanModule"), Load("HatchbackModule"), Load("VanModule") };
-            residential = Load("ResidentialModule");
             refinedTrees = new[]
             {
                 Load("RefinedTreeOak"),
@@ -234,14 +232,6 @@ namespace StreetCrossing.Presentation
                 PedestrianPalette[key] = cached;
             }
             return cached;
-        }
-
-        public void CreateBuilding(Transform parent, Vector3 position, int side, float height)
-        {
-            GameObject go = Object.Instantiate(residential, parent); go.name = "Modular residential facade";
-            go.transform.localPosition = position; go.transform.localRotation = Quaternion.Euler(0, side > 0 ? 0 : 180, 0);
-            go.transform.localScale = new Vector3(1, height / 7.2f, 1);
-            BoxCollider collider = go.AddComponent<BoxCollider>(); collider.center = Vector3.up * 3.6f; collider.size = new Vector3(10.3f, 7.2f, 4);
         }
 
         // Imported CC0 glTF models live under Resources/StreetCrossing/Imported/Models and load lazily.
