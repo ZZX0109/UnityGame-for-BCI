@@ -17,6 +17,49 @@ namespace Neuralife.VirtualHand
         public string filePath;
         public double Duration => frames.Count > 0 ? frames[frames.Count - 1].time + frames[frames.Count - 1].duration : 0;
 
+        // ---- protocol audit (spec 3.3) ----
+
+        /// <summary>Frames whose time went backwards in the file.</summary>
+        public int outOfOrderFrames;
+
+        /// <summary>Number of time gaps larger than <see cref="gapThresholdSeconds"/>.</summary>
+        public int gapCount;
+
+        /// <summary>Largest gap between consecutive frames, in seconds.</summary>
+        public double largestGapSeconds;
+
+        /// <summary>Gaps above this are reported; they are not silently interpolated.</summary>
+        public double gapThresholdSeconds = 0.5;
+
+        /// <summary>SHA-256 of the file bytes, so a switched source is detectable.</summary>
+        public string sourceHash = "";
+
+        /// <summary>Bit i set means version i+1 appeared. Bit 0 = v1.</summary>
+        public int declaredVersions;
+
+        /// <summary>v1 is the only supported contract; anything else is refused.</summary>
+        public bool VersionCompatible => declaredVersions == 0 || (declaredVersions & ~1) == 0;
+
+        /// <summary>True when the file yielded frames that may be played back.</summary>
+        public bool IsUsable => frames.Count > 0 && VersionCompatible;
+
+        /// <summary>Human-readable summary for the host / test report.</summary>
+        public string Describe()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("frames=").Append(frames.Count);
+            sb.Append(" duration=").Append(Duration.ToString("F3", CultureInfo.InvariantCulture)).Append("s");
+            sb.Append(" rejected=").Append(rejectedLines);
+            sb.Append(" outOfOrder=").Append(outOfOrderFrames);
+            sb.Append(" gaps=").Append(gapCount);
+            if (gapCount > 0)
+                sb.Append(" maxGap=").Append(largestGapSeconds.ToString("F3", CultureInfo.InvariantCulture)).Append("s");
+            sb.Append(" versions=").Append(declaredVersions == 0 ? "none" : declaredVersions.ToString());
+            if (!VersionCompatible) sb.Append(" UNSUPPORTED_VERSION");
+            if (frames.Count == 0) sb.Append(" EMPTY");
+            return sb.ToString();
+        }
+
         public static bool TryParseFrame(string json, out HandMotionFrame f, out string error)
         {
             f = null; error = null;
@@ -129,9 +172,20 @@ namespace Neuralife.VirtualHand
     {
         public ReplayData Data { get; private set; } = new ReplayData();
         public event Action<HandMotionFrame> FrameReady;
+
+        /// <summary>
+        /// Raised whenever <see cref="Open"/> swaps in a different data set. The host
+        /// uses it to drop the previous source's target pose and any action events
+        /// that were produced but never consumed.
+        /// </summary>
+        public event Action SourceChanged;
+
         public bool IsPlaying { get; private set; }
         public double Position { get; private set; }
         public double Duration => Data?.Duration ?? 0;
+
+        /// <summary>Frames at or past the current position not yet delivered.</summary>
+        public int PendingFrames => Data == null ? 0 : Mathf.Max(0, Data.frames.Count - _cursor);
 
         int _cursor;
         bool _loop;
@@ -161,6 +215,7 @@ namespace Neuralife.VirtualHand
             }
 
             int lineNo = 0;
+            double previousTime = double.NegativeInfinity;
             using (var sr = new StringReader(text))
             {
                 string line;
@@ -168,7 +223,19 @@ namespace Neuralife.VirtualHand
                 {
                     lineNo++;
                     if (string.IsNullOrWhiteSpace(line)) continue;
-                    if (TryParseLine(line, out var f, out var err, out bool partial)) data.frames.Add(f);
+                    if (TryParseLine(line, out var f, out var err, out bool partial))
+                    {
+                        // Time-order audit: records the problem instead of silently
+                        // reordering, so a malformed file is visible in the report.
+                        if (f.time < previousTime)
+                            data.outOfOrderFrames++;
+                        previousTime = f.time;
+
+                        if (f.version >= 1 && f.version <= 31)
+                            data.declaredVersions |= 1 << (f.version - 1);
+
+                        data.frames.Add(f);
+                    }
                     else
                     {
                         data.rejectedLines++;
@@ -177,7 +244,31 @@ namespace Neuralife.VirtualHand
                     }
                 }
             }
+
             data.frames.Sort((a, b) => a.time.CompareTo(b.time));
+
+            // Gap audit: a long break means the stream stalled; playable, but the
+            // host must be told so it can hold rather than interpolate across it.
+            for (int i = 1; i < data.frames.Count; i++)
+            {
+                double gap = data.frames[i].time - (data.frames[i - 1].time + data.frames[i - 1].duration);
+                if (gap > data.gapThresholdSeconds)
+                {
+                    data.gapCount++;
+                    if (gap > data.largestGapSeconds) data.largestGapSeconds = gap;
+                }
+            }
+
+            // Source fingerprint: identifies this exact file so a source switch is
+            // detectable even when two files share a name.
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(text));
+                var sb = new System.Text.StringBuilder(bytes.Length * 2);
+                foreach (var b in bytes) sb.Append(b.ToString("x2", CultureInfo.InvariantCulture));
+                data.sourceHash = sb.ToString();
+            }
+
             return data;
         }
 
@@ -191,7 +282,30 @@ namespace Neuralife.VirtualHand
 
         public void Open(ReplayData data, bool loop = false)
         {
-            Data = data; _loop = loop; _cursor = 0; Position = 0; IsPlaying = false;
+            // Switching source must not inherit anything from the previous stream:
+            // the cursor, the clock and the pending frame backlog all reset, and the
+            // host is told so it can clear the old target pose and un-consumed events.
+            bool isSwitch = !ReferenceEquals(Data, data) || (Data != null && Data.frames.Count > 0);
+
+            Data = data;
+            _loop = loop;
+            _cursor = 0;
+            Position = 0;
+            IsPlaying = false;
+
+            if (isSwitch)
+                SourceChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Discards every buffered frame without delivering it. A host calls this
+        /// after a source switch or a long stall so stale target poses and action
+        /// events from the old stream can never be applied.
+        /// </summary>
+        public void ClearPending()
+        {
+            if (Data != null)
+                _cursor = Data.frames.Count;
         }
 
         public void Play() => IsPlaying = true;

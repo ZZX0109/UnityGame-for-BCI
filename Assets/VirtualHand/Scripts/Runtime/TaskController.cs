@@ -234,10 +234,116 @@ namespace Neuralife.VirtualHand
         }
 
         /// <summary>Intent is only actionable while the input source is valid and confident.</summary>
+        // ------------------------------------------------------------------
+        // Multi-source safety (spec 3.4)
+        //
+        // The task assist and a live XR/controller source must never write the
+        // same hand bones in the same frame, and a tracking loss must not be
+        // mistaken for a release. Both are enforced here rather than in the
+        // individual callers, so no host can bypass them by mistake.
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Host sets false when hand tracking is lost, the hand is suspended, or a
+        /// replay is paused. Task transitions then stop advancing.
+        /// </summary>
+        public bool InputTrusted { get; set; } = true;
+
+        /// <summary>
+        /// True while a live source (XR optical joints or VR controller grip) is
+        /// driving the hand bones. The task assist must not write them as well,
+        /// otherwise two writers fight over one skeleton.
+        /// </summary>
+        public bool LiveSourceOwnsHands { get; set; }
+
+        [Tooltip("Seconds after input returns before new task transitions are accepted.")]
+        [Range(0f, 2f)] public float inputResyncSeconds = 0.3f;
+
+        float _inputResyncRemaining;
+
+        /// <summary>
+        /// True between losing trustworthy input and completing the resync window.
+        /// The task holds its stage and object ownership throughout — losing
+        /// tracking must never look like letting go.
+        /// </summary>
+        public bool AwaitingSafeState { get; private set; }
+
+        /// <summary>
+        /// Drops stale task progress without arming the tracking-resync gate.
+        ///
+        /// A source switch is not a tracking loss: clearing the previous stream's timers
+        /// and latches is required, but freezing the task for the resync window on every
+        /// replay load would stall legitimate progress. Tracking loss uses
+        /// <see cref="EnterSafeState"/>; a source switch uses this.
+        /// </summary>
+        public void ClearStaleState()
+        {
+            _restTimer = 0f;
+            _receiverStableTimer = 0f;
+            _receiverLatched = false;
+        }
+
+        /// <summary>
+        /// Enters the explicit safe state: stop advancing the task and clear the
+        /// pending timers/latches, but deliberately keep object ownership and the
+        /// current stage. Called on tracking loss, source switch and explicit pause.
+        /// </summary>
+        public void EnterSafeState()
+        {
+            _restTimer = 0f;
+            _receiverStableTimer = 0f;
+            _receiverLatched = false;
+            AwaitingSafeState = true;
+            _inputResyncRemaining = inputResyncSeconds;
+        }
+
+        /// <summary>
+        /// Single entry point for the host to report input health. Dropping to
+        /// untrusted enters the safe state immediately; regaining trust still has to
+        /// wait out the resync window before events resume.
+        /// </summary>
+        public void NotifyInputTrusted(bool trusted)
+        {
+            if (trusted == InputTrusted)
+                return;
+
+            InputTrusted = trusted;
+            if (!trusted)
+                EnterSafeState();
+        }
+
+        /// <summary>
+        /// Called when the visual mode changes. Exists to make the contract
+        /// explicit and testable: appearance is a rendering concern only, so this
+        /// deliberately touches no Rigidbody, no ownership and no stage.
+        /// </summary>
+        public void NotifyVisualModeChanged()
+        {
+            // Intentionally empty. Kept as a named API so a regression that starts
+            // mutating physics from the appearance path has somewhere obvious to
+            // show up, and so tests can assert ownership survives a mode switch.
+        }
+
         public void OnIntent(string intent, double dt, bool inputValid = true, float confidence = 1f)
         {
             if (Type == TaskType.None || CurrentStage == Stage.Done || _heldObject == null) return;
             if (leftAnchor == null || rightAnchor == null) return;
+
+            // No new transitions without trustworthy input: a stale or lost source
+            // must not be able to start or finish a grasp.
+            if (!InputTrusted)
+                return;
+
+            // After input returns, hold the current stage until the resync window
+            // has elapsed so the caller can re-align coordinates first.
+            if (AwaitingSafeState)
+            {
+                _inputResyncRemaining -= (float)dt;
+                if (_inputResyncRemaining > 0f)
+                    return;
+                AwaitingSafeState = false;
+            }
+
             bool actionable = inputValid && confidence >= minConfidence;
             if (!actionable)
             {
@@ -473,6 +579,11 @@ namespace Neuralife.VirtualHand
         void UpdateTaskHands()
         {
             if (!ControlsTaskHands || _heldObject == null) return;
+
+            // Single-writer rule: a live XR/controller source owns the bones while it
+            // is active, so the task assist stands down instead of fighting it.
+            if (LiveSourceOwnsHands) return;
+
             ApplyTaskAssist(leftHand, true, TaskAssistFactor(true));
             ApplyTaskAssist(rightHand, false, TaskAssistFactor(false));
         }

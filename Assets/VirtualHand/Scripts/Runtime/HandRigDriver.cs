@@ -42,6 +42,129 @@ namespace Neuralife.VirtualHand
         [Tooltip("Max spread degrees for the 4th control of each finger block.")]
         public float maxSpreadDeg = 10f;
 
+        // ------------------------------------------------------------------
+        // Inter-finger self-penetration detection (spec 3.2)
+        //
+        // The rig carries no per-bone skin radii, so a true penetration depth is not
+        // computable here. What is computable — and what actually answers "are the
+        // fingers overlapping" — is the shortest distance between adjacent fingers'
+        // bone centrelines. That is reported as a conservative diagnostic, not as a
+        // skin-accurate measurement, and it never silently rewrites the pose.
+        // ------------------------------------------------------------------
+
+        [Header("Self-intersection diagnostics")]
+        [Tooltip("Measure adjacent-finger clearance after each pose update.")]
+        public bool detectSelfIntersection = true;
+
+        [Tooltip("Adjacent finger centrelines closer than this are reported as interpenetrating (metres).")]
+        [Range(0.001f, 0.03f)] public float selfIntersectionThresholdMeters = 0.006f;
+
+        /// <summary>Shortest centreline distance found between adjacent fingers, in metres.</summary>
+        public float ClosestAdjacentFingerDistance { get; private set; } = float.PositiveInfinity;
+
+        /// <summary>True when that distance fell below <see cref="selfIntersectionThresholdMeters"/>.</summary>
+        public bool SelfIntersectionDetected { get; private set; }
+
+        /// <summary>
+        /// Measures the clearance between adjacent fingers and updates
+        /// <see cref="ClosestAdjacentFingerDistance"/> / <see cref="SelfIntersectionDetected"/>.
+        ///
+        /// The proximal phalanx of each finger is excluded from the comparison: adjacent
+        /// knuckles meet at the palm, so their centrelines are near zero apart in every
+        /// pose and including them would make the diagnostic fire constantly. What is
+        /// compared is the middle and distal phalanges, which are the parts that can
+        /// genuinely cross when a pose over-curls.
+        /// </summary>
+        public void EvaluateSelfIntersection()
+        {
+            if (!detectSelfIntersection || _thumb[0] == null || _fingers[0] == null)
+            {
+                SelfIntersectionDetected = false;
+                ClosestAdjacentFingerDistance = float.PositiveInfinity;
+                return;
+            }
+
+            float closest = float.PositiveInfinity;
+
+            // Thumb against the index finger: the pair that contacts first in a fist.
+            closest = Mathf.Min(closest, ChainClearance(_thumb, _fingers[0]));
+
+            for (int f = 0; f < 3; f++)
+                closest = Mathf.Min(closest, ChainClearance(_fingers[f], _fingers[f + 1]));
+
+            ClosestAdjacentFingerDistance = closest;
+            SelfIntersectionDetected = closest < selfIntersectionThresholdMeters;
+        }
+
+        /// <summary>Shortest segment-to-segment distance between two phalanx chains.</summary>
+        static float ChainClearance(Transform[] a, Transform[] b)
+        {
+            if (a == null || b == null)
+                return float.PositiveInfinity;
+
+            float best = float.PositiveInfinity;
+
+            // Start at 1: skip the proximal segment, which shares the palm.
+            for (int i = 1; i < a.Length - 1; i++)
+            {
+                if (!a[i] || !a[i + 1]) continue;
+                for (int j = 1; j < b.Length - 1; j++)
+                {
+                    if (!b[j] || !b[j + 1]) continue;
+                    float d = SegmentDistance(a[i].position, a[i + 1].position,
+                                              b[j].position, b[j + 1].position);
+                    if (d < best) best = d;
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>Shortest distance between two line segments.</summary>
+        static float SegmentDistance(Vector3 p1, Vector3 q1, Vector3 p2, Vector3 q2)
+        {
+            Vector3 d1 = q1 - p1;
+            Vector3 d2 = q2 - p2;
+            Vector3 r = p1 - p2;
+            float a = Vector3.Dot(d1, d1);
+            float e = Vector3.Dot(d2, d2);
+            float f = Vector3.Dot(d2, r);
+
+            const float eps = 1e-10f;
+            float s, t;
+
+            if (a <= eps && e <= eps)
+                return Vector3.Distance(p1, p2);
+
+            if (a <= eps)
+            {
+                s = 0f;
+                t = Mathf.Clamp01(f / e);
+            }
+            else
+            {
+                float c = Vector3.Dot(d1, r);
+                if (e <= eps)
+                {
+                    t = 0f;
+                    s = Mathf.Clamp01(-c / a);
+                }
+                else
+                {
+                    float b = Vector3.Dot(d1, d2);
+                    float denom = a * e - b * b;
+                    s = denom > eps ? Mathf.Clamp01((b * f - c * e) / denom) : 0f;
+                    t = (b * s + f) / e;
+                    if (t < 0f) { t = 0f; s = Mathf.Clamp01(-c / a); }
+                    else if (t > 1f) { t = 1f; s = Mathf.Clamp01((b - c) / a); }
+                }
+            }
+
+            Vector3 c1 = p1 + d1 * s;
+            Vector3 c2 = p2 + d2 * t;
+            return Vector3.Distance(c1, c2);
+        }
+
         HandRigProfile.Channel[] _profile;   // 20 calibrated channels (null = legacy path)
 
         // Native-clip path (Elena FF). Per-bone control maps are cached at bind
@@ -66,20 +189,73 @@ namespace Neuralife.VirtualHand
         [SerializeField] bool _isMirrored;
         public bool IsMirrored { get => _isMirrored; private set => _isMirrored = value; }
 
-        void Awake() => CacheBones();
+        void Awake()
+        {
+            // Length tuning first: the native path derives spread axes, thumb
+            // clearance and contact spheres from the current bone positions.
+            ApplyProportionsOnce();
+            CacheBones();
+        }
 
-        /// <summary>Find bones under this hand root (direct name or name.side suffix).</summary>
+        /// <summary>
+        /// Applies the finger-length multipliers from
+        /// Resources/Rig/ElenaFF/HandProportions once per hand instance.
+        ///
+        /// Runtime instead of build-time on purpose: bone localPosition is safe to
+        /// edit because this driver only ever writes localRotation, and applying it
+        /// on Awake means a tuned value shows up on the next Play instead of
+        /// requiring a prefab rebuild.  Identity (all 1) leaves the hand untouched.
+        /// </summary>
+        static HandProportions _cachedProportions;
+        static bool _proportionsLookupDone;
+        bool _proportionsApplied;
+
+        void ApplyProportionsOnce()
+        {
+            if (_proportionsApplied)
+                return;
+            _proportionsApplied = true;
+
+            if (!_proportionsLookupDone)
+            {
+                _proportionsLookupDone = true;
+                _cachedProportions = Resources.Load<HandProportions>("Rig/ElenaFF/HandProportions");
+                if (_cachedProportions == null)
+                    Debug.Log("[HandRigDriver] no HandProportions asset found under Resources/Rig/ElenaFF; " +
+                              "using the model's authored finger lengths.");
+            }
+
+            if (_cachedProportions == null || _cachedProportions.IsIdentity)
+                return;
+
+            int changed = 0;
+            foreach (var bone in GetComponentsInChildren<Transform>(true))
+            {
+                float scale = _cachedProportions.ScaleFor(bone.name);
+                if (Mathf.Approximately(scale, 1f))
+                    continue;
+
+                bone.localPosition = bone.localPosition * scale;
+                changed++;
+            }
+
+            Debug.Log("[HandRigDriver] HandProportions applied to " + changed + " bones on " + name + ".");
+        }
+
+        /// <summary>Find bones under this hand root (direct name or name.name.side suffix).</summary>
         public bool CacheBones()
         {
             if (nativeProfile != null && CacheNativeBones())
-                return true;
-
-            for (int i = 0; i < 3; i++) _thumb[i] = FindBone(ThumbChain[i]);
-            for (int f = 0; f < 4; f++)
             {
-                _fingers[f] = new Transform[3];
-                for (int j = 0; j < 3; j++) _fingers[f][j] = FindBone(Chains[f][j]);
+                // The native path returns early, but the per-finger chains are still
+                // needed: the self-intersection diagnostic and thumb clearance both walk
+                // them, and on this rig they must be resolved from the native landmarks
+                // rather than the legacy FBX names.
+                CacheFingerChains();
+                return true;
             }
+
+            CacheFingerChains();
             bool ok = _thumb[0] != null && _fingers[0][0] != null;
             if (!ok)
             {
@@ -90,6 +266,60 @@ namespace Neuralife.VirtualHand
             LoadProfile();
             CacheRest();
             return true;
+        }
+
+        /// <summary>Native landmark prefixes, one row per finger, proximal to distal.</summary>
+        static readonly string[][] NativeChainLandmarks =
+        {
+            new[] { "index_01", "index_02", "index_03" },
+            new[] { "middle_01", "middle_02", "middle_03" },
+            new[] { "ring_01", "ring_02", "ring_03" },
+            new[] { "pinky_01", "pinky_02", "pinky_03" }
+        };
+
+        static readonly string[] NativeThumbLandmarks = { "thumb_01", "thumb_02", "thumb_03" };
+
+        /// <summary>
+        /// Fills <see cref="_thumb"/> and <see cref="_fingers"/> on whichever rig layout
+        /// is present: the legacy FBX names first, then the Elena native landmarks. Runs
+        /// on both paths so downstream diagnostics never see a half-filled chain.
+        /// </summary>
+        void CacheFingerChains()
+        {
+            for (int i = 0; i < 3; i++)
+                _thumb[i] = FindBone(ThumbChain[i]) ?? FindNativeBone(NativeThumbLandmarks[i]);
+
+            for (int f = 0; f < 4; f++)
+            {
+                if (_fingers[f] == null)
+                    _fingers[f] = new Transform[3];
+                for (int j = 0; j < 3; j++)
+                    _fingers[f][j] = FindBone(Chains[f][j]) ?? FindNativeBone(NativeChainLandmarks[f][j]);
+            }
+        }
+
+        /// <summary>
+        /// Resolves a native landmark by name. Searches the cached arrays first, then the
+        /// hierarchy: on the native path <see cref="_allBones"/> is never filled (only the
+        /// legacy fallback builds it), so relying on it alone left every chain empty.
+        /// </summary>
+        Transform FindNativeBone(string landmark)
+        {
+            if (_nativeTransforms != null)
+                foreach (var t in _nativeTransforms)
+                    if (t && ElenaNativeRigProfile.MatchesBone(t.name, landmark))
+                        return t;
+
+            if (_allBones != null)
+                foreach (var t in _allBones)
+                    if (t && ElenaNativeRigProfile.MatchesBone(t.name, landmark))
+                        return t;
+
+            foreach (var t in GetComponentsInChildren<Transform>(true))
+                if (t && ElenaNativeRigProfile.MatchesBone(t.name, landmark))
+                    return t;
+
+            return null;
         }
 
         /// <summary>Bind the sampled native Elena bones without changing the 20-control contract.</summary>
@@ -222,6 +452,14 @@ namespace Neuralife.VirtualHand
         }
 
         public bool HasProfile => _profile != null || _nativeTransforms != null;
+
+        /// <summary>
+        /// The 20 controls currently driving this hand, read-only.
+        /// Gesture recognition and the guidance hand use this so they classify and
+        /// blend what the hand is actually doing rather than a parallel copy that
+        /// could drift out of step. Callers must not mutate the array.
+        /// </summary>
+        public float[] LastControls => _current;
         public float[] ProfileOpen => _profileOpen;
         public float[] ProfileFist => _profileFist;
         public float[] ProfilePinch => _profilePinch;
@@ -261,12 +499,36 @@ namespace Neuralife.VirtualHand
         /// </summary>
         public void SetMirrored(bool mirrored) => IsMirrored = mirrored;
 
+        /// <summary>Returns true when all 20 values are finite and in [0,1].</summary>
+        public static bool IsValidControlArray(float[] c)
+        {
+            if (c == null || c.Length != 20)
+                return false;
+            for (int i = 0; i < 20; i++)
+            {
+                float v = c[i];
+                if (float.IsNaN(v) || float.IsInfinity(v) || v < 0f || v > 1f)
+                    return false;
+            }
+            return true;
+        }
+
         /// <summary>Apply 20 controls instantly. Invalid length is rejected visibly.</summary>
         public void SetControls(float[] c)
         {
             if (c == null || c.Length != 20)
             {
                 Debug.LogWarning("[HandRigDriver] SetControls expects 20 values; ignoring frame.");
+                return;
+            }
+            if (!IsValidControlArray(c))
+            {
+                // Spec 3.2: an invalid frame is REJECTED, not sanitised and applied.
+                // Sanitising would let a single NaN/Infinity burst overwrite the last
+                // trusted pose with a zeroed hand. The caller's array is left untouched
+                // so the provider can still inspect what it sent.
+                Debug.LogWarning("[HandRigDriver] SetControls rejected a frame containing NaN/Infinity " +
+                                 "or out-of-range values; the last trusted pose is preserved.");
                 return;
             }
             Array.Copy(c, _target, 20);
@@ -277,9 +539,18 @@ namespace Neuralife.VirtualHand
         /// <summary>Smooth-approach toward the 20-control target. Call once per frame.</summary>
         public void UpdateControls(float[] target, float smooth, float dt)
         {
-            if (target != null && target.Length == 20)
-                Array.Copy(target, _target, 20);
-            float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.016f, smooth));
+            if (target == null || target.Length != 20)
+                return;
+            if (!IsValidControlArray(target))
+            {
+                // Same rejection rule as SetControls: never let a bad frame move the hand.
+                Debug.LogWarning("[HandRigDriver] UpdateControls rejected a frame containing NaN/Infinity " +
+                                 "or out-of-range values; the last trusted pose is preserved.");
+                return;
+            }
+            Array.Copy(target, _target, 20);
+            float k = 1f - Mathf.Exp(-Mathf.Max(0f, dt) / Mathf.Max(0.016f, smooth));
+            if (float.IsNaN(k) || float.IsInfinity(k)) k = 1f;
             for (int i = 0; i < 20; i++)
                 _current[i] = Mathf.Lerp(_current[i], _target[i], k);
             Apply(_current);
@@ -293,6 +564,14 @@ namespace Neuralife.VirtualHand
 
 
         void Apply(float[] v)
+        {
+            ApplyPose(v);
+            // Diagnostics run after every pose path, so the reported clearance always
+            // describes the pose that is actually on the bones.
+            EvaluateSelfIntersection();
+        }
+
+        void ApplyPose(float[] v)
         {
             if (_nativeTransforms != null)
             {
@@ -328,8 +607,7 @@ namespace Neuralife.VirtualHand
         }
 
         /// <summary>Apply native clip deltas while keeping curl, spread, and opposition independent.</summary>
-        void ApplyNative(float[] v)
-        {
+        void ApplyNative(float[] v)        {
             for (int i = 0; i < _nativeTransforms.Length; i++)
             {
                 var t = _nativeTransforms[i];

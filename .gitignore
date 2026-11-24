@@ -14,6 +14,8 @@ datasets/
 *.edf
 *.mat
 *.joblib
+# Unity materials are tracked text assets (*.mat above only targets ML data files).
+!Assets/**/*.mat
 
 # Blender autosave backups; editable .blend source is retained.
 *.blend[0-9]*

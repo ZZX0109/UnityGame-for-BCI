@@ -21,6 +21,13 @@ namespace Neuralife.VirtualHand.Editor
                 pointer.handPair = pair;
                 BuildHand(root.transform, true, out pair.leftWrist, out pair.leftHand, out pointer.leftIndexAnatomy);
                 BuildHand(root.transform, false, out pair.rightWrist, out pair.rightHand, out pointer.rightIndexAnatomy);
+
+                var appearance = root.AddComponent<HandAppearanceController>();
+                appearance.blueShader = AssetDatabase.LoadAssetAtPath<Shader>(
+                    "Assets/VirtualHand/Shaders/AvatarBlueOutline.shader");
+                root.AddComponent<HandInputRouter>();
+                root.AddComponent<VirtualHandHost>();
+
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath, out bool saved);
                 if (!saved) throw new InvalidOperationException("Could not save first-person hand prefab.");
             }

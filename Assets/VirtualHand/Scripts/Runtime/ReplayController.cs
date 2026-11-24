@@ -47,15 +47,67 @@ namespace Neuralife.VirtualHand
         {
             _tasks = GetComponent<TaskController>();
             if (source == null) source = GetComponent<ReplaySource>();
-            if (source != null) source.FrameReady += ApplyFrame;
+            if (source != null)
+            {
+                source.FrameReady += ApplyFrame;
+                source.SourceChanged += OnSourceChanged;
+            }
         }
 
-        void OnDestroy() { if (source != null) source.FrameReady -= ApplyFrame; }
+        void OnDestroy()
+        {
+            if (source != null)
+            {
+                source.FrameReady -= ApplyFrame;
+                source.SourceChanged -= OnSourceChanged;
+            }
+        }
+
+        /// <summary>
+        /// Spec 3.3: switching source must clear the previous stream's target pose and any
+        /// action events that were produced but never consumed.
+        ///
+        /// Without this the controller kept serving the old stream's intent and grip, so a
+        /// newly opened replay would briefly drive the hand from stale data — and a task
+        /// mid-grasp would be acting on an intent that no longer exists.
+        /// </summary>
+        void OnSourceChanged()
+        {
+            _lastFrameTime = 0.0;
+            _validUntil = 0.0;
+            HasValidInput = false;
+            CurrentIntent = "rest";
+            CurrentConfidence = 0f;
+            CurrentSource = "manual";
+            SubjectRun = "";
+            _leftTarget = null;
+            _rightTarget = null;
+            IsMirroredDisplay = false;
+
+            // Un-consumed task progress belongs to the old stream. Clear it, but do NOT
+            // arm the tracking-resync gate: opening a different replay is not a tracking
+            // loss, and freezing the task for the resync window on every load would stall
+            // legitimate progress.
+            if (_tasks != null)
+                _tasks.ClearStaleState();
+
+            Debug.Log("[Replay] source changed — cleared the previous stream's target pose and pending state.");
+        }
 
         /// <summary>Apply one decoded frame; validity expires after duration+gap.</summary>
         public void ApplyFrame(HandMotionFrame f)
         {
             if (f == null) return;
+            if (_manualMode)
+            {
+                Debug.LogWarning("[Replay] Replay frame ignored — manual mode is active.");
+                return;
+            }
+            if (f.version < 1)
+            {
+                Debug.LogWarning($"[Replay] Unsupported replay version {f.version}; ignoring frame.");
+                return;
+            }
             if (f.source == "prediction" && f.time < _lastFrameTime)
                 Debug.LogWarning($"[Replay] prediction frame at t={f.time:0.00} precedes previous frame; applying anyway.");
             _lastFrameTime = f.time;

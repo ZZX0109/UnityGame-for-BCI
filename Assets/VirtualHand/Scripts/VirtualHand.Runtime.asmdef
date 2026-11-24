@@ -2,7 +2,8 @@
     "name": "Neuralife.VirtualHand.Runtime",
     "rootNamespace": "Neuralife.VirtualHand",
     "references": [
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -11,6 +12,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.7.0",
+            "define": "VIRTUALHAND_INPUTSYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }

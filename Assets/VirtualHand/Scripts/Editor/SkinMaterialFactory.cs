@@ -145,7 +145,7 @@ namespace Neuralife.VirtualHand.Editor
                         for (int i = 0; i < srcPixels.Length; i++)
                             outPixels[i] = new Color(0f, 0f, 0f,
                                 1f - srcPixels[i].r);  // alpha = 1 - roughness
-                        smooth.Resize(src.width, src.height);
+                        smooth.Reinitialize(src.width, src.height);
                         smooth.SetPixels(outPixels);
                         smooth.Apply(false, false);
                         converted = true;
@@ -165,7 +165,7 @@ namespace Neuralife.VirtualHand.Editor
                 var pixels = new Color[4];
                 for (int i = 0; i < pixels.Length; i++)
                     pixels[i] = new Color(0f, 0f, 0f, 0.6f);
-                smooth.Resize(2, 2);
+                smooth.Reinitialize(2, 2);
                 smooth.SetPixels(pixels);
                 smooth.Apply(false, false);
             }

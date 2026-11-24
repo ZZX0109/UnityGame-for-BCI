@@ -4,7 +4,8 @@
     "references": [
         "Neuralife.VirtualHand.Runtime",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
@@ -17,6 +18,12 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.7.0",
+            "define": "VIRTUALHAND_INPUTSYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }

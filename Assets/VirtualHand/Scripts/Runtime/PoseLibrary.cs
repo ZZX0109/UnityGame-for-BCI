@@ -53,7 +53,7 @@ namespace Neuralife.VirtualHand
         {
             var p = Rest();
             p[4] = 0f; p[5] = 0f; p[6] = 0f; p[7] = 0.5f; // index straight
-            for (int f = 2; f < 4; f++)
+            for (int f = 2; f < 5; f++) // middle, ring, little curl
             {
                 int o = f * 4;
                 p[o] = 0.85f; p[o + 1] = 0.95f; p[o + 2] = 0.8f;

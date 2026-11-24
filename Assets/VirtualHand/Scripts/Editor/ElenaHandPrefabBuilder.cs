@@ -16,6 +16,8 @@ namespace Neuralife.VirtualHand.Editor
     {
         const string ModelPath = "Assets/VirtualHand/Models/ElenaFF/ElenaHand_R.glb";
         const string ProfilePath = "Assets/VirtualHand/Resources/Rig/ElenaFF/ElenaNativeRig_R.asset";
+        const string ProportionsPath = "Assets/VirtualHand/Resources/Rig/ElenaFF/HandProportions.asset";
+        const string BaseColorTexturePath = "Assets/VirtualHand/Models/ElenaFF/ElenaHand_BaseColor.png";
         const string PrefabFolder = "Assets/VirtualHand/Prefabs/ElenaFF";
         const string RightPrefabPath = PrefabFolder + "/ElenaHand_R.prefab";
         const string LeftPrefabPath = PrefabFolder + "/ElenaHand_L.prefab";
@@ -24,6 +26,7 @@ namespace Neuralife.VirtualHand.Editor
         const float RelativeReopenTolerance = 0.0001f;
 
         [MenuItem("Neuralife/VirtualHand/Build Elena FF Hand Prefabs and Verify")]
+        [MenuItem("Assets/Neuralife/Rebuild Hand Prefabs", priority = 100)]
         public static void BuildAll()
         {
             // The native profile must be sampled from the original imported GLB before
@@ -31,6 +34,10 @@ namespace Neuralife.VirtualHand.Editor
             ElenaNativeProfileBuilder.Build();
             AssetDatabase.SaveAssets();
 
+            // Force-reimport the source GLB in case the model was updated since the
+            // last Unity session (e.g. stripped or re-exported).  Batchmode -quit
+            // races the asynchronous asset pipeline, so a synchronous import is needed.
+            AssetDatabase.ImportAsset(ModelPath, ImportAssetOptions.ForceUpdate);
             var profile = AssetDatabase.LoadAssetAtPath<ElenaNativeRigProfile>(ProfilePath);
             ValidateProfile(profile);
             var source = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
@@ -92,6 +99,9 @@ namespace Neuralife.VirtualHand.Editor
                                                         "Measured " + finalLength.ToString("0.000") + " m.");
 
                 OptimizeSkinMaterial(instance);
+                // Finger-length tuning is applied at runtime by HandRigDriver.Awake
+                // (from Resources/Rig/ElenaFF/HandProportions), so it must NOT be
+                // baked here as well — that would square the multipliers.
 
                 var driver = instance.GetComponent<HandRigDriver>();
                 if (driver == null) driver = instance.AddComponent<HandRigDriver>();
@@ -220,11 +230,15 @@ namespace Neuralife.VirtualHand.Editor
         }
 
         /// <summary>
-        /// Fixes the glTF-imported material for skin: disables back-face rendering
-        /// to prevent internal-surface stacking with the blue shader, and sets skin-
-        /// appropriate metallic (0) and smoothness (0.65, from the roughness texture G
-        /// channel). The material is saved as a persistent asset under
-        /// Materials/Generated so scene reloads and player builds keep the fix.
+        /// Repairs the glTF-imported skin material and keeps it as a persistent asset
+        /// under Materials/Generated.
+        ///
+        /// The glTFast material uses glTF-style property names, NOT the Built-in
+        /// Standard names, so these must be set explicitly:
+        ///   _CullMode      0 = Cull Off (double sided) -> 2 = Cull Back
+        ///   metallicFactor 0 (skin is non-metal)
+        ///   roughnessFactor 0.5
+        ///   baseColorTexture -> the external PNG so art can repaint skin and nails
         /// </summary>
         public static void OptimizeSkinMaterial(GameObject instance)
         {
@@ -234,8 +248,6 @@ namespace Neuralife.VirtualHand.Editor
 
             Material mat = renderer.sharedMaterial;
 
-            // Only patch materials that look like a glTF import (Standard shader,
-            // named after the GLB or the generic "lambert1").
             if (mat.shader != Shader.Find("Standard") && mat.shader != Shader.Find("glTF/PbrMetallicRoughness"))
                 return;
 
@@ -243,7 +255,6 @@ namespace Neuralife.VirtualHand.Editor
             EnsureAssetFolder(matDir);
             string matPath = matDir + "/Elena_Skin_" + instance.name + ".mat";
 
-            // Create a persistent copy once; reuses the existing asset on rebuilds.
             Material persistent = AssetDatabase.LoadAssetAtPath<Material>(matPath);
             if (!persistent)
             {
@@ -252,23 +263,36 @@ namespace Neuralife.VirtualHand.Editor
             }
             else
             {
+                // Keep the artist's texture assignment: only copy from the source
+                // material when the persistent asset still points at the GLB sub-asset.
                 persistent.CopyPropertiesFromMaterial(mat);
             }
 
-            persistent.SetFloat("_Metallic", 0f);
-            persistent.SetFloat("_Glossiness", 0.5f);
-            persistent.SetFloat("_GlossMapScale", 0.5f);
-            persistent.SetFloat("_Mode", 0f);           // Opaque
+            // glTFast PbrMetallicRoughness property names.
+            // roughnessFactor must stay 1: the model's metallicRoughness texture
+            // already carries the per-texel roughness, and lowering the factor makes
+            // the whole hand read as glossy/oily skin.
+            persistent.SetFloat("_CullMode", 2f);          // Cull Back = single sided
+            persistent.SetFloat("metallicFactor", 0f);
+            persistent.SetFloat("roughnessFactor", 1f);
+            persistent.SetColor("baseColorFactor", Color.white);
+            persistent.SetFloat("_Mode", 0f);              // Opaque
             persistent.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             persistent.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
             persistent.SetInt("_ZWrite", 1);
-            persistent.DisableKeyword("_SPECULARHIGHLIGHTS_OFF");
-            persistent.renderQueue = -1;
 
+            // Point the base colour at the editable external PNG when it exists, so
+            // skin and nail colours can be repainted without touching the GLB.
+            var external = AssetDatabase.LoadAssetAtPath<Texture2D>(BaseColorTexturePath);
+            if (external != null)
+                persistent.SetTexture("baseColorTexture", external);
+
+            persistent.renderQueue = -1;
             EditorUtility.SetDirty(persistent);
             renderer.sharedMaterial = persistent;
             Debug.Log("[ElenaHandPrefabBuilder] skin material optimized: " + matPath +
-                      " (metallic=0, smoothness=0.5, opaque single-sided, specular on)");
+                      " (cull=Back, metallic=0, roughness=1 matte, opaque" +
+                      (external != null ? ", base colour = " + BaseColorTexturePath : ", base colour = GLB embedded") + ")");
         }
 
         static void EnsureAssetFolder(string folder)
