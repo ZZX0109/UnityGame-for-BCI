@@ -9,6 +9,9 @@ namespace FirstPersonSokoban.Presentation
     /// per-renderer material clones: one palette owns the shared room materials.
     /// The menu preview can create a separate owner and release it independently.
     /// </summary>
+    // Editor tools/tests can explicitly initialize a palette too. Participate
+    // in edit-time destruction so those owners release their generated assets.
+    [ExecuteAlways]
     public sealed class LabMaterials : MonoBehaviour
     {
         public static readonly Color AccentColor = Hex("BB6039");

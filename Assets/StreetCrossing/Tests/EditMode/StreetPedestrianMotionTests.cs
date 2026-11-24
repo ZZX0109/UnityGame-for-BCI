@@ -110,7 +110,12 @@ namespace StreetCrossing.Tests.EditMode
         [Test]
         public void TurnPivotIsSlowAndHalfCircle()
         {
-            const float step = 0.02f;
+            const float step = 0.01f;
+            // 120s contract horizon plus a generous closure margin: a pivot window still open at
+            // the horizon is sampled just long enough to close (windows last TurnTime = 2s and no
+            // window can open after the horizon), so AssertRun never judges a horizon-truncated
+            // half circle as if the route had failed to sweep 180 degrees.
+            const float closureCap = 182f;
             foreach (StreetBackgroundRoute route in Walkers())
             {
                 float runStart = -1f;
@@ -118,8 +123,12 @@ namespace StreetCrossing.Tests.EditMode
                 float sweep = 0f;
                 float maxRate = 0f;
                 int runs = 0;
-                for (float t = 0f; t <= 120f; t += step)
+                // Exact integer-indexed grid (i * step) instead of a t += step accumulation, so the
+                // sample phase cannot drift against the analytic pivot window as t grows.
+                for (int i = 0; i * step <= closureCap; i++)
                 {
+                    float t = i * step;
+                    if (t > 120f && runStart < 0f) break;
                     if (route.TryTurnYaw(t, out float yaw))
                     {
                         if (runStart < 0f)
@@ -146,7 +155,7 @@ namespace StreetCrossing.Tests.EditMode
                 }
                 if (runStart >= 0f)
                 {
-                    AssertRun(route, runStart, 120f, sweep, maxRate);
+                    AssertRun(route, runStart, closureCap, sweep, maxRate);
                     runs++;
                 }
                 Assert.That(runs, Is.GreaterThanOrEqualTo(1),
