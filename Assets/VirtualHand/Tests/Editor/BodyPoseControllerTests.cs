@@ -138,10 +138,10 @@ namespace Neuralife.VirtualHand.EditorTests
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseStanding, SeatedHandSide.Right),
                 "the Standing right preset drifted");
 
-            Assert.AreEqual(new Vector3(-0.10f, 0.30f, 0.26f),
+            Assert.AreEqual(new Vector3(-0.12f, 0.18f, 0.32f),
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseHandsOnLap, SeatedHandSide.Left),
                 "the HandsOnLap left preset drifted");
-            Assert.AreEqual(new Vector3(0.10f, 0.30f, 0.26f),
+            Assert.AreEqual(new Vector3(0.12f, 0.18f, 0.32f),
                 FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseHandsOnLap, SeatedHandSide.Right),
                 "the HandsOnLap right preset drifted");
 
@@ -165,6 +165,40 @@ namespace Neuralife.VirtualHand.EditorTests
         }
 
         [Test]
+        public void BothArmsForwardAppliesToBothArms()
+        {
+            GameObject root = CreateController(out FullBodyPoseController controller);
+            try
+            {
+                Assert.IsTrue(controller.ApplyPose(FullBodyPoseController.PoseBothArmsForward),
+                    "the both-arms-forward pose should apply");
+                Assert.AreEqual(FullBodyPoseController.PoseBothArmsForward, controller.CurrentPoseName,
+                    "the resolved name should be the canonical both-arms-forward name");
+
+                Assert.AreEqual(new Vector3(-0.18f, 0.50f, 0.52f),
+                    FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseBothArmsForward, SeatedHandSide.Left),
+                    "the BothArmsForward left preset drifted");
+                Assert.AreEqual(new Vector3(0.18f, 0.50f, 0.52f),
+                    FullBodyPoseController.GetBodySpaceWristTarget(FullBodyPoseController.PoseBothArmsForward, SeatedHandSide.Right),
+                    "the BothArmsForward right preset drifted");
+
+                Assert.IsTrue(controller.TryGetSolvedArm(SeatedHandSide.Left, out SeatedArmSolver.Solution left),
+                    "the left arm should solve for the both-arms-forward pose");
+                Assert.IsTrue(left.IsValid, "the left arm solution must be valid for the both-arms-forward pose");
+                Assert.IsTrue(left.IsReachable, "the left arm target must be reachable for the both-arms-forward pose");
+
+                Assert.IsTrue(controller.TryGetSolvedArm(SeatedHandSide.Right, out SeatedArmSolver.Solution right),
+                    "the right arm should solve for the both-arms-forward pose");
+                Assert.IsTrue(right.IsValid, "the right arm solution must be valid for the both-arms-forward pose");
+                Assert.IsTrue(right.IsReachable, "the right arm target must be reachable for the both-arms-forward pose");
+            }
+            finally
+            {
+                Destroy(root);
+            }
+        }
+
+        [Test]
         public void TryGetSolvedArmReturnsReachableSolutions()
         {
             GameObject root = CreateController(out FullBodyPoseController controller);
@@ -180,7 +214,8 @@ namespace Neuralife.VirtualHand.EditorTests
                     FullBodyPoseController.PoseStanding,
                     FullBodyPoseController.PoseHandsOnLap,
                     FullBodyPoseController.PoseLeftArmForward,
-                    FullBodyPoseController.PoseRightArmForward
+                    FullBodyPoseController.PoseRightArmForward,
+                    FullBodyPoseController.PoseBothArmsForward
                 };
                 for (int i = 0; i < poses.Length; i++)
                 {
@@ -241,6 +276,98 @@ namespace Neuralife.VirtualHand.EditorTests
                 Destroy(root);
                 Destroy(elbow);
                 Destroy(wrist);
+            }
+        }
+
+        [Test]
+        public void PoseTransitionBlendsInsteadOfSnapping()
+        {
+            GameObject root = CreateController(out FullBodyPoseController controller);
+            GameObject leftElbow = new GameObject("Left Elbow");
+            GameObject leftWrist = new GameObject("Left Wrist");
+            GameObject rightElbow = new GameObject("Right Elbow");
+            GameObject rightWrist = new GameObject("Right Wrist");
+            GameObject freshRoot = CreateController(out FullBodyPoseController freshController);
+            try
+            {
+                root.transform.position = new Vector3(1f, 2f, 3f);
+                root.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                leftElbow.transform.SetParent(root.transform, false);
+                leftWrist.transform.SetParent(root.transform, false);
+                rightElbow.transform.SetParent(root.transform, false);
+                rightWrist.transform.SetParent(root.transform, false);
+                controller.leftElbow = leftElbow.transform;
+                controller.leftWrist = leftWrist.transform;
+                controller.rightElbow = rightElbow.transform;
+                controller.rightWrist = rightWrist.transform;
+
+                Vector3 initialLeftElbow = leftElbow.transform.position;
+                Vector3 initialLeftWrist = leftWrist.transform.position;
+                Vector3 initialRightElbow = rightElbow.transform.position;
+                Vector3 initialRightWrist = rightWrist.transform.position;
+
+                controller.blendPoseTransitions = true;
+                Assert.IsTrue(controller.ApplyPose(FullBodyPoseController.PoseBothArmsForward),
+                    "the both-arms-forward pose should apply");
+
+                AssertAreEqual(initialLeftElbow, leftElbow.transform.position, Delta,
+                    "blending must suppress the instant snap of the left elbow");
+                AssertAreEqual(initialLeftWrist, leftWrist.transform.position, Delta,
+                    "blending must suppress the instant snap of the left wrist");
+                AssertAreEqual(initialRightElbow, rightElbow.transform.position, Delta,
+                    "blending must suppress the instant snap of the right elbow");
+                AssertAreEqual(initialRightWrist, rightWrist.transform.position, Delta,
+                    "blending must suppress the instant snap of the right wrist");
+
+                Assert.IsTrue(controller.TryGetSolvedArm(SeatedHandSide.Left, out SeatedArmSolver.Solution left),
+                    "the left arm should solve");
+                Assert.IsTrue(controller.TryGetSolvedArm(SeatedHandSide.Right, out SeatedArmSolver.Solution right),
+                    "the right arm should solve");
+                Vector3 leftWristTarget = root.transform.TransformPoint(left.SolvedWristPositionMeters);
+                Vector3 leftElbowTarget = root.transform.TransformPoint(left.ElbowPositionMeters);
+                Vector3 rightWristTarget = root.transform.TransformPoint(right.SolvedWristPositionMeters);
+                Vector3 rightElbowTarget = root.transform.TransformPoint(right.ElbowPositionMeters);
+
+                float k = 1f - Mathf.Exp(-(1f / 60f) / 0.15f);
+                Assert.IsTrue(controller.BlendTowardCurrent(1f / 60f),
+                    "the first blend step should run once the opt-in flag is set");
+                AssertAreEqual(initialLeftElbow + k * (leftElbowTarget - initialLeftElbow),
+                    leftElbow.transform.position, 0.002f,
+                    "the first blend step should move the left elbow by k of the gap");
+                AssertAreEqual(initialLeftWrist + k * (leftWristTarget - initialLeftWrist),
+                    leftWrist.transform.position, 0.002f,
+                    "the first blend step should move the left wrist by k of the gap");
+                AssertAreEqual(initialRightElbow + k * (rightElbowTarget - initialRightElbow),
+                    rightElbow.transform.position, 0.002f,
+                    "the first blend step should move the right elbow by k of the gap");
+                AssertAreEqual(initialRightWrist + k * (rightWristTarget - initialRightWrist),
+                    rightWrist.transform.position, 0.002f,
+                    "the first blend step should move the right wrist by k of the gap");
+
+                Assert.IsFalse(controller.BlendTowardCurrent(0f),
+                    "a non-positive deltaTime must refuse to blend");
+                Assert.IsFalse(freshController.BlendTowardCurrent(1f / 60f),
+                    "a fresh controller with the flag left false must refuse to blend");
+
+                for (int i = 0; i < 200; i++)
+                {
+                    Assert.IsTrue(controller.BlendTowardCurrent(1f / 60f),
+                        "blend step {0} should run while the flag is set", i);
+                }
+
+                AssertAreEqual(leftWristTarget, leftWrist.transform.position, 0.001f,
+                    "the blended left wrist should converge on the solved target");
+                AssertAreEqual(rightWristTarget, rightWrist.transform.position, 0.001f,
+                    "the blended right wrist should converge on the solved target");
+            }
+            finally
+            {
+                Destroy(root);
+                Destroy(leftElbow);
+                Destroy(leftWrist);
+                Destroy(rightElbow);
+                Destroy(rightWrist);
+                Destroy(freshRoot);
             }
         }
 

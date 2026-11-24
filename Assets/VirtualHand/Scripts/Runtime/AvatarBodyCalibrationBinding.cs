@@ -33,6 +33,12 @@ namespace Neuralife.VirtualHand
         private Quaternion uprightYaw = Quaternion.identity;
         private AvatarBodyCalibration appliedCalibration;
 
+        /// <summary>
+        /// Maximum body-yaw follow rate in degrees per second. Fast head turns rotate the upright body frame at
+        /// this capped rate instead of snapping, keeping the visible body lagging behind the head.
+        /// </summary>
+        public const float MaxYawFollowRateDegreesPerSecond = 720f;
+
         /// <summary>A normalized copy of the applied calibration, including each measurement's source metadata.</summary>
         public AvatarBodyCalibration AppliedCalibration => appliedCalibration;
 
@@ -49,7 +55,7 @@ namespace Neuralife.VirtualHand
 
         private void LateUpdate()
         {
-            RefreshBinding();
+            RefreshBinding(Time.deltaTime);
         }
 
         private void OnDisable()
@@ -96,6 +102,22 @@ namespace Neuralife.VirtualHand
         /// <summary>Updates the upright body frame and refreshes preview outputs immediately.</summary>
         public bool RefreshBinding()
         {
+            return RefreshBindingCore(null);
+        }
+
+        /// <summary>
+        /// Time-stepped variant used by LateUpdate. Identical guards and outputs to the parameterless refresh,
+        /// but the body yaw approaches the head-derived yaw at a capped rate
+        /// (<see cref="MaxYawFollowRateDegreesPerSecond"/>) instead of snapping, so fast head turns leave the
+        /// visible body lagging behind.
+        /// </summary>
+        public bool RefreshBinding(float deltaTime)
+        {
+            return RefreshBindingCore(deltaTime);
+        }
+
+        private bool RefreshBindingCore(float? cappedDeltaSeconds)
+        {
             CapturePreviewOrigin();
             if (!preview)
             {
@@ -116,7 +138,14 @@ namespace Neuralife.VirtualHand
             if (!IsSafeBodyOrigin(controlledOrigin, out string error))
                 return DisableOutputs(error);
 
+            Quaternion previousYaw = uprightYaw;
             UpdateUprightYaw(trackedHead, controlledOrigin);
+            if (cappedDeltaSeconds.HasValue)
+            {
+                float maxDeltaDegrees = Mathf.Max(0f, MaxYawFollowRateDegreesPerSecond * cappedDeltaSeconds.Value);
+                uprightYaw = Quaternion.RotateTowards(previousYaw, uprightYaw, maxDeltaDegrees);
+            }
+
             Vector3 worldOriginPosition = trackedHead.position + uprightYaw * bodyOriginOffsetFromTrackedHeadMeters;
             controlledOrigin.SetPositionAndRotation(worldOriginPosition, uprightYaw);
 

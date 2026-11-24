@@ -237,7 +237,7 @@ namespace Neuralife.VirtualHand.Editor
         /// Standard names, so these must be set explicitly:
         ///   _CullMode      0 = Cull Off (double sided) -> 2 = Cull Back
         ///   metallicFactor 0 (skin is non-metal)
-        ///   roughnessFactor 0.5
+        ///   roughnessFactor 1 (metallicRoughness texture carries per-texel roughness)
         ///   baseColorTexture -> the external PNG so art can repaint skin and nails
         /// </summary>
         public static void OptimizeSkinMaterial(GameObject instance)

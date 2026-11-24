@@ -16,6 +16,12 @@ namespace Neuralife.VirtualHand.Body
     [DisallowMultipleComponent]
     public sealed class LowerBodyPoseController : MonoBehaviour
     {
+        /// <summary>
+        /// Yaw-rate inputs whose magnitude is below this threshold (degrees per second) are
+        /// treated as tracking jitter and do not rotate the body.
+        /// </summary>
+        public const float YawDeadzoneDegreesPerSecond = 2f;
+
         Vector2 _planarVelocityMetersPerSecond;
         float _yawDegreesPerSecond;
         Vector2 _planarPositionMeters;
@@ -55,7 +61,9 @@ namespace Neuralife.VirtualHand.Body
                 return;
             _lastIntegratedFrame = Time.frameCount;
             _planarPositionMeters += _planarVelocityMetersPerSecond * deltaTime;
-            _yawDegrees += _yawDegreesPerSecond * deltaTime;
+            // Sub-deadzone yaw rates are jitter (head micro-motions), not intentional turns.
+            float yawRate = Mathf.Abs(_yawDegreesPerSecond) < YawDeadzoneDegreesPerSecond ? 0f : _yawDegreesPerSecond;
+            _yawDegrees += yawRate * deltaTime;
             // Path length uses the input speed magnitude so reversing (or turning)
             // motion keeps advancing the walk-cycle phase instead of rewinding it.
             _pathDistanceMeters += _planarVelocityMetersPerSecond.magnitude * deltaTime;
