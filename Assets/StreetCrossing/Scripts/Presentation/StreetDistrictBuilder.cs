@@ -766,7 +766,7 @@ namespace StreetCrossing.Presentation
                     for (int bay = 0; bay < 4; bay++)
                     {
                         float x = end * (43 + bay * 10);
-                        world.CreateRefinedTree(streets,
+                        world.CreateLodgedTree(streets,
                             new Vector3(x, 0, StreetLayout.SidewalkZ(side * 5.4f)),
                             bay + (side > 0 ? 1 : 0));
                     }

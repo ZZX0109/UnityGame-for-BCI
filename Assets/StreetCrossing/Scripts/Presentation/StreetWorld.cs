@@ -53,6 +53,7 @@ namespace StreetCrossing.Presentation
         public Material AsphaltMaterial => modules.Asphalt;
         public Material PavingMaterial => modules.Paving;
         public Transform CreateRefinedTree(Transform parent, Vector3 position, int variant) => modules.CreateRefinedTree(parent, position, variant);
+        public Transform CreateLodgedTree(Transform parent, Vector3 position, int variant) => modules.CreateLodgedTree(parent, position, variant);
         public (Transform root, Animator animator) CreatePedestrian(Transform parent, int variant) => modules.CreatePedestrian(parent, variant);
         /// <summary>Real transparent glass for windows; alpha tinted so recessed backing reads through.</summary>
         public Material GlassMaterial
@@ -765,12 +766,11 @@ namespace StreetCrossing.Presentation
         }
         private void Tree(Vector3 p)
         {
-            // Keep the original planter collider used by clearance tests; replace only the
-            // primitive trunk and low-poly crown with the refined procedural tree model.
+            // Keep the original planter collider used by clearance tests; the refined FBX model
+            // serves near range and drops to a procedural trunk-plus-crown proxy at distance.
             Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 1.4f), "9D967C");
             int variant = Mathf.Abs(Mathf.RoundToInt(p.x * 13f + p.z * 7f)) % 3;
-            Transform tree = modules.CreateRefinedTree(root, p, variant);
-            AddVisualLod(tree, .006f);
+            modules.CreateLodgedTree(root, p, variant);
         }
         private void Lamp(Vector3 p)
         {

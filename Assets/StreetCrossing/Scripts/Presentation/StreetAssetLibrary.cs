@@ -105,6 +105,104 @@ namespace StreetCrossing.Presentation
             return go.transform;
         }
 
+        private const float Lod0ScreenHeight = 0.15f;
+        private const float Lod1ScreenHeight = 0.006f;
+
+        /// <summary>Create the refined tree and give it a two-level LOD chain in one step. Level 0
+        /// keeps the refined FBX renderers; level 1 swaps them for a procedural trunk plus the
+        /// revived low-poly crown parts so far trees stop paying full FBX vertex cost. The proxy
+        /// container cancels the wrapper's -90° FBX axis fix and uniform scale, so the authored
+        /// crown meshes stay upright and metre-sized, scaled so the canopy tops out at the height
+        /// the refined model was measured to. Exactly one SetLODs call defines both levels; below
+        /// the last level the group culls the tree entirely. LOD children carry no colliders —
+        /// the tree-pit box stays the only collision surface.</summary>
+        public Transform CreateLodgedTree(Transform parent, Vector3 position, int variant)
+        {
+            Transform tree = CreateRefinedTree(parent, position, variant);
+            if (tree == null || tree.GetComponentInChildren<LODGroup>() != null) return tree;
+
+            // Collect level 0 before any proxy child exists under the wrapper.
+            MeshRenderer[] lod0 = tree.GetComponentsInChildren<MeshRenderer>();
+
+            // Authored crown extents (mesh units above the trunk base) size the proxy.
+            float crownTop = 1f;
+            foreach (Mesh mesh in crownMeshes)
+                if (mesh != null) crownTop = Mathf.Max(crownTop, mesh.bounds.max.y);
+            float branchStart = crownMeshes[0] != null ? crownMeshes[0].bounds.min.y : crownTop * .4f;
+
+            Bounds treeBounds = BoundsInSpace(tree.gameObject, parent);
+            float treeHeight = Mathf.Max(.5f, treeBounds.size.y);
+            float worldScale = treeHeight / crownTop;
+
+            Transform proxy = new GameObject("Distance proxy").transform;
+            proxy.SetParent(tree, false);
+            proxy.localPosition = tree.InverseTransformPoint(parent.TransformPoint(position));
+            // Reuse the tree's own yaw so the proxy silhouette matches level 0 at the swap.
+            float yaw = (position.x * 37f + position.z * 23f) % 360f;
+            proxy.localRotation = Quaternion.Inverse(tree.rotation) * Quaternion.Euler(0f, yaw, 0f);
+            float localScale = worldScale / Mathf.Max(1e-3f, tree.lossyScale.x);
+            proxy.localScale = new Vector3(localScale, localScale, localScale);
+
+            CollectTreeMaterials(lod0, out Material bark, out Material[] leaves);
+            Material[] partMaterials = leaves.Length > 0
+                ? new[] { bark, leaves[0], leaves[Mathf.Min(1, leaves.Length - 1)] }
+                : new Material[] { bark, bark, bark };
+            for (int i = 0; i < crownMeshes.Length; i++)
+            {
+                if (crownMeshes[i] == null) continue;
+                GameObject part = new GameObject(crownMeshes[i].name, typeof(MeshFilter), typeof(MeshRenderer));
+                part.transform.SetParent(proxy, false);
+                part.GetComponent<MeshFilter>().sharedMesh = crownMeshes[i];
+                if (partMaterials[i] != null) part.GetComponent<MeshRenderer>().sharedMaterial = partMaterials[i];
+            }
+
+            // Code trunk from just under the pit surface up into the branch mass.
+            GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Object.DestroyImmediate(trunk.GetComponent<Collider>());
+            trunk.name = "Proxy trunk";
+            trunk.transform.SetParent(proxy, false);
+            float trunkBottom = -.05f, trunkTop = branchStart + .35f;
+            trunk.transform.localPosition = new Vector3(0f, (trunkBottom + trunkTop) * .5f, 0f);
+            trunk.transform.localScale = new Vector3(.18f, (trunkTop - trunkBottom) * .5f, .18f);
+            if (bark != null) trunk.GetComponent<MeshRenderer>().sharedMaterial = bark;
+
+            LOD[] levels =
+            {
+                new LOD(Lod0ScreenHeight, lod0),
+                new LOD(Lod1ScreenHeight, proxy.GetComponentsInChildren<MeshRenderer>())
+            };
+            LODGroup group = tree.gameObject.AddComponent<LODGroup>();
+            group.SetLODs(levels);
+            return tree;
+        }
+
+        /// <summary>Split the refined tree's material slots into bark and foliage groups so the
+        /// LOD1 proxy reuses the FBX materials instead of introducing new assets.</summary>
+        private static void CollectTreeMaterials(Renderer[] renderers, out Material bark, out Material[] leaves)
+        {
+            bark = null;
+            List<Material> found = new List<Material>();
+            List<Material> foliage = new List<Material>();
+            foreach (Renderer renderer in renderers)
+            {
+                foreach (Material material in renderer.sharedMaterials)
+                {
+                    if (material == null || found.Contains(material)) continue;
+                    found.Add(material);
+                    string name = material.name;
+                    if (name.IndexOf("bark", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    { if (bark == null) bark = material; }
+                    else if (name.IndexOf("leaf", System.StringComparison.OrdinalIgnoreCase) >= 0
+                        || name.IndexOf("foliage", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                        foliage.Add(material);
+                }
+            }
+            if (bark == null && found.Count > 0) bark = found[0];
+            if (foliage.Count == 0) foliage.AddRange(found);
+            if (foliage.Count == 0 && bark != null) foliage.Add(bark);
+            leaves = foliage.ToArray();
+        }
+
         /// <summary>Instantiate the refined near-field residence with real frames, awning and balcony.</summary>
         public Transform CreateRefinedBuilding(Transform parent, Vector3 position, int side, float height)
         {
