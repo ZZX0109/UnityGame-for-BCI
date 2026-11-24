@@ -355,5 +355,80 @@ namespace StreetCrossing.Tests.EditMode
                 }
             }
         }
+
+        // ---- §4.4/§4.5 body-type silhouette contract (pure data, no prefab instantiation) ----
+
+        [Test]
+        public void SilhouetteProfilesAreDeterministicPerVariant()
+        {
+            Assert.That(StreetAssetLibrary.SilhouetteCount, Is.EqualTo(4),
+                "The sidewalk crowd draws from four authored body types.");
+            foreach (int variant in new[] { 0, 1, 2, 3, 7, 11, -3, -9 })
+            {
+                StreetAssetLibrary.Silhouette first = StreetAssetLibrary.SilhouetteFor(variant);
+                StreetAssetLibrary.Silhouette second = StreetAssetLibrary.SilhouetteFor(variant);
+                Assert.That(first.hipsX, Is.EqualTo(second.hipsX), $"hipsX must be stable for variant {variant}.");
+                Assert.That(first.spineX, Is.EqualTo(second.spineX), $"spineX must be stable for variant {variant}.");
+                Assert.That(first.spineZ, Is.EqualTo(second.spineZ), $"spineZ must be stable for variant {variant}.");
+                Assert.That(first.spineY, Is.EqualTo(second.spineY), $"spineY must be stable for variant {variant}.");
+                Assert.That(first.shoulderY, Is.EqualTo(second.shoulderY), $"shoulderY must be stable for variant {variant}.");
+                Assert.That(first.headScale, Is.EqualTo(second.headScale), $"headScale must be stable for variant {variant}.");
+            }
+        }
+
+        [Test]
+        public void HeavyAndSlimBodyTypesReadApart()
+        {
+            // Authored classes 1 (heavy) and 2 (slim) sit 1.10 vs 0.90 on spine width; the
+            // ±4 % seeded jitter cannot close that gap (worst case 1.056 vs 0.936).
+            for (int baseVariant = 0; baseVariant < 12; baseVariant += StreetAssetLibrary.SilhouetteCount)
+            {
+                StreetAssetLibrary.Silhouette heavy = StreetAssetLibrary.SilhouetteFor(baseVariant + 1);
+                StreetAssetLibrary.Silhouette slim = StreetAssetLibrary.SilhouetteFor(baseVariant + 2);
+                Assert.That(heavy.hipsX, Is.GreaterThan(slim.hipsX),
+                    $"Heavy variant {baseVariant + 1} must stay wider at the hips than slim variant {baseVariant + 2}.");
+                Assert.That(heavy.spineX, Is.GreaterThan(slim.spineX),
+                    $"Heavy variant {baseVariant + 1} must keep a wider torso than slim variant {baseVariant + 2}.");
+                Assert.That(heavy.shoulderY, Is.GreaterThan(slim.shoulderY),
+                    $"Heavy variant {baseVariant + 1} must keep broader shoulders than slim variant {baseVariant + 2}.");
+            }
+        }
+
+        [Test]
+        public void CrowdVariantsSpreadAcrossSilhouettes()
+        {
+            float minWidth = float.MaxValue, maxWidth = float.MinValue;
+            for (int variant = 0; variant < 12; variant++)
+            {
+                float width = StreetAssetLibrary.SilhouetteFor(variant).spineX;
+                minWidth = Mathf.Min(minWidth, width);
+                maxWidth = Mathf.Max(maxWidth, width);
+            }
+            Assert.That(maxWidth - minWidth, Is.GreaterThan(0.10f),
+                "Twelve consecutive crowd variants must not collapse onto one body width.");
+            // Same authored class, different jitter seed: the per-variant draw must vary.
+            Assert.That(StreetAssetLibrary.SilhouetteFor(0).spineX,
+                Is.Not.EqualTo(StreetAssetLibrary.SilhouetteFor(4).spineX),
+                "Variants sharing a body class must still differ through their seeded jitter.");
+        }
+
+        [Test]
+        public void SilhouetteNeverScalesLengthAxes()
+        {
+            // The feet-plant maths reads bind-pose bounds after bone scaling; keeping every
+            // length-dominant factor near 1.0 (spine/shoulder long axes, no leg bones at all)
+            // is what stops height drift between body types.
+            for (int variant = -8; variant <= 8; variant++)
+            {
+                StreetAssetLibrary.Silhouette s = StreetAssetLibrary.SilhouetteFor(variant);
+                Assert.That(s.spineY, Is.EqualTo(1f).Within(0.04f),
+                    $"Variant {variant} must keep the spine long axis at unit scale.");
+                Assert.That(s.hipsX, Is.InRange(0.88f, 1.17f), $"Variant {variant} hips width out of range.");
+                Assert.That(s.spineX, Is.InRange(0.86f, 1.15f), $"Variant {variant} torso width out of range.");
+                Assert.That(s.spineZ, Is.InRange(0.90f, 1.13f), $"Variant {variant} torso depth out of range.");
+                Assert.That(s.shoulderY, Is.InRange(0.90f, 1.10f), $"Variant {variant} shoulder span out of range.");
+                Assert.That(s.headScale, Is.InRange(0.91f, 1.07f), $"Variant {variant} head scale out of range.");
+            }
+        }
     }
 }

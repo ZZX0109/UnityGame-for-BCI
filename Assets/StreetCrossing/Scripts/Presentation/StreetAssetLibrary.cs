@@ -161,8 +161,81 @@ namespace StreetCrossing.Presentation
             new Color(.12f, .12f, .13f), new Color(.42f, .28f, .16f), new Color(.85f, .83f, .80f)
         };
 
+        /// <summary>Silhouette knobs for one body type. Axes were measured in Blender on the
+        /// trimmed Mixamo rig (BuildOutput/fbx_axes.py): spine localY runs up the back, localX
+        /// spans width, localZ is depth; shoulder localY runs along the bone. Hips localY and
+        /// the leg bones are never scaled, so leg length — and therefore the planted feet —
+        /// cannot drift. The Animator clips only author position/rotation curves, so bone
+        /// scale set once at spawn survives every state transition on the Generic rig.</summary>
+        public struct Silhouette
+        {
+            public float hipsX;
+            public float spineX;
+            public float spineZ;
+            public float spineY;
+            public float shoulderY;
+            public float headScale;
+        }
+
+        private static readonly Silhouette[] Silhouettes =
+        {
+            new Silhouette { hipsX = 1.00f, spineX = 1.00f, spineZ = 1.00f, spineY = 1.00f, shoulderY = 1.00f, headScale = 1.00f },
+            new Silhouette { hipsX = 1.12f, spineX = 1.10f, spineZ = 1.08f, spineY = 0.98f, shoulderY = 1.06f, headScale = 1.03f },
+            new Silhouette { hipsX = 0.92f, spineX = 0.90f, spineZ = 0.94f, spineY = 1.01f, shoulderY = 0.94f, headScale = 0.97f },
+            new Silhouette { hipsX = 0.96f, spineX = 0.95f, spineZ = 0.92f, spineY = 1.02f, shoulderY = 1.05f, headScale = 0.95f }
+        };
+
+        /// <summary>Number of distinct body-type profiles the crowd draws from.</summary>
+        public static int SilhouetteCount => Silhouettes.Length;
+
+        /// <summary>Deterministic body type plus seeded per-variant jitter. Self-contained
+        /// (own Random on the shared PedestrianSeed) so tests can assert stability without
+        /// instantiating the prefab.</summary>
+        public static Silhouette SilhouetteFor(int variant)
+        {
+            Silhouette s = Silhouettes[Mathf.Abs(variant) % Silhouettes.Length];
+            System.Random random = new System.Random(unchecked(variant ^ PedestrianSeed));
+            s.hipsX *= .96f + (float)random.NextDouble() * .08f;
+            s.spineX *= .96f + (float)random.NextDouble() * .08f;
+            s.spineZ *= .96f + (float)random.NextDouble() * .08f;
+            s.spineY *= .99f + (float)random.NextDouble() * .02f;
+            s.shoulderY *= .97f + (float)random.NextDouble() * .06f;
+            s.headScale *= .97f + (float)random.NextDouble() * .06f;
+            return s;
+        }
+
+        /// <summary>Scale rig bones so variants read as different body types, not just
+        /// recolours. Root scale and feet planting stay untouched: hips/leg length axes are
+        /// never scaled, so bind-pose bounds keep matching the planted feet.</summary>
+        private static void ApplySilhouette(GameObject go, int variant)
+        {
+            Silhouette s = SilhouetteFor(variant);
+            foreach (Transform bone in go.GetComponentsInChildren<Transform>())
+            {
+                string n = bone.name;
+                // EndsWith keeps matching whether or not the importer prefixes "mixamorig:".
+                if (n.EndsWith("Hips"))
+                {
+                    bone.localScale = new Vector3(s.hipsX, 1f, s.hipsX);
+                }
+                else if (n.EndsWith("Spine1") || n.EndsWith("Spine2") || n.EndsWith("Spine"))
+                {
+                    bone.localScale = new Vector3(s.spineX, s.spineY, s.spineZ);
+                }
+                else if (n.EndsWith("LeftShoulder") || n.EndsWith("RightShoulder"))
+                {
+                    bone.localScale = new Vector3(1f, s.shoulderY, 1f);
+                }
+                else if (n.EndsWith("Head"))
+                {
+                    bone.localScale = Vector3.one * s.headScale;
+                }
+            }
+        }
+
         /// <summary>Instantiate the animated pedestrian with its feet on the actor origin.
-        /// Variant drives seeded height and palette variation so sidewalk crowds are not clones.</summary>
+        /// Variant drives seeded height, body-type silhouette and palette variation so
+        /// sidewalk crowds are not clones.</summary>
         public (Transform root, Animator animator) CreatePedestrian(Transform parent, int variant)
         {
             GameObject go = Object.Instantiate(streetPedestrian, parent);
@@ -171,6 +244,7 @@ namespace StreetCrossing.Presentation
             System.Random random = new System.Random(unchecked(variant ^ PedestrianSeed));
             float scale = .94f + (float)random.NextDouble() * .12f;
             go.transform.localScale *= scale; // scale first: bounds must be measured post-scale or feet drift by h*(1-scale)
+            ApplySilhouette(go, variant); // bone scale after root scale, before bounds: never touches length axes, so planting stays exact
             Bounds b = BoundsInSpace(go, parent);
             // Feet on the actor origin, measured in the actor's own space so the yaw applied by
             // the route follower keeps them planted.
