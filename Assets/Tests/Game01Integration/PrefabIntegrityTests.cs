@@ -1,5 +1,5 @@
 #if UNITY_EDITOR && UNITY_INCLUDE_TESTS
-// EditMode integrity checks for Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab.
+// EditMode integrity checks for Assets/FirstPersonSokoban/Resources/FirstPersonFullBody.prefab.
 // Pure asset/skeleton inspection: no PlayMode, no rendering, no pixel assertions.
 using System.Collections.Generic;
 using System.IO;
@@ -23,7 +23,7 @@ namespace Game01Integration.Tests
                 RegexOptions.Compiled);
 
         private static string PrefabFileSystemPath =>
-            Path.Combine(Application.dataPath, "VirtualHand/Prefabs/FirstPersonFullBody.prefab");
+            Path.Combine(Application.dataPath, "FirstPersonSokoban/Resources/FirstPersonFullBody.prefab");
 
         private static HashSet<string> ExtractGuids(string yaml, Regex regex)
         {
@@ -86,6 +86,17 @@ namespace Game01Integration.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(assetPath),
                     $"Nested prefab guid '{guid}' does not resolve inside this project.");
             }
+        }
+
+        [Test]
+        public void FullBodyPrefabLoadsFromResources()
+        {
+            // Runtime resolution path used by SokobanFullBodyBinding in player builds:
+            // Resources.Load with a project-Resources-relative name (no extension).
+            GameObject prefab = Resources.Load<GameObject>("FirstPersonFullBody");
+            Assert.IsNotNull(prefab,
+                "Resources.Load(\"FirstPersonFullBody\") failed; the full-body prefab must stay under " +
+                "Assets/FirstPersonSokoban/Resources so player builds can resolve it at runtime.");
         }
 
         [Test]

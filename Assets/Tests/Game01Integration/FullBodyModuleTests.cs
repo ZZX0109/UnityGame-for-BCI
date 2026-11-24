@@ -1,6 +1,6 @@
 #if UNITY_EDITOR && UNITY_INCLUDE_TESTS
 // EditMode regression tests for the Game01 integration of the VirtualHand
-// full-body prefab (Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab).
+// full-body prefab (Assets/FirstPersonSokoban/Resources/FirstPersonFullBody.prefab).
 // Each test class is independently runnable from the Unity Test Runner and
 // touches no rendering pixels, no PlayMode loop and no graphics device state.
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace Game01Integration.Tests
     /// </summary>
     public abstract class FirstPersonFullBodyTestBase
     {
-        protected const string PrefabPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+        protected const string PrefabPath = "Assets/FirstPersonSokoban/Resources/FirstPersonFullBody.prefab";
         protected const int ExpectedBoneCount = 53; // 52 named bones + 1 rig root (see Logs/fullbody-import-report.txt: SMR bones=53)
 
         /// <summary>22 core skeleton bones, named exactly as in the FBX rig.</summary>

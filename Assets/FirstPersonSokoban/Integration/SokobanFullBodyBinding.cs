@@ -23,14 +23,16 @@ namespace FirstPersonSokoban.Integration
     /// </summary>
     public sealed class SokobanFullBodyBinding : MonoBehaviour, IGameHandActionAdapter
     {
-        // 模块预制体在 Game04 拷贝出的原始路径(供 UNITY_EDITOR 直接加载)。
-        const string FullBodyPrefabPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+        // 模块预制体路径:预制体已移入 Resources 目录,玩家构建可用
+        // Resources.Load("FirstPersonFullBody") 解析(见 FullBodyResourcesCandidates);
+        // 编辑器下也可按该路径直接 AssetDatabase 加载。
+        const string FullBodyPrefabPath = "Assets/FirstPersonSokoban/Resources/FirstPersonFullBody.prefab";
         const string HandsPrefabPath = "Assets/VirtualHand/Prefabs/ElenaFF/FirstPersonHands.prefab";
 
-        // Resources.Load 的候选路径(仅当预制体被放进 Resources 目录时生效)。
+        // Resources.Load 的候选路径(相对任一 Resources 根目录,不含扩展名)。
         static readonly string[] FullBodyResourcesCandidates =
         {
-            "FirstPersonFullBody", "VirtualHand/Prefabs/FirstPersonFullBody",
+            "FirstPersonFullBody",
         };
         static readonly string[] HandsResourcesCandidates =
         {
@@ -185,7 +187,8 @@ namespace FirstPersonSokoban.Integration
             if (prefab == null)
             {
                 Debug.LogError("[SokobanFullBodyBinding] 找不到 FirstPersonFullBody 预制体。" +
-                               "请把 " + FullBodyPrefabPath + " 放入任意 Resources 目录,或给 " +
+                               "玩家构建需以 'FirstPersonFullBody' 从 Resources 目录加载" +
+                               "(应在 " + FullBodyPrefabPath + "),或给 " +
                                "SokobanFullBodyBinding.fullBodyPrefabOverride 赋值。全身显示将不可用。");
                 return;
             }

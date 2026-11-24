@@ -56,7 +56,7 @@ namespace Game01Integration.Tests
         [Test]
         public void FirstPersonFullBodyPrefabExists()
         {
-            string prefabPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+            string prefabPath = "Assets/FirstPersonSokoban/Resources/FirstPersonFullBody.prefab";
             Assert.IsTrue(System.IO.File.Exists(System.IO.Path.Combine(UnityEngine.Application.dataPath, "..", prefabPath)),
                 $"[file in place sentinel] {prefabPath} is missing; full-body integration has no source asset.");
         }
