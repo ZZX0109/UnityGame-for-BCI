@@ -691,6 +691,19 @@ namespace StreetCrossing.Presentation
         private void BuildFurnitureBounds(StreetScenarioDefinition s)
         {
             PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.5f)), new Vector3(2.25f, 1, .65f));
+            // Pergola columns (StreetVisualDetails.GardenEntrance) are visual-only; these blockers stop
+            // the player from clipping through them on the way to the residence doorstep. The pergola
+            // visual only exists in the Residential district, so the blockers must follow the same gate.
+            if (profile.identity == StreetVisualIdentity.Residential)
+                for (int side = -1; side <= 1; side += 2)
+                    PhysicalBounds("Pergola column bounds", new Vector3(7.5f + side * 1.8f, 1.65f, StreetLayout.SidewalkZ(-8.7f)), new Vector3(.18f, 3.3f, .18f));
+            // The kerbside hydrants (StreetFurnitureBuilder) are visual-only, so the player can walk
+            // straight through them. These twins mirror the builder's positions exactly: the x offset
+            // follows hydrantSide (not side), and |z| = 6.9 sits just past the kerb line on purpose.
+            for (int hydrantSide = -1; hydrantSide <= 1; hydrantSide += 2)
+                PhysicalBounds("Kerbside fire hydrant bounds",
+                    new Vector3(hydrantSide > 0 ? -16.5f : 14.5f, .31f, StreetLayout.SidewalkZ(hydrantSide * 3.6f)),
+                    new Vector3(.30f, .62f, .30f));
             for (int side = -1; side <= 1; side += 2)
             {
                 PhysicalBounds("Cycle stand bounds", new Vector3((side > 0 ? 19 : 17) + .8f, .44f, StreetLayout.SidewalkZ(side * 8.4f)), new Vector3(2.3f, .88f, .72f));
@@ -700,6 +713,11 @@ namespace StreetCrossing.Presentation
                 // the player from walking through the box.
                 PhysicalBounds("Utility cabinet bounds", new Vector3(side * 4f, .56f, StreetLayout.SidewalkZ(side * 8.2f)), new Vector3(.56f, 1.12f, .46f));
                 PhysicalBounds("Secondary utility cabinet bounds", new Vector3(side * 22.5f, .43f, StreetLayout.SidewalkZ(side * 8.2f)), new Vector3(.72f, .86f, .36f));
+                // The discarded tyre by each maintenance gate is a knee-high solid object; give it a
+                // blocker so the player cannot walk through it. Half width .31 keeps the far face at
+                // |x| = 38.79, still clear of the gate envelope collider that starts at |x| = 38.85.
+                for (int end = -1; end <= 1; end += 2)
+                    PhysicalBounds("Old tyre bounds", new Vector3(end * 38.48f, .30f, StreetLayout.SidewalkZ(side * 7.8f)), new Vector3(.62f, .58f, .62f));
                 for (int slot = -2; slot <= 2; slot++)
                 {
                     float x = slot * profile.furnishingSpacing;
@@ -733,18 +751,17 @@ namespace StreetCrossing.Presentation
             Box("Planter", new Vector3(4.25f, 0.35f, StreetLayout.SidewalkZ(8.8f)), new Vector3(1.2f, 0.7f, 0.8f), "A87857");
             Shape(PrimitiveType.Sphere, "Planter greenery", root, new Vector3(4.25f, 0.9f, StreetLayout.SidewalkZ(8.8f)), new Vector3(1.1f, 0.65f, 0.8f), "667C49", false);
         }
+        // The shelter shell (roof, posts, back panel, glazing, slatted seat) is the detailed build in
+        // StreetVisualDetails.Shelter; only the collision and interaction fixtures that PlayMode tests
+        // resolve by name stay here, as direct children of the environment root.
         private void BusStop(Vector3 p)
         {
-            Box("Bus shelter roof", p + new Vector3(0, 2.6f, 0), new Vector3(3.6f, 0.18f, 1.7f), "71816C");
-            for (int x = -1; x <= 1; x += 2) Box("Bus shelter post", p + new Vector3(x * 1.6f, 1.3f, 0.65f), new Vector3(0.09f, 2.6f, 0.09f), "6D7466");
-            Box("Shelter back panel", p + new Vector3(0, 1.5f, 0.7f), new Vector3(3.2f, 1.7f, 0.07f), "B5C4B6");
-            // The visible seat is the slatted build in StreetVisualDetails (finished top 0.450 m). The legacy
-            // base block keeps only its collider, resized onto the slat envelope so the retained blocker is
+            // The visible seat is the slatted build in StreetVisualDetails (finished top 0.450 m). This
+            // block keeps only its collider, sized onto the slat envelope so the retained blocker is
             // the seat surface itself instead of a floating invisible shelf above it.
             Box("Bus seat", p + new Vector3(0, 0.4225f, 0.25f), new Vector3(2.7f, 0.055f, 0.36f), "8E7656").GetComponent<Renderer>().enabled = false;
             Box("Bus sign pole", p + new Vector3(-2.2f, 1.4f, -0.3f), new Vector3(0.07f, 2.8f, 0.07f), "717B6A");
             Inspectable(Box("Bus stop board", p + new Vector3(-2.2f, 2.25f, -0.3f), new Vector3(0.95f, 1, 0.1f), "F4EBD6"), "街心公交站", "候车区位于人行道内。请保留斑马线入口和盲道通道，过街时以行人信号和实际车流为准。");
-            Label("公交\n街心站", p + new Vector3(-2.2f, 2.25f, -0.37f), 0.06f, "32483D", null, 0, 0.8f, 0.8f);
         }
         private void Tree(Vector3 p)
         {

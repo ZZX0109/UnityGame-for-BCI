@@ -133,7 +133,12 @@ namespace StreetCrossing.Presentation
             Part(shelter, w, "Shelter rounded fascia", new Vector3(0, 2.59f, -.88f), new Vector3(3.76f, .26f, .08f), p.metal, .10f);
             Part(shelter, w, "Shelter roof inset", new Vector3(0, 2.66f, 0), new Vector3(3.5f, .035f, 1.62f), p.secondary, .012f);
             for (int support = -1; support <= 1; support += 2)
+            {
+                // The legacy shelter's posts move here so the detailed shell is self-supporting;
+                // they rise from the ground shoe to the roof inset underside.
+                Part(shelter, w, "Shelter post", new Vector3(support * 1.6f, 1.33f, .65f), new Vector3(.09f, 2.66f, .09f), p.metal);
                 Part(shelter, w, "Shelter post shoe", new Vector3(support * 1.6f, .11f, .65f), new Vector3(.19f, .22f, .19f), p.metal);
+            }
             // Opaque framed panel deliberately agrees with the retained collision/visibility surface.
             Part(shelter, w, "Opaque information panel", new Vector3(.9f, 1.52f, .645f), new Vector3(1.10f, 1.48f, .035f), "E8E2CF");
             for (int line = 0; line < 6; line++)
