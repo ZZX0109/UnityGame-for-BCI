@@ -119,7 +119,17 @@ namespace StreetCrossing.Presentation
         public Transform CreateLodgedTree(Transform parent, Vector3 position, int variant)
         {
             Transform tree = CreateRefinedTree(parent, position, variant);
+            return ApplyLodChain(tree, position);
+        }
+
+        /// <summary>Apply the two-level LOD chain to an already created refined tree. Safe to
+        /// call more than once: a wrapper that already carries a LODGroup is returned unchanged,
+        /// so a double application can never stack groups, proxy containers or renderer
+        /// sets.</summary>
+        public Transform ApplyLodChain(Transform tree, Vector3 position)
+        {
             if (tree == null || tree.GetComponentInChildren<LODGroup>() != null) return tree;
+            Transform parent = tree.parent;
 
             // Collect level 0 before any proxy child exists under the wrapper.
             MeshRenderer[] lod0 = tree.GetComponentsInChildren<MeshRenderer>();
@@ -173,6 +183,9 @@ namespace StreetCrossing.Presentation
             };
             LODGroup group = tree.gameObject.AddComponent<LODGroup>();
             group.SetLODs(levels);
+            // Bake the cull volume now that both levels exist; Unity would otherwise derive it
+            // lazily and the first frame could pop the whole tree out of view.
+            group.RecalculateBounds();
             return tree;
         }
 
