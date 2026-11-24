@@ -200,6 +200,14 @@ namespace StreetCrossing.Presentation
                     Part(world, block, "Ground floor residential window backing", new Vector3(wx, 1.65f, -2.015f), new Vector3(width * .20f, 1.55f, .025f), "263633");
                     Renderer pane = Part(world, block, "Ground floor residential window", new Vector3(wx, 1.65f, -2.04f), new Vector3(width * .22f, 1.7f, .015f), "506866");
                     pane.sharedMaterial = world.GlassMaterialVariant(edge > 0 ? 2 : 1);
+                    if (!distant)
+                    {
+                        // Closed roller shutter surface-mounted over each side window: the imported
+                        // housing reads up close, a flat slatted panel stands in when the model is absent.
+                        Transform shutter = world.Modules.SpawnImported(block, "rollershutter_window_01", new Vector3(wx, .6f, -2.16f), 1.9f);
+                        if (shutter != null) world.AddVisualLod(shutter, .012f);
+                        else Part(world, block, "Residential shutter panel", new Vector3(wx, 1.68f, -2.07f), new Vector3(width * .20f, 1.62f, .04f), "8E959B");
+                    }
                 }
             }
             else
@@ -261,7 +269,18 @@ namespace StreetCrossing.Presentation
                         }
                         Transform threshold = new GameObject("Doorway " + kind).transform; threshold.SetParent(block, false); threshold.localPosition = new Vector3(0, 0, -2.32f);
                     }
-                    else if (!distant) ShopDisplay(world, block, profile, kind, x, sideWindowWidth);
+                    else if (!distant)
+                    {
+                        // Convenience side bays read as closed service bays: an imported roller shutter
+                        // over the glazing, or a slatted flat panel when the model is unavailable.
+                        if (kind == StreetFacadeKind.Convenience)
+                        {
+                            Transform serviceShutter = world.Modules.SpawnImported(block, "rollershutter_door", new Vector3(x, .05f, -2.15f), 2.3f);
+                            if (serviceShutter != null) world.AddVisualLod(serviceShutter, .012f);
+                            else Part(world, block, "Convenience service shutter", new Vector3(x, 1.25f, -2.09f), new Vector3(1.05f, 2.2f, .05f), "8E959B");
+                        }
+                        else ShopDisplay(world, block, profile, kind, x, sideWindowWidth);
+                    }
                     float transomWidth = bay == 0 ? entryWidth + .10f : sideFrameWidth;
                     Part(world, block, "Shopfront transom", new Vector3(x, 2.45f, -2.22f), new Vector3(transomWidth, .065f, .05f), profile.secondary);
                 }
