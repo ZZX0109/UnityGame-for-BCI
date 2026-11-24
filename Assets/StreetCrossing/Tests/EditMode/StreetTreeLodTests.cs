@@ -159,8 +159,11 @@ namespace StreetCrossing.Tests.EditMode
 
             // The stored cull volume must already cover the silhouette. A fresh LODGroup
             // defaults to a one-metre cull cube, so a missing explicit recalculation leaves
-            // the whole tree culled long before its far LOD takes over.
-            Assert.GreaterOrEqual(group.size, treeHeight * 0.9f,
+            // the whole tree culled long before its far LOD takes over. LODGroup.size is
+            // documented as the group's local-space extent while treeHeight is measured in
+            // world space, so convert with the wrapper's uniform scale — otherwise a wrapper
+            // scaled up from a short authored FBX fails the floor despite a correct volume.
+            Assert.GreaterOrEqual(group.size * tree.lossyScale.y, treeHeight * 0.9f,
                 "stored cull volume is smaller than the tree height");
             Vector3 expectedLocalCentre = tree.InverseTransformPoint(treeBounds.center);
             Assert.LessOrEqual(Vector3.Distance(group.localReferencePoint, expectedLocalCentre),
