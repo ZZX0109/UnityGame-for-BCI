@@ -320,6 +320,7 @@ namespace StreetCrossing.Presentation
         private GameObject importedFireHydrant;
         private GameObject importedStreetLamp01;
         private GameObject importedModularFireEscape;
+        private GameObject importedExteriorAirconUnit;
         private Dictionary<string, Material> importedMaterials;
         private bool importedAssetLoaded;
         /// <summary>True once at least one imported CC0 model was loaded successfully.</summary>
@@ -361,9 +362,12 @@ namespace StreetCrossing.Presentation
             return instance.transform;
         }
         /// <summary>
-        /// Replace the FBX's untextured materials with one Standard PBR material built from the CC0
+        /// Replace the FBX's untextured materials with Standard PBR materials built from the CC0
         /// 1k albedo/normal/roughness maps shipped under Imported/Textures. Falls back to leaving the
         /// imported material untouched when the maps are absent, so the model still renders.
+        /// Multi-slot assets (Poly Haven FBX ships one material per part, e.g.
+        /// <c>modular_fire_escape_01</c>/<c>_02</c>) get one material per original slot, looked up
+        /// from slot-prefixed textures; single-slot assets keep the plain behaviour.
         /// </summary>
         private void ApplyImportedMaterial(GameObject instance, string assetName)
         {
@@ -371,53 +375,91 @@ namespace StreetCrossing.Presentation
             Material material;
             if (!importedMaterials.TryGetValue(assetName, out material))
             {
-                Texture2D albedo = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + assetName + "_diff");
-                Texture2D normal = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + assetName + "_nor");
-                Texture2D roughness = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + assetName + "_rough");
-                if (albedo != null)
-                {
-                    Shader shader = Shader.Find("Standard");
-                    if (shader == null && Plaster != null) shader = Plaster.shader;
-                    if (shader != null)
-                    {
-                        material = new Material(shader) { name = "Imported " + assetName };
-                        material.mainTexture = albedo;
-                        if (normal != null)
-                        {
-                            material.SetTexture("_BumpMap", normal);
-                            material.SetFloat("_BumpScale", .85f);
-                            material.EnableKeyword("_NORMALMAP");
-                        }
-                        if (roughness != null)
-                        {
-                            // Roughness map is greyscale (R = roughness) while Standard expects
-                            // smoothness in _MetallicGlossMap.a, so the map cannot be bound
-                            // directly without a custom shader. Tuning the uniform gloss to a
-                            // balanced midpoint and scale is the best Standard-only compromise;
-                            // per-pixel roughness variation is a known limitation.
-                            material.SetFloat("_Glossiness", .38f);
-                            material.SetFloat("_GlossMapScale", .85f);
-                            material.SetFloat("_Metallic", .08f);
-                        }
-                        else
-                        {
-                            material.SetFloat("_Glossiness", .30f);
-                            material.SetFloat("_Metallic", .12f);
-                        }
-                        // One shared material per asset keeps every instance in the same batch and gives
-                        // DisposeImported a single owner to release.
-                        importedMaterials.Add(assetName, material);
-                    }
-                }
-                // No usable maps: keep the FBX's own material rather than blanking the model out.
-                if (!importedMaterials.TryGetValue(assetName, out material)) return;
+                material = BuildTexturedMaterial(assetName, null);
+                if (material != null) importedMaterials.Add(assetName, material);
             }
             foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>())
             {
-                var materials = new Material[Mathf.Max(1, renderer.sharedMaterials.Length)];
-                for (int i = 0; i < materials.Length; i++) materials[i] = material;
+                Material[] shared = renderer.sharedMaterials;
+                if (shared.Length <= 1)
+                {
+                    // Single-slot asset (or no base maps): the plain behaviour covers it, and the
+                    // FBX's own material is kept when no maps exist at all.
+                    if (material != null) renderer.sharedMaterials = new Material[] { material };
+                    continue;
+                }
+                // Preserve the original slot count: one slot-prefix material per slot, falling back
+                // to the base material, then to the FBX's own material when nothing resolves.
+                var materials = new Material[shared.Length];
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    int slotIndex = ParseSlotIndex(assetName, shared[i] != null ? shared[i].name : string.Empty);
+                    string slotKey = assetName + "_" + slotIndex.ToString("00");
+                    Material slotMaterial;
+                    if (!importedMaterials.TryGetValue(slotKey, out slotMaterial))
+                    {
+                        slotMaterial = BuildTexturedMaterial(assetName, slotIndex);
+                        if (slotMaterial != null) importedMaterials.Add(slotKey, slotMaterial);
+                    }
+                    materials[i] = slotMaterial != null ? slotMaterial : (material != null ? material : shared[i]);
+                }
                 renderer.sharedMaterials = materials;
             }
+        }
+        /// <summary>Extract the numeric slot suffix (<c>modular_fire_escape_02</c> → 2) from an
+        /// imported material name; 0 when the name carries no recognisable suffix.</summary>
+        private static int ParseSlotIndex(string assetName, string materialName)
+        {
+            if (string.IsNullOrEmpty(materialName)) return 0;
+            string name = materialName;
+            int paren = name.IndexOf("(instance)", System.StringComparison.Ordinal);
+            if (paren > 0) name = name.Substring(0, paren).TrimEnd();
+            if (!name.StartsWith(assetName + "_", System.StringComparison.Ordinal)) return 0;
+            string suffix = name.Substring(assetName.Length + 1);
+            int parsed;
+            return int.TryParse(suffix, out parsed) ? Mathf.Max(0, parsed) : 0;
+        }
+        /// <summary>Build one Standard material from the slot-prefixed texture triplet
+        /// (<c>{asset}_{slot:00}_diff/_nor/_rough</c>); <paramref name="slotIndex"/> of null builds
+        /// the plain unprefixed base material. Returns null when no albedo map exists.</summary>
+        private Material BuildTexturedMaterial(string assetName, int? slotIndex)
+        {
+            string prefix = slotIndex.HasValue ? assetName + "_" + slotIndex.Value.ToString("00") : assetName;
+            Texture2D albedo = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + prefix + "_diff");
+            if (albedo == null) return null;
+            Texture2D normal = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + prefix + "_nor");
+            Texture2D roughness = Resources.Load<Texture2D>("StreetCrossing/Imported/Textures/" + prefix + "_rough");
+            Shader shader = Shader.Find("Standard");
+            if (shader == null && Plaster != null) shader = Plaster.shader;
+            if (shader == null) return null;
+            string materialName = slotIndex.HasValue
+                ? "Imported " + assetName + " slot " + slotIndex.Value.ToString("00")
+                : "Imported " + assetName;
+            Material material = new Material(shader) { name = materialName };
+            material.mainTexture = albedo;
+            if (normal != null)
+            {
+                material.SetTexture("_BumpMap", normal);
+                material.SetFloat("_BumpScale", .85f);
+                material.EnableKeyword("_NORMALMAP");
+            }
+            if (roughness != null)
+            {
+                // Roughness map is greyscale (R = roughness) while Standard expects
+                // smoothness in _MetallicGlossMap.a, so the map cannot be bound
+                // directly without a custom shader. Tuning the uniform gloss to a
+                // balanced midpoint and scale is the best Standard-only compromise;
+                // per-pixel roughness variation is a known limitation.
+                material.SetFloat("_Glossiness", .38f);
+                material.SetFloat("_GlossMapScale", .85f);
+                material.SetFloat("_Metallic", .08f);
+            }
+            else
+            {
+                material.SetFloat("_Glossiness", .30f);
+                material.SetFloat("_Metallic", .12f);
+            }
+            return material;
         }
         /// <summary>The primary material captured when the named model was first instantiated, or null.</summary>
         public Material GetCachedMaterialFor(string assetName)
@@ -440,6 +482,7 @@ namespace StreetCrossing.Presentation
                 case "fire_hydrant": return importedFireHydrant;
                 case "street_lamp_01": return importedStreetLamp01;
                 case "modular_fire_escape": return importedModularFireEscape;
+                case "exterior_aircon_unit": return importedExteriorAirconUnit;
                 default: return null;
             }
         }
@@ -458,6 +501,7 @@ namespace StreetCrossing.Presentation
                 case "fire_hydrant": importedFireHydrant = asset; break;
                 case "street_lamp_01": importedStreetLamp01 = asset; break;
                 case "modular_fire_escape": importedModularFireEscape = asset; break;
+                case "exterior_aircon_unit": importedExteriorAirconUnit = asset; break;
             }
         }
         /// <summary>Destroy every cached pedestrian tint material and clear the session-lifetime
