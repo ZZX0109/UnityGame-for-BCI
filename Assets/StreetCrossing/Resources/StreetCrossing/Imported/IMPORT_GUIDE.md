@@ -10,9 +10,9 @@
 
 FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0`、`importCameras=0`、`importLights=0`（场景碰撞与光照由代码统一管理）。
 
-## 已就绪资产（32 个文件，约 15 MB）
+## 已就绪资产（44 个文件，约 21.7 MB）
 
-### 模型 `Resources/StreetCrossing/Imported/Models/`（8 × FBX，1.33 MB）
+### 模型 `Resources/StreetCrossing/Imported/Models/`（11 × FBX，3.9 MB）
 
 | 文件 | 用途 | 替换目标 |
 |---|---|---|
@@ -23,8 +23,11 @@ FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0
 | `rollershutter_window_01.fbx` | 卷帘窗 | 新增商铺立面 |
 | `old_tyre.fbx` | 旧轮胎 | 路边装饰 |
 | `security_light.fbx` | 工业安防灯 | 新增建筑墙面灯 |
+| `fire_hydrant.fbx` | 消防栓（clean-paint 变体；导入前已在 Blender 剔除同位重叠的 `*_aged` 变体，防 z-fighting） | 程序化消防栓 |
+| `street_lamp_01.fbx` | 铸铁路灯（高 3.87 m，匹配代码目标高 3.9 m） | 程序化路灯 |
+| `modular_fire_escape.fbx` | 模块化防火梯（7 个网格对象，2 个材质槽；当前已缓存、暂无场景挂点） | 预留建筑侧面立体层次 |
 
-### 贴图 `Resources/StreetCrossing/Imported/Textures/`（24 × 1K JPG，13.8 MB）
+### 贴图 `Resources/StreetCrossing/Imported/Textures/`（33 × 1K JPG，18.8 MB）
 
 每个模型三张：`<name>_diff.jpg`（albedo）、`<name>_nor.jpg`（法线）、`<name>_rough.jpg`（粗糙度）。
 
@@ -38,7 +41,17 @@ FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0
 4. **落座**：把模型底面精确放在 `localPosition.y`，水平居中到 `localPosition`
 5. 由调用方 `AddVisualLod` 加入视距剔除
 
-已接入 3 处：垃圾桶、消防栓、路灯。当前若模型缺失，会静默回退到上一轮的程序化实现——**不会中断场景构建或测试**。
+已接入 10 处（10 个资产）：垃圾桶、消防栓、路灯、井盖、旧轮胎、配电箱×2、安防灯、卷帘窗（住宅立面）、卷帘门（Convenience 服务口）。当前若模型缺失，会静默回退到上一轮的程序化实现——**不会中断场景构建或测试**。
+
+## 已知限制（运行时单材质合并）
+
+`StreetAssetLibrary.ApplyImportedMaterial` 给每个资产只构建**一份**共享材质并覆盖全部渲染器的材质槽数组：
+
+- `street_lamp_01` 原生 3 槽（本体/玻璃/灯泡）→ 合并为 1 槽，玻璃透明度丢失（灯罩呈实体金属质感）
+- `modular_fire_escape` 原生 2 槽（`_01`/`_02`）→ 合并为 1 槽，采用 `_01` 槽贴图
+- 灰度 rough 贴图无法拆出金属度通道，`_Metallic` 用固定值（有 rough 图 0.08，无则 0.12）
+
+这些折损是运行时方案的设计代价（零 .mat YAML 风险），接受；若需恢复多槽，需改为手写多材质或升级导入管线。
 
 ## 一次性 Unity Editor 步骤
 
@@ -59,15 +72,17 @@ FBX 的 Unity 默认导入设置对本项目已经是安全的：`addColliders=0
 4. **落座**：模型底部贴合地面，无悬空/陷地
 5. **性能**：PICO 目标 ≥72 FPS；如不足，优先降低 `security_light`/`metal_trash_can` 的贴图尺寸
 
-## 仍待补下载（代码已就位）
+## 本轮新增资产（2026-11-24 下载完成）
 
-| 模型 | 面数 | 说明 |
-|---|---|---|
-| `fire_hydrant` | 86,316 | 高面数，建议 Unity 内做 LOD 或有条件启用 |
-| `street_lamp_01` | 30,610 | 同上 |
-| `modular_fire_escape` | 11,322 | 建筑侧面立体层次 |
+上表 3 个待补模型已全部落地并通过校验（HTTP 200 + md5 + 字节数对 `files/{asset}` 清单逐一核对，`TOTAL_FAIL=0`）：
 
-下载：从 [Poly Haven 模型页](https://polyhaven.com/models) 取 **FBX 1k** 放 `Models/`，三张 1k JPG 放 `Textures/`（命名 `<name>_diff.jpg` / `_nor.jpg` / `_rough.jpg`），再跑一次上面的菜单项即可，无需改代码。
+| 模型 | 作者（Poly Haven） | 面数 | 处理记录 |
+|---|---|---|---|
+| `fire_hydrant` | Gonçalo Felício | 86,316 | FBX 内含 clean/aged 两套同位几何体；已在 Blender 剔除 aged 套件后回导出（Y-up，高 0.80 m），顶点 43282→21641 |
+| `street_lamp_01` | Josh Dean | 30,610 | 原样使用；实测尺寸 0.70×0.39×3.87 m，与代码目标高 3.9 m 吻合 |
+| `modular_fire_escape` | Juniix | 11,322 | 原样使用；7 个网格对象、2 材质槽（`_01`/`_02`），运行时合并为 `_01` |
+
+全部来自 [Hidden Alley 合集](https://polyhaven.com/collections/hidden_alley)，CC0。下载源清单与校验脚本产物在仓库外 `BuildOutput/polyhaven-dl/` 留档。该合集仍可继续扩充（如 `exterior_aircon_unit`），代码侧 `GetImportedModel`/`SetImportedModel` 需各加一个 case 才能生效。
 
 ## 已放弃的方案（记录以免重走）
 
