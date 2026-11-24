@@ -27,7 +27,6 @@ namespace StreetCrossing.Presentation
             public Transform root;
             public Animator animator;
             public float restYaw;
-            public float animOffset;
         }
         private const float WalkClipSpeed = .8f;
         private readonly List<Actor> actors = new List<Actor>();
@@ -83,7 +82,7 @@ namespace StreetCrossing.Presentation
                 }
                 world.AddVisualLod(person, .018f);
                 actors.Add(new Actor { route = routes[i], root = person, animator = animator,
-                    restYaw = 165f + (i % 3) * 15f, animOffset = routes[i].phase });
+                    restYaw = 165f + (i % 3) * 15f });
             }
             Apply(0);
         }

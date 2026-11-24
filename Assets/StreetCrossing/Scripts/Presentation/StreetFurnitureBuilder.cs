@@ -221,14 +221,17 @@ namespace StreetCrossing.Presentation
             for (int side = -1; side <= 1; side += 2)
             for (int end = -1; end <= 1; end += 2)
             {
-                float x = end * 38.6f;
+                // Both props sit just clear of the 0.30 m wide gate envelope collider, which starts
+                // at |x| = 38.85, so nothing overlaps an invisible blocker.
+                float x = end * 38.48f;
                 Transform tyre = world.Modules.SpawnImported(furniture, "old_tyre", new Vector3(x, .03f, Z(side, 6.0f)), .58f);
                 if (tyre != null) world.AddVisualLod(tyre, .012f);
                 else Part(world, furniture, "Old tyre", new Vector3(x, .30f, Z(side, 6.0f)), new Vector3(.56f, .58f, .56f), "282A28", .08f, .15f);
-                // Security light mounted on the gate top rail.
+                // Security light bracketed onto the gate's upper rail; the rail face is at
+                // |x| = 38.94 and its underside at y = 1.11, so the body touches both.
                 Transform lightParent = new GameObject("Gate security light").transform;
                 lightParent.SetParent(furniture, false);
-                lightParent.localPosition = new Vector3(x, .95f, Z(side, 6.3f) + end * 2.1f);
+                lightParent.localPosition = new Vector3(end * 38.88f, .95f, Z(side, 6.3f) + end * 2.1f);
                 Transform securityLight = world.Modules.SpawnImported(lightParent, "security_light", Vector3.zero, .22f);
                 if (securityLight != null) world.AddVisualLod(securityLight, .012f);
                 else
