@@ -562,11 +562,13 @@ namespace StreetCrossing.Presentation
             Transform stop = new GameObject("Corner bus stop").transform;
             stop.SetParent(root, false);
             stop.localPosition = new Vector3(-2.15f, 0, -width - 1.48f);
-            GameObject panel = Box("Opaque route board", new Vector3(0, 1.19f, 0), new Vector3(.15f, 2.08f, 2.28f), "285D65", true, stop);
+            // Dual lock: south face >= -9.205 keeps the spawn corridor spare >= 0.42 m;
+            // north face <= -6.96 keeps the S03 blocked-sightline acceptance margin (eye x = 0).
+            GameObject panel = Box("Opaque route board", new Vector3(0, 1.19f, 0), new Vector3(.15f, 2.08f, 2.24f), "285D65", true, stop);
             stopPanel = panel.GetComponent<Collider>();
             Inspectable(panel, "街角公交站", "站牌挡住左侧近车道。在人行道上靠近斑马线，绕过牌边再看；不用踏进车道。");
             // Keep the tested obstacle envelopes; the small construction details are visual only.
-            GameObject roof = Box("Stop canopy", new Vector3(-1.18f, 2.31f, 0), new Vector3(2.85f, .16f, 2.45f), "32717A", true, stop);
+            GameObject roof = Box("Stop canopy", new Vector3(-1.18f, 2.31f, 0), new Vector3(2.85f, .16f, 1.9f), "32717A", true, stop);
             roof.GetComponent<Renderer>().enabled = false;
             Box("Stop post", new Vector3(-2.38f, 1.12f, -.91f), new Vector3(.10f, 2.24f, .10f), "344D50", true, stop);
             GameObject seat = Box("Waiting bench", new Vector3(-1.27f, .46f, -.7f), new Vector3(1.82f, .13f, .46f), "A97850", true, stop);
@@ -691,7 +693,7 @@ namespace StreetCrossing.Presentation
         }
         private void BuildFurnitureBounds(StreetScenarioDefinition s)
         {
-            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.5f)), new Vector3(2.25f, 1, .65f));
+            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.8f)), new Vector3(2.25f, 1, .65f));
             // Pergola columns (StreetVisualDetails.GardenEntrance) are visual-only; these blockers stop
             // the player from clipping through them on the way to the residence doorstep. The pergola
             // visual only exists in the Residential district, so the blockers must follow the same gate.
@@ -768,7 +770,7 @@ namespace StreetCrossing.Presentation
         {
             // Keep the original planter collider used by clearance tests; the refined FBX model
             // serves near range and drops to a procedural trunk-plus-crown proxy at distance.
-            Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 1.4f), "9D967C");
+            Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 0.8f), "9D967C");
             int variant = Mathf.Abs(Mathf.RoundToInt(p.x * 13f + p.z * 7f)) % 3;
             modules.CreateLodgedTree(root, p, variant);
         }
