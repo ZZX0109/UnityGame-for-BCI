@@ -3,6 +3,8 @@
   "rootNamespace": "StreetCrossing.Tests.PlayMode",
   "references": [
     "StreetCrossing.Runtime",
+    "StreetCrossing.Integration",
+    "Neuralife.VirtualHand.Runtime",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
     "Unity.TextMeshPro",

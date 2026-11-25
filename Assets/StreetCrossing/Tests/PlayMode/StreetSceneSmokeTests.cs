@@ -24,6 +24,9 @@ namespace StreetCrossing.Tests.PlayMode
         [UnityTest]
         public IEnumerator S01BuildsFirstPersonStreetPausesAndResetsWithoutDuplicateCars()
         {
+            // 全身接线链每次场景加载会确定性输出 7 条一次性 info 日志（良性诊断），
+            // 在加载前显式登记为预期，保持 NoUnexpectedReceived 的真实纪律。
+            FullBodyWiringLogs.ExpectWiringSequence();
             yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
             StreetGameManager game = Object.FindObjectOfType<StreetGameManager>();
             Assert.That(game, Is.Not.Null); game.AutoPauseOnFocusLoss = false; game.SetInputSource(new QuietInput());
