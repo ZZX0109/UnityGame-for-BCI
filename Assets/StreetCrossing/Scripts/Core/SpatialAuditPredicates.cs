@@ -78,5 +78,137 @@ namespace StreetCrossing.Core
 
         private static float Cross(Vector2 o, Vector2 a, Vector2 b)
             => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+
+        // ------------------------------------------------------------------
+        // P0-§3 round 2: pure predicates behind checks a-h, k and l. All are
+        // side-effect free so EditMode tests cover every branch without
+        // loading a scene or touching the physics world.
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// check a (render_bounds_abnormal): true when every world-AABB axis
+        /// sits inside [minBand, maxBand]. bandRatio reports the worst per-axis
+        /// excursion factor: exactly 1 when in band, &gt;1 when out.
+        /// </summary>
+        public static bool IsWithinSizeBand(Vector3 size, Vector3 minBand, Vector3 maxBand, out float bandRatio)
+        {
+            bandRatio = Mathf.Max(AxisExcursion(size.x, minBand.x, maxBand.x),
+                         Mathf.Max(AxisExcursion(size.y, minBand.y, maxBand.y),
+                                   AxisExcursion(size.z, minBand.z, maxBand.z)));
+            return bandRatio <= 1f;
+        }
+
+        /// <summary>Per-axis band excursion; degenerate bands (max &lt;= min) count as unconstrained.</summary>
+        private static float AxisExcursion(float value, float min, float max)
+        {
+            if (max > min)
+            {
+                if (value > max) return value / Mathf.Max(max, 1e-6f);
+                if (value < min) return min / Mathf.Max(value, 1e-6f);
+            }
+            return 1f;
+        }
+
+        /// <summary>check b (tipped_over): a vertical prop lies down when its height collapses under uprightRatio x footprint.</summary>
+        public static bool IsTippedOver(Vector3 size, float uprightRatio)
+        {
+            return size.y < uprightRatio * Mathf.Max(size.x, size.z);
+        }
+
+        /// <summary>check c (floating): AABB bottom drifted above the ground plane by more than threshold.</summary>
+        public static bool IsFloating(float groundGap, float threshold) => groundGap > threshold;
+
+        /// <summary>check d (sunk): AABB bottom pushed below the ground plane by more than threshold.</summary>
+        public static bool IsSunk(float groundGap, float threshold) => groundGap < -threshold;
+
+        /// <summary>check e (category_overlap): intersection volume of two world AABBs; 0 when disjoint.</summary>
+        public static float SharedVolume(Bounds a, Bounds b)
+        {
+            Vector3 d = Vector3.Min(a.max, b.max) - Vector3.Max(a.min, b.min);
+            if (d.x <= 0f || d.y <= 0f || d.z <= 0f) return 0f;
+            return d.x * d.y * d.z;
+        }
+
+        /// <summary>Axis-aligned box volume; Unity's Bounds has no volume property.</summary>
+        public static float VolumeOf(Bounds b) => b.size.x * b.size.y * b.size.z;
+
+        /// <summary>
+        /// check f (collider_offset): true when the merged renderer and collider
+        /// AABBs of one hierarchy drift apart by more than distanceLimit or
+        /// differ in size by more than ratioLimit on any axis.
+        /// </summary>
+        public static bool ColliderOffsetExceeds(Vector3 rendererCenter, Vector3 rendererSize,
+            Vector3 colliderCenter, Vector3 colliderSize, float distanceLimit, float ratioLimit,
+            out float distance, out float ratio)
+        {
+            distance = Vector3.Distance(rendererCenter, colliderCenter);
+            ratio = Mathf.Max(AxisSizeRatio(rendererSize.x, colliderSize.x),
+                     Mathf.Max(AxisSizeRatio(rendererSize.y, colliderSize.y),
+                               AxisSizeRatio(rendererSize.z, colliderSize.z)));
+            return distance > distanceLimit || ratio > ratioLimit;
+        }
+
+        /// <summary>Per-axis renderer/collider size ratio; degenerate on both sides counts as equal.</summary>
+        private static float AxisSizeRatio(float rendererAxis, float colliderAxis)
+        {
+            float lo = Mathf.Min(rendererAxis, colliderAxis);
+            float hi = Mathf.Max(rendererAxis, colliderAxis);
+            return lo <= 1e-6f ? (hi <= 1e-6f ? 1f : hi) : hi / lo;
+        }
+
+        /// <summary>check g (duplicate_collider): intersection-over-union of two world AABBs; touching boxes score 0.</summary>
+        public static float Iou(Bounds a, Bounds b)
+        {
+            float shared = SharedVolume(a, b);
+            if (shared <= 0f) return 0f;
+            float union = VolumeOf(a) + VolumeOf(b) - shared;
+            return union > 1e-10f ? shared / union : 0f;
+        }
+
+        /// <summary>
+        /// check h (corridor_blocker): true when the box footprint overlaps the
+        /// doorstep corridor band |z - corridorZ| &lt; halfBand within the strip
+        /// x in [minX, maxX]; depth is the penetrated band width along z.
+        /// </summary>
+        public static bool BlocksDoorstepCorridor(Bounds box, float corridorZ, float halfBand, float minX, float maxX, out float depth)
+        {
+            depth = 0f;
+            float xOverlap = Mathf.Min(box.max.x, maxX) - Mathf.Max(box.min.x, minX);
+            if (xOverlap <= 0f) return false;
+            float zOverlap = Mathf.Min(box.max.z, corridorZ + halfBand) - Mathf.Max(box.min.z, corridorZ - halfBand);
+            if (zOverlap <= 0f) return false;
+            depth = zOverlap;
+            return true;
+        }
+
+        /// <summary>check k (mission_path_block): a sampled route point (x, z) lies inside the collider footprint.</summary>
+        public static bool PathPointBlocked(Bounds box, Vector2 point)
+        {
+            return point.x >= box.min.x && point.x <= box.max.x
+                && point.y >= box.min.z && point.y <= box.max.z;
+        }
+
+        /// <summary>check l (signal_occluded): slab test of the segment from→to against a world AABB.</summary>
+        public static bool SegmentIntersectsAabb(Vector3 from, Vector3 to, Bounds box)
+        {
+            Vector3 dir = to - from;
+            float tMin = 0f, tMax = 1f;
+            return SlabWithin(box.min.x, box.max.x, from.x, dir.x, ref tMin, ref tMax)
+                && SlabWithin(box.min.y, box.max.y, from.y, dir.y, ref tMin, ref tMax)
+                && SlabWithin(box.min.z, box.max.z, from.z, dir.z, ref tMin, ref tMax);
+        }
+
+        /// <summary>Slab-method step: clips the segment parameter window to one axis slab.</summary>
+        private static bool SlabWithin(float min, float max, float origin, float dir, ref float tMin, ref float tMax)
+        {
+            if (Mathf.Abs(dir) < 1e-8f) return origin >= min && origin <= max;
+            float inv = 1f / dir;
+            float t1 = (min - origin) * inv;
+            float t2 = (max - origin) * inv;
+            if (t1 > t2) { float swap = t1; t1 = t2; t2 = swap; }
+            tMin = Mathf.Max(tMin, t1);
+            tMax = Mathf.Min(tMax, t2);
+            return tMin <= tMax;
+        }
     }
 }
