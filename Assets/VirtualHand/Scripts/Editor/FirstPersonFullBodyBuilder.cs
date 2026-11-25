@@ -511,7 +511,15 @@ namespace Neuralife.VirtualHand.Editor
             if (elenaWrist != null)
             {
                 var d = elenaWrist.position - wristBone.position;
-                delta = $"{d.magnitude:F4} m {d}";
+                // V5-075 fix (1) (ClipAudit DEFECT (1)): bake the wrist-landmark compensation at attach
+                // time. The GLB-internal node chain (0.0145x root scale x Armature 100x) leaves the Elena
+                // wrist landmark ~2.8 m off the body wrist bone at localPosition zero.
+                // InverseTransformPoint absorbs parent-chain rotation + per-axis lossyScale (incl. the
+                // ~101.65x body-side authored bone scale, arithmetically inferred) in one step and is
+                // idempotent (d ~= 0 writes ~= 0). Runtime counterpart: ElenaWristAligner.
+                hand.transform.localPosition = wristBone.InverseTransformPoint(wristBone.position - d);
+                var post = elenaWrist.position - wristBone.position;
+                delta = $"pre {d.magnitude:F4} m -> post {post.magnitude:F4} m {post}";
             }
             else missingRefs.Add($"Elena wrist landmark on '{hand.name}'");
 
@@ -609,10 +617,16 @@ namespace Neuralife.VirtualHand.Editor
 
         static Transform FindElenaWrist(Transform handRoot, bool left)
         {
-            string exact = left ? "hand.L_02" : "hand.R_02";
+            // V5-075 门禁实测：两个 Elena 手部 prefab 的 m_SourcePrefab 均指向 ElenaHand_R.glb，
+            // 其内部只有 hand.R_02 / hand.R.001_011，没有 hand.L_*；左手实例的腕部地标实际
+            // 名为 hand.R_02。先按本侧精确名，再按对侧精确名，最后宽松回退（保持旧行为）。
+            string primary = left ? "hand.L_02" : "hand.R_02";
+            string secondary = left ? "hand.R_02" : "hand.L_02";
             var children = handRoot.GetComponentsInChildren<Transform>(true);
             foreach (var t in children)
-                if (ElenaNativeRigProfile.MatchesBone(t.name, exact)) return t;
+                if (ElenaNativeRigProfile.MatchesBone(t.name, primary)) return t;
+            foreach (var t in children)
+                if (ElenaNativeRigProfile.MatchesBone(t.name, secondary)) return t;
             foreach (var t in children)
                 if (t != handRoot && (ElenaNativeRigProfile.MatchesBone(t.name, "hand") || t.name.ToLowerInvariant().Contains("wrist")))
                     return t;

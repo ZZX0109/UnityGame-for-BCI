@@ -221,6 +221,14 @@ namespace FirstPersonSokoban.Integration
             _bodyAdapter.SetSeated(false);
             _bodyAdapter.SetFirstPerson(true);
             _bodyAdapter.SetAppearanceMode(_appearance);
+
+            // V5-075 修复①（ClipAudit 缺陷① DEFECT/HIGH）：出厂预制体由旧版构建器产出
+            // （挂载时腕部补偿未烘焙），运行时补挂 ElenaWristAligner 并把 Elena 腕部
+            // 地标（hand.L_02/hand.R_02）对齐到身体腕骨（hand_l/hand_r），目标 <2 cm 残差。
+            // 幂等：已对齐（含新版构建器重产出的预制体）为 no-op。
+            int wristAligned = ElenaWristAligner.HealBody(_bodyInstance.transform);
+            if (wristAligned > 0)
+                Debug.Log($"[SokobanFullBodyBinding] Elena 腕部地标对齐 {wristAligned}/2 只手（目标 <2 cm 残差）。");
         }
 
         // ------------------------------------------------------------------
