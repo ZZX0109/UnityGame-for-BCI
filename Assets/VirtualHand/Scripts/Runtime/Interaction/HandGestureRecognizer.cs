@@ -67,6 +67,23 @@ namespace Neuralife.VirtualHand
         }
 
         float[] _leftPose, _rightPose;
+        float? _leftTipGap, _rightTipGap;
+
+        // In optical mode the gap is measured in palm lengths. NaN marks a lost
+        // observation and clears confirmation immediately, even between Update calls.
+        public void SetOpticalTipGap(SeatedHandSide side, float gap)
+        {
+            if (side == SeatedHandSide.Left)
+            {
+                _leftTipGap = gap;
+                if (float.IsNaN(gap)) { _leftState = HandGestureType.None; _leftHeld = 0f; LeftGesture = default; }
+            }
+            else
+            {
+                _rightTipGap = gap;
+                if (float.IsNaN(gap)) { _rightState = HandGestureType.None; _rightHeld = 0f; RightGesture = default; }
+            }
+        }
 
         void Update() => TickClassify(Time.unscaledDeltaTime);
 
@@ -94,14 +111,15 @@ namespace Neuralife.VirtualHand
                                  ref float held, float dt)
         {
             var result = new HandGestureEvent { side = side, type = HandGestureType.None };
-            if (pose == null || pose.Length != 20)
+            float? gap = side == SeatedHandSide.Left ? _leftTipGap : _rightTipGap;
+            if (pose == null || pose.Length != 20 || (gap.HasValue && float.IsNaN(gap.Value)))
             {
                 state = HandGestureType.None;
                 held = 0f;
                 return result;
             }
 
-            HandGestureType observed = Observe(pose);
+            HandGestureType observed = Observe(pose, gap, state);
 
             if (observed == state)
             {
@@ -124,7 +142,7 @@ namespace Neuralife.VirtualHand
         }
 
         /// <summary>Classifies one pose using hysteresis thresholds.</summary>
-        HandGestureType Observe(float[] c)
+        HandGestureType Observe(float[] c, float? gap, HandGestureType state)
         {
             float index = Curl(c, 1);
             float middle = Curl(c, 2);
@@ -132,14 +150,17 @@ namespace Neuralife.VirtualHand
             float little = Curl(c, 4);
             float othersMax = Mathf.Max(middle, Mathf.Max(ring, little));
 
-            if (index <= extendedEnterCurl && othersMax >= fistEnterCurl)
-                return HandGestureType.Point;
-
             if (index >= fistEnterCurl && middle >= fistEnterCurl &&
                 ring >= fistEnterCurl && little >= fistEnterCurl)
                 return HandGestureType.Fist;
 
-            if (PinchDistance(c) <= pinchEnterDistance)
+            if (gap.HasValue && gap.Value <= (state == HandGestureType.Pinch ? pinchExitDistance : pinchEnterDistance))
+                return HandGestureType.Pinch;
+
+            if (index <= extendedEnterCurl && othersMax >= fistEnterCurl)
+                return HandGestureType.Point;
+
+            if (!gap.HasValue && PinchDistance(c) <= pinchEnterDistance)
                 return HandGestureType.Pinch;
 
             if (index <= extendedEnterCurl && othersMax <= extendedEnterCurl)

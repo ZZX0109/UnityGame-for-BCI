@@ -1,4 +1,5 @@
 using System;
+using Neuralife.XR;
 using StreetCrossing.Player;
 using Neuralife.VirtualHand;
 using Neuralife.VirtualHand.Body;
@@ -71,6 +72,13 @@ namespace StreetCrossing.Integration
         /// <summary>True once the body was instantiated and the adapter wired.</summary>
         public bool IsWired => Adapter != null && BodyInstance != null && PlayerRoot != null;
 
+        HandGestureRecognizer gestures;
+        StreetTrackedHands trackedHands;
+        PedestrianPlayerController boundPlayer;
+        bool openHandSeen;
+
+        PedestrianPlayerController _player;
+        Camera _configuredView;
         bool _primed;              // baseline pose stored, differential feeds allowed
         bool _firstPerson = true;  // binding owns the toggle state; starts hidden-head (standing)
         bool _blueAppearance;      // V cycles Realistic <-> Blue
@@ -104,6 +112,19 @@ namespace StreetCrossing.Integration
         void LateUpdate()
         {
             TickLocomotion(Time.deltaTime);
+            if (!gestures || !boundPlayer || !PicoXR.Requested || !trackedHands ||
+                !trackedHands.RightGestureTracked)
+            {
+                openHandSeen = false;
+                return;
+            }
+            var gesture = gestures.RightGesture.type;
+            if (gesture == HandGestureType.Open) openHandSeen = true;
+            if (openHandSeen && gesture == HandGestureType.Pinch)
+            {
+                openHandSeen = false;
+                boundPlayer.InspectFacingSign();
+            }
         }
 
         /// <summary>
@@ -113,12 +134,17 @@ namespace StreetCrossing.Integration
         public bool EnsureWiring()
         {
             if (IsWired)
+            {
+                ConfigureEyeCamera();
                 return true;
+            }
 
             var player = FindObjectOfType<PedestrianPlayerController>();
             if (player == null)
                 return false;
 
+            _player = player;
+            boundPlayer = player;
             PlayerRoot = player.transform;
 
             if (BodyInstance == null)
@@ -138,24 +164,20 @@ namespace StreetCrossing.Integration
                 }
 
                 BodyInstance = Instantiate(prefab);
+                _configuredView = null;
+                gestures = BodyInstance.GetComponentInChildren<HandGestureRecognizer>(true);
+                if (!gestures) gestures = BodyInstance.AddComponent<HandGestureRecognizer>();
+                openHandSeen = false;
                 BodyInstance.name = "FirstPersonFullBody(StreetCrossing)";
                 BodyInstance.transform.SetParent(PlayerRoot, false);
                 BodyInstance.transform.localPosition = Vector3.zero;
                 BodyInstance.transform.localRotation = Quaternion.identity;
 
-                // V5-075 fix (1) (ClipAudit DEFECT (1)): the shipped prefab was built by the old
-                // builder, so the Elena hand instances still carry the ~2.8 m intrinsic wrist
-                // offset. HealBody is idempotent: it measures landmark-vs-bone world delta and
-                // cancels it once in the hand instance's parent local space (<2 cm residual).
+                // Verify the baked palm fits and calibrate instances from older prefabs.
                 int wristAligned = ElenaWristAligner.HealBody(BodyInstance.transform);
                 Debug.Log($"[StreetCrossingFullBodyBinding] Elena wrist landmark alignment {wristAligned}/2 hands (target <2 cm residual).");
 
-                // M2: match the body skin tone to the hand skin. Silent by design — the smoke
-                // test consumes exactly the 7 wiring log lines above (FIFO LogAssert), so any
-                // extra log here would fail the gate. Runs before any V-key toggle can enter
-                // Blue mode; if Blue IS active the applier defers and retries via Update().
-                BodySkinTintApplier skinTint = BodyInstance.AddComponent<BodySkinTintApplier>();
-                skinTint.Apply();
+                BodyInstance.AddComponent<BodySkinTintApplier>().Apply();
             }
 
             if (Adapter == null)
@@ -182,11 +204,40 @@ namespace StreetCrossing.Integration
             // pre-wired HiddenRenderers list; no extra hide logic added here).
             Adapter.SetSeated(false);
             Adapter.SetFirstPerson(true);
+            ConfigureEyeCamera();
+            if (!PicoXR.Requested)
+                Adapter.poseController.ApplyPose(FullBodyPoseController.PoseDesktopHandsVisible);
             _firstPerson = true;
             _blueAppearance = false;
 
             PrimeBaseline(PlayerRoot.position, PlayerRoot.forward);
             return true;
+        }
+
+        void ConfigureEyeCamera()
+        {
+            Camera view = _player ? _player.View : null;
+            if (!view || _configuredView == view || !Adapter.visibility) return;
+            if (PicoXR.Requested)
+            {
+                var rig = view.GetComponentInParent<PicoRig>();
+                if (!rig || !rig.TrackingSpace) return;
+                trackedHands = BodyInstance.GetComponent<StreetTrackedHands>();
+                if (!trackedHands) trackedHands = BodyInstance.AddComponent<StreetTrackedHands>();
+                trackedHands.Bind(Adapter.poseController, rig.TrackingSpace);
+            }
+            Adapter.visibility.FirstPersonCamera = view;
+            int headLayer = LayerMask.NameToLayer("LocalAvatarHead");
+            foreach (var head in Adapter.visibility.HiddenRenderers)
+                if (head) head.gameObject.layer = headLayer;
+            // Keep the local face out of the eye camera even when B restores it for spectators.
+            view.cullingMask &= ~(1 << headLayer);
+            if (!PicoXR.Requested)
+            {
+                Transform eyes = BodyInstance.transform.Find("BodyRoot/EyeCenter");
+                if (eyes) view.transform.position = eyes.position + PlayerRoot.forward * 0.05f;
+            }
+            _configuredView = view;
         }
 
         /// <summary>

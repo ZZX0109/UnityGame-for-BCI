@@ -187,6 +187,8 @@ namespace Neuralife.VirtualHand.Body
                         family.Contains(candidate))
                         continue;
 
+                    if (dominant.mainTexture != null && dominant.name == "Human.body" &&
+                        candidate.mainTexture != dominant.mainTexture) continue;
                     Color candidateCombined;
                     if (!SkinColorSampling.TryGetCombinedColor(candidate, out candidateCombined))
                         continue;
@@ -214,7 +216,7 @@ namespace Neuralife.VirtualHand.Body
             if (TargetSkinMaterial != null)
                 return TargetSkinMaterial;
 
-            Renderer[] renderers = FindObjectsOfType<Renderer>();
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
             {
                 if (renderers[i] == null || !HasElenaHandAncestor(renderers[i].transform))
@@ -282,6 +284,8 @@ namespace Neuralife.VirtualHand.Body
                         ReferenceEquals(candidate, handMaterial))
                         continue;
 
+                    if (candidate.name == "Human.body" && candidate.mainTexture != null)
+                        return candidate;
                     int count = 0;
                     for (int r2 = r; r2 < renderers.Length; r2++)
                     {

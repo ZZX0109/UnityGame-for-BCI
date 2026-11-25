@@ -67,3 +67,7 @@ python Tools/run_game_delivery.py --game street
 [2026-11-16旧运行包](BuildOutput/Review-20261116-StreetFinal2/StreetCrossing-Windows64.zip) 和 [旧验收报告](Validation/Review-20261116-Street.md) 仅用于实施前回溯，不含本轮九任务；原始证据与运行记录继续保留。`Assets/`、`Packages/`、`ProjectSettings/`和`.meta`是必要工程文件，不要把Unity工程直接复制成Neuralife的QML插件。
 
 本轮运行包：[九任务Windows ZIP](BuildOutput/Missions-20261117-Final2/StreetCrossing-Windows64.zip)。新27配置行走为timeScale3的真实引擎自动测试，不是27次人工试玩；旧Acceptance与正式600为timeScale1。帮助/耗时不减安全星，逐段结果不可被后段成功覆盖。GPU/GC计数器不可用；完整菜单、放大字号与全部交互不由现有截图推断通过。
+
+## 回放数据来源与许可
+
+实际随项目保存的 EEG 与 NinaPro DB8 回放文件，其来源、引用和许可见[回放数据来源、引用与许可](Assets/StreamingAssets/Replays/CREDITS.md)。

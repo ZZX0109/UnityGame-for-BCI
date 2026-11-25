@@ -200,6 +200,14 @@ namespace StreetCrossing.Presentation
                     Part(world, block, "Ground floor residential window backing", new Vector3(wx, 1.65f, -2.015f), new Vector3(width * .20f, 1.55f, .025f), "263633");
                     Renderer pane = Part(world, block, "Ground floor residential window", new Vector3(wx, 1.65f, -2.04f), new Vector3(width * .22f, 1.7f, .015f), "506866");
                     pane.sharedMaterial = world.GlassMaterialVariant(edge > 0 ? 2 : 1);
+                    if (!distant)
+                    {
+                        // Closed roller shutter surface-mounted over each side window: the imported
+                        // housing reads up close, a flat slatted panel stands in when the model is absent.
+                        Transform shutter = world.Modules.SpawnImported(block, "rollershutter_window_01", new Vector3(wx, .6f, -2.16f), 1.9f);
+                        if (shutter != null) world.AddVisualLod(shutter, .012f);
+                        else Part(world, block, "Residential shutter panel", new Vector3(wx, 1.68f, -2.07f), new Vector3(width * .20f, 1.62f, .04f), "8E959B");
+                    }
                 }
             }
             else
@@ -261,7 +269,18 @@ namespace StreetCrossing.Presentation
                         }
                         Transform threshold = new GameObject("Doorway " + kind).transform; threshold.SetParent(block, false); threshold.localPosition = new Vector3(0, 0, -2.32f);
                     }
-                    else if (!distant) ShopDisplay(world, block, profile, kind, x, sideWindowWidth);
+                    else if (!distant)
+                    {
+                        // Convenience side bays read as closed service bays: an imported roller shutter
+                        // over the glazing, or a slatted flat panel when the model is unavailable.
+                        if (kind == StreetFacadeKind.Convenience)
+                        {
+                            Transform serviceShutter = world.Modules.SpawnImported(block, "rollershutter_door", new Vector3(x, .05f, -2.15f), 2.3f);
+                            if (serviceShutter != null) world.AddVisualLod(serviceShutter, .012f);
+                            else Part(world, block, "Convenience service shutter", new Vector3(x, 1.25f, -2.09f), new Vector3(1.05f, 2.2f, .05f), "8E959B");
+                        }
+                        else ShopDisplay(world, block, profile, kind, x, sideWindowWidth);
+                    }
                     float transomWidth = bay == 0 ? entryWidth + .10f : sideFrameWidth;
                     Part(world, block, "Shopfront transom", new Vector3(x, 2.45f, -2.22f), new Vector3(transomWidth, .065f, .05f), profile.secondary);
                 }
@@ -317,8 +336,20 @@ namespace StreetCrossing.Presentation
             if (residential && !distant)
             {
                 // Wall-mounted condenser on its own pair of brackets; visual only, no collider.
-                Part(world, block, "AC outdoor unit", new Vector3(width * .17f, 3.20f, -2.30f), new Vector3(.66f, .48f, .26f), "C9CFC9", .025f, .35f);
-                Part(world, block, "AC fan grille", new Vector3(width * .17f, 3.20f, -2.435f), new Vector3(.32f, .32f, .02f), "6E7672", .025f, .30f);
+                // 2026-11-25: the CC0 air-conditioner FBX replaces the old blocky Part unit; the
+                // procedural version stays as fallback when the imported model is unavailable.
+                Transform condenser = world.Modules.SpawnImported(block, "exterior_aircon_unit",
+                    new Vector3(width * .17f, 2.96f, -2.30f), .55f);
+                if (condenser != null)
+                {
+                    DisableRustedVariant(condenser);
+                    world.AddVisualLod(condenser, .012f);
+                }
+                else
+                {
+                    Part(world, block, "AC outdoor unit", new Vector3(width * .17f, 3.20f, -2.30f), new Vector3(.66f, .48f, .26f), "C9CFC9", .025f, .35f);
+                    Part(world, block, "AC fan grille", new Vector3(width * .17f, 3.20f, -2.435f), new Vector3(.32f, .32f, .02f), "6E7672", .025f, .30f);
+                }
                 for (int bracket = -1; bracket <= 1; bracket += 2)
                     Part(world, block, "AC bracket", new Vector3(width * .17f + bracket * .25f, 2.92f, -2.28f), new Vector3(.05f, .08f, .24f), profile.metal);
                 // Entrance porch: canopy on brackets, lamp and number plaque beside the door, threshold stone at the step.
@@ -341,6 +372,17 @@ namespace StreetCrossing.Presentation
                 for (int legX = -1; legX <= 1; legX += 2)
                 for (int legZ = -1; legZ <= 1; legZ += 2)
                     Part(world, block, "Tank leg", new Vector3(width * .10f + legX * .5f, height + .20f, 1.4f + legZ * .5f), new Vector3(.06f, .40f, .06f), profile.metal);
+                if (!corner)
+                {
+                    // Modular CC0 fire escape climbing the facade from pavement level, offset left of
+                    // the central entrance and the bay-0 balcony; visual only, no collider. Its front
+                    // tip stops at the same ~3.4 m envelope as the shopfront valances so the walk
+                    // bands keep their clearance.
+                    Transform fireEscape = world.Modules.SpawnImported(block, "modular_fire_escape",
+                        new Vector3(-width * .28f, 0f, -2.68f), 6.4f);
+                    if (fireEscape != null) world.AddVisualLod(fireEscape, .012f);
+                    else Part(world, block, "Fire escape stub", new Vector3(-width * .28f, 3.2f, -2.55f), new Vector3(2.4f, 6.4f, .08f), "6E7672", .02f, .4f);
+                }
             }
             if (!distant) world.Label(Captions[(int)kind], new Vector3(0, residential ? 2.82f : 2.98f, -2.37f), .075f,
                 residential ? profile.accent : "F3EDDB", block, 0, width * .75f, .43f);
@@ -360,6 +402,23 @@ namespace StreetCrossing.Presentation
             world.CombineVisuals(block);
             world.AddVisualLod(block, distant ? .018f : .006f);
             return block;
+        }
+
+        /// <summary>
+        /// Poly Haven's exterior_aircon_unit FBX carries a pristine and a rusted twin stacked on the
+        /// same spot (one texture set per state). Whole-file instantiation would z-fight the pair, so
+        /// the rusted subtree is switched off — renderers too, because CombineVisuals walks inactive
+        /// children as well and would otherwise bake the duplicate shell into the combined chunk.
+        /// </summary>
+        private static void DisableRustedVariant(Transform imported)
+        {
+            Transform[] nodes = imported.GetComponentsInChildren<Transform>(true);
+            foreach (Transform node in nodes)
+            {
+                if (node == imported || !node.name.ToLowerInvariant().Contains("rusted")) continue;
+                node.gameObject.SetActive(false);
+                foreach (Renderer renderer in node.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
+            }
         }
 
         /// <summary>
@@ -707,7 +766,7 @@ namespace StreetCrossing.Presentation
                     for (int bay = 0; bay < 4; bay++)
                     {
                         float x = end * (43 + bay * 10);
-                        world.CreateRefinedTree(streets,
+                        world.CreateLodgedTree(streets,
                             new Vector3(x, 0, StreetLayout.SidewalkZ(side * 5.4f)),
                             bay + (side > 0 ? 1 : 0));
                     }

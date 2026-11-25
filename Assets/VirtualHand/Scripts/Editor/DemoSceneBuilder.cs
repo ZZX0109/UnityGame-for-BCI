@@ -141,6 +141,8 @@ namespace Neuralife.VirtualHand.Editor
                 throw new InvalidOperationException("Elena FF prefab has no native HandRigDriver profile: " + prefabPath);
             driver.profileJson = null;
             driver.SetMirrored(side == "L");
+            driver.IgnoreGlobalHandProportions = true;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(driver);
 
             Transform wrist = FindNativeWrist(go.transform);
             Transform middleTip = FindNamedTransform(go.transform, "middle_tip");

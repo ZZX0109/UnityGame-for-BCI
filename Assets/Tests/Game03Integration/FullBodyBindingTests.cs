@@ -44,7 +44,7 @@ namespace StreetCrossing.Integration.Tests
         }
 
         [Test]
-        public void EnsureWiring_InstantiatesBodyUnderPlayerRoot_WithAdapterAndStandingPose()
+        public void EnsureWiring_InstantiatesBodyUnderPlayerRoot_WithAdapterAndVisibleDesktopHands()
         {
             var binding = CreateWiredBinding();
 
@@ -57,10 +57,27 @@ namespace StreetCrossing.Integration.Tests
             Assert.IsNotNull(binding.Adapter.visibility, "Adapter must auto-wire the FirstPersonVisibility.");
             Assert.IsNotNull(binding.Adapter.appearance, "Adapter must auto-wire the FullBodyAppearanceController.");
             Assert.IsTrue(binding.Adapter.visibility.FirstPersonActive, "Binding starts in first-person (head hidden).");
-            Assert.AreEqual("Standing", binding.Adapter.poseController.CurrentPoseName,
-                "SetSeated(false) must leave the avatar in the Standing pose.");
+            Assert.AreEqual(FullBodyPoseController.PoseDesktopHandsVisible, binding.Adapter.poseController.CurrentPoseName,
+                "Desktop first-person wiring must raise both hands.");
             Assert.IsTrue(binding.EnsureWiring(), "EnsureWiring must be idempotent.");
             Assert.AreSame(binding.Adapter, binding.Adapter, "Adapter reference must survive idempotent re-entry.");
+        }
+
+        [Test]
+        public void SingleTrackedWristUsesWorldSpaceAndLeavesOtherHandIndependent()
+        {
+            var binding = CreateWiredBinding();
+            var rig = binding.Adapter.poseController;
+            binding.PlayerRoot.SetPositionAndRotation(new Vector3(3, 0.2f, -4), Quaternion.Euler(0, 80, 0));
+            Vector3 target = rig.leftUpperArm.position + binding.PlayerRoot.rotation * new Vector3(-0.06f, -0.12f, 0.34f);
+            Vector3 otherHand = rig.rightWrist.position;
+            Vector3 elbowOffset = rig.leftElbow.localPosition;
+            Vector3 wristOffset = rig.leftWrist.localPosition;
+            Assert.IsTrue(rig.ApplyTrackedWrist(SeatedHandSide.Left, target));
+            Assert.Less(Vector3.Distance(target, rig.leftWrist.position), 0.001f);
+            Assert.AreEqual(otherHand, rig.rightWrist.position);
+            Assert.AreEqual(elbowOffset, rig.leftElbow.localPosition);
+            Assert.AreEqual(wristOffset, rig.leftWrist.localPosition);
         }
 
         [Test]

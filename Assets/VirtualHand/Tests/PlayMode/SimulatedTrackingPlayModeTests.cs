@@ -86,6 +86,27 @@ namespace Neuralife.VirtualHand.PlayTests
         // ------------------------------------------------------------------
 
         [Test]
+        public void OpticalPinchUsesMeasuredTipsAndClearsImmediatelyOnLoss()
+        {
+            _recognizer.SetSourcePoses(Open(), Open());
+            _recognizer.SetOpticalTipGap(SeatedHandSide.Left, 0.08f);
+            _recognizer.SetOpticalTipGap(SeatedHandSide.Right, 0.8f);
+            _recognizer.TickClassify(0.1f);
+            _recognizer.TickClassify(0.1f);
+            Assert.AreEqual(HandGestureType.Pinch, _recognizer.LeftGesture.type);
+            Assert.AreEqual(HandGestureType.Open, _recognizer.RightGesture.type);
+            _recognizer.SetOpticalTipGap(SeatedHandSide.Left, 0.16f);
+            _recognizer.TickClassify(0.1f);
+            Assert.AreEqual(HandGestureType.Pinch, _recognizer.LeftGesture.type);
+            _recognizer.SetOpticalTipGap(SeatedHandSide.Left, float.NaN);
+            Assert.AreEqual(HandGestureType.None, _recognizer.LeftGesture.type);
+            _recognizer.SetOpticalTipGap(SeatedHandSide.Left, 0.08f);
+            _recognizer.TickClassify(0.1f);
+            Assert.AreEqual(HandGestureType.None, _recognizer.LeftGesture.type);
+            Assert.AreEqual(HandGestureType.Open, _recognizer.RightGesture.type);
+        }
+
+        [Test]
         public void SingleHandLossDoesNotDisturbTheOther()
         {
             var left = new HandTrackingValidity();

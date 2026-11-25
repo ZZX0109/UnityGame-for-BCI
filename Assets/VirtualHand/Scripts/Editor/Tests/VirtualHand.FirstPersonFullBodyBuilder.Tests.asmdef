@@ -3,6 +3,7 @@
   "rootNamespace": "Neuralife.VirtualHand.Editor.Tests",
   "references": [
     "Neuralife.VirtualHand.Editor",
+    "Neuralife.VirtualHand.Runtime",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

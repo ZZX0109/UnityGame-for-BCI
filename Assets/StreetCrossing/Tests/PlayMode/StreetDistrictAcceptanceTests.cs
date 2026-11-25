@@ -40,7 +40,12 @@ namespace StreetCrossing.Tests.PlayMode
                 game.SelectScenario(i); yield return null;
                 Transform environment = game.transform.Find(game.scenario.scenarioId + " Street Environment");
                 Transform details = environment.Find("Visual details - " + game.scenario.visualProfile.identity);
-                Assert.That(details.GetComponentsInChildren<Collider>(true), Is.Empty);
+                foreach (Collider obstacle in details.GetComponentsInChildren<Collider>(true))
+                {
+                    Assert.AreEqual("Tree trunk bounds", obstacle.name);
+                    Assert.AreEqual(StreetPhysicsLayers.PlayerObstacle, obstacle.gameObject.layer);
+                    Assert.That(obstacle.bounds.size.x, Is.InRange(.20f, .28f));
+                }
                 Assert.That(details.Find("Continuous 160 metre streetscape"), Is.Not.Null);
                 Assert.That(details.Find("Continuous sidewalk furnishings"), Is.Not.Null);
                 StreetBackgroundPopulation population = details.GetComponentInChildren<StreetBackgroundPopulation>();

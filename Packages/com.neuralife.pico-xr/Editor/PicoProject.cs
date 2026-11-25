@@ -67,6 +67,7 @@ namespace Neuralife.XR.Editor
                 if (feature is UnityEngine.XR.OpenXR.Features.OpenXRInteractionFeature)
                     feature.enabled = (group == BuildTargetGroup.Android ? AndroidProfiles : WindowsProfiles).Contains(feature.GetType().Name);
                 else if (feature.GetType().Name == "PICOFeature") feature.enabled = group == BuildTargetGroup.Android;
+                else if (feature.GetType().Name == "HandTracking") feature.enabled = true; // com.unity.xr.hands: optical joints on Android and Standalone VR runtimes that support it.
                 EditorUtility.SetDirty(feature);
             }
             settings.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
@@ -118,43 +119,100 @@ namespace Neuralife.XR.Editor
         private static bool CanPreview() => !EditorApplication.isPlayingOrWillChangePlaymode;
 
         [MenuItem("Neuralife/PICO XR/Build Windows PCVR")]
-        public static void BuildWindows() => Build(false);
+        public static void BuildWindows() => Build(false, false);
         [MenuItem("Neuralife/PICO XR/Build Android PICO")]
-        public static void BuildAndroid() => Build(true);
+        public static void BuildAndroid() => Build(true, false);
 
-        private static void Build(bool android)
+        /// <summary>
+        /// Second deployable flavor: the Hand Sync Lab inspection app. Distinct
+        /// package (com.neuralife.handsync.vr) and executable product name; the
+        /// normal street build entries and every project setting they touch are
+        /// restored afterwards.
+        /// </summary>
+        [MenuItem("Neuralife/PICO XR/Build Hand Lab Windows PCVR")]
+        public static void BuildHandLabWindows() => Build(false, true);
+        [MenuItem("Neuralife/PICO XR/Build Hand Lab Android PICO")]
+        public static void BuildHandLabAndroid() => Build(true, true);
+
+        const string HandLabPackage = "com.neuralife.handsync.vr";
+        const string HandLabProductName = "Neuralife Hand Sync Lab";
+        const string HandLabScenePath = "Assets/HandSyncLab/Scenes/HandSyncLab.unity";
+
+        private static void Build(bool android, bool lab)
         {
             BuildTarget target = android ? BuildTarget.Android : BuildTarget.StandaloneWindows64;
             if (!BuildPipeline.IsBuildTargetSupported(android ? BuildTargetGroup.Android : BuildTargetGroup.Standalone, target))
                 throw new BuildFailedException("Install " + (android ? "Android Build Support (SDK / NDK / OpenJDK)" : "Windows Build Support") + " for this exact Unity Editor.");
+            // Capture before Configure(): it rewrites the Android identifier, and the
+            // lab flavor must restore the true prior state afterwards.
+            ColorSpace previousColor = PlayerSettings.colorSpace;
+            bool previousBundle = EditorUserBuildSettings.buildAppBundle;
+            string previousIdentifier = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
+            string previousProduct = PlayerSettings.productName;
             Configure();
+            if (lab) EnsureHandLabScene();
+            string scenePath = lab ? HandLabScenePath : Scene();
+            if (!File.Exists(scenePath))
+                throw new BuildFailedException("Scene is missing: " + scenePath);
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-            string output = Argument("-picoOutput") ?? Path.Combine(root, "BuildOutput", "PICO-" + (android ? "Android-" : "PCVR-") + DateTime.UtcNow.ToString("yyyyMMddTHHmmssfff"));
+            string output = Argument("-picoOutput") ?? Path.Combine(root, "BuildOutput", (lab ? "HandLab-" : "PICO-") + (android ? "Android-" : "PCVR-") + DateTime.UtcNow.ToString("yyyyMMddTHHmmssfff"));
             output = Path.GetFullPath(output);
             if (!output.StartsWith(Path.Combine(root, "BuildOutput") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
                 (Directory.Exists(output) && Directory.EnumerateFileSystemEntries(output).Any()))
                 throw new BuildFailedException("Use a new output directory inside BuildOutput.");
             Directory.CreateDirectory(output);
-            ColorSpace previousColor = PlayerSettings.colorSpace;
-            bool previousBundle = EditorUserBuildSettings.buildAppBundle;
             try
             {
                 if (android) { PlayerSettings.colorSpace = ColorSpace.Linear; EditorUserBuildSettings.buildAppBundle = false; }
-                string executable = "Neuralife-" + GameId() + "-PICO" + (android ? ".apk" : ".exe");
+                if (lab)
+                {
+                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, HandLabPackage);
+                    PlayerSettings.productName = HandLabProductName;
+                }
+                string executable = lab ? "Neuralife-HandSyncLab-PICO" : "Neuralife-" + GameId() + "-PICO";
                 BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
-                    scenes = new[] { Scene() }, target = target, locationPathName = Path.Combine(output, executable),
+                    scenes = new[] { scenePath }, target = target, locationPathName = Path.Combine(output, executable + (android ? ".apk" : ".exe")),
                     extraScriptingDefines = new[] { "NEURALIFE_PICO_XR" }, options = BuildOptions.None
                 });
                 if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("PICO build failed: " + report.summary.result);
                 string[] files = Directory.GetFiles(output, "*", SearchOption.AllDirectories);
                 File.WriteAllText(Path.Combine(output, "build-manifest.json"), JsonUtility.ToJson(new Manifest {
-                    game = GameId(), target = target.ToString(), builtAtUtc = DateTime.UtcNow.ToString("o"), unity = Application.unityVersion,
+                    game = lab ? "handsync" : GameId(), target = target.ToString(), builtAtUtc = DateTime.UtcNow.ToString("o"), unity = Application.unityVersion,
                     sourceFingerprint = Fingerprint(root),
                     files = files.Select(p => new Entry { path = p.Substring(output.Length + 1).Replace('\\', '/'), sha256 = Hash(File.ReadAllBytes(p)) }).ToArray()
                 }, true), new UTF8Encoding(false));
                 Debug.Log("PICO build succeeded: " + output);
             }
-            finally { if (android) EditorUserBuildSettings.buildAppBundle = previousBundle; PlayerSettings.colorSpace = previousColor; AssetDatabase.SaveAssets(); }
+            finally
+            {
+                if (android) EditorUserBuildSettings.buildAppBundle = previousBundle;
+                PlayerSettings.colorSpace = previousColor;
+                if (lab)
+                {
+                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, previousIdentifier);
+                    PlayerSettings.productName = previousProduct;
+                }
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        /// <summary>
+        /// The lab scene builder lives in Assembly-CSharp-Editor (it wires street/virtual-hand
+        /// assets), which this package assembly must not reference — call it reflectively.
+        /// </summary>
+        private static void EnsureHandLabScene()
+        {
+            const string builderType = "HandSyncLab.Editor.HandSyncLabSceneBuilder";
+            foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                System.Type type = assembly.GetType(builderType);
+                if (type == null) continue;
+                var method = type.GetMethod("EnsureScene", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (method == null) throw new BuildFailedException(builderType + " has no EnsureScene method.");
+                method.Invoke(null, null);
+                return;
+            }
+            throw new BuildFailedException("Hand Sync Lab scene builder is missing (expected " + builderType + ").");
         }
 
         [Serializable] private sealed class Entry { public string path, sha256; }

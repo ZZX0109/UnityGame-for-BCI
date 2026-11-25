@@ -18,6 +18,7 @@ namespace StreetCrossing.Core
         TactilePath,
         CrossingEntrance,
         Kerb,
+        LampPost,
     }
 
     /// <summary>
@@ -77,9 +78,11 @@ namespace StreetCrossing.Core
     ///
     /// Deliberately not registered (not in the task's facility list, or profile-dependent):
     /// litter bins (x = 25 fixed on BOTH sides, StreetWorld.cs:697 — asymmetric on purpose),
-    /// utility cabinets (StreetWorld.cs:701-702), cycle stands (StreetWorld.cs:696),
-    /// lamps (StreetWorld.cs:310), and bollards (x = slot * StreetVisualProfile.furnishingSpacing,
-    /// runtime-dependent in 12..24 — no fixed coordinate exists to anchor, StreetWorld.cs:705).
+    /// utility cabinets (StreetWorld.cs:701-702), cycle stands (StreetWorld.cs:696), and
+    /// bollards (x = slot * StreetVisualProfile.furnishingSpacing, runtime-dependent in 12..24 —
+    /// no fixed coordinate exists to anchor, StreetWorld.cs:705).
+    /// Lamp posts ARE registered since P0-§3 (AnchorKind.LampPost, built in BuildAll below from
+    /// the StreetWorld.cs:311 tree/lamp loop); bollards remain unregistered for the same reason.
     /// </summary>
     public static class StreetSpatialAnchors
     {
@@ -261,14 +264,16 @@ namespace StreetCrossing.Core
 
             // ---- Tactile guide path (盲道) ------------------------------------------
             // StreetFurnitureBuilder.cs:18,22,45: directional paving at Z(side, 6.7) =
-            // SidewalkZ(side * 6.7) = ±10.0, seven 9.7 × 0.34 segments per side centred on
-            // x = segment * 10 for segment in -3..3. The S03 turning-traffic variant replaces the
-            // segment at x = -10 with three bridging spans on the same line (StreetFurnitureBuilder.cs:23-44).
+            // SidewalkZ(side * 6.7) = ±10.0, seven 10.0 × 0.34 segments per side centred on
+            // x = segment * 10 for segment in -3..3, butt-jointing at x = ±5/±15/±25. The S03
+            // turning-traffic variant replaces the segment at x = -10 with three bridging spans
+            // rendering the same x ∈ [-15, -5] union (StreetFurnitureBuilder.cs:23-44), so the
+            // single anchor below describes both variants.
             float tactileZ = StreetLayout.SidewalkZ(6.7f);
             for (int segment = -3; segment <= 3; segment++)
                 for (int side = -1; side <= 1; side += 2)
                     anchors.Add(new SpatialAnchor($"tactile.{segment}.{(side > 0 ? "n" : "s")}", AnchorKind.TactilePath, side,
-                        new Vector3(segment * 10f, 0f, side * tactileZ), new Vector2(9.7f, 0.34f)));
+                        new Vector3(segment * 10f, 0f, side * tactileZ), new Vector2(10.0f, 0.34f)));
 
             // ---- Crossing entrance / kerb -------------------------------------------
             // StreetWorld.cs:380: CrossingRegion.Entry z = ∓width = ±6.6 with 3.6 × 0.35 crosswalk
@@ -281,6 +286,29 @@ namespace StreetCrossing.Core
                     new Vector3(0f, 0f, side * StreetLayout.RoadHalfWidth), new Vector2(3.6f, 0.35f)));
                 anchors.Add(new SpatialAnchor($"kerb.{(side > 0 ? "n" : "s")}", AnchorKind.Kerb, side,
                     new Vector3(0f, 0f, side * (StreetLayout.RoadHalfWidth + 0.45f)), Vector2.zero));
+            }
+
+            // ---- Lamp posts (P0-§3) ---------------------------------------------
+            // StreetWorld.cs:311: `for (int x = -26; x <= 26; x += 13) if (Mathf.Abs(x) > 4 &&
+            // (!s.turningTraffic || Mathf.Abs(x + 9 * s.DirectionForLane(0)) > 6)) { ...
+            // Lamp(new Vector3(x + 3.5f, 0, StreetLayout.SidewalkZ(side * 4.7f))); }` (StreetWorld.cs:775).
+            // Non-turning sites: x ∈ {-26,-13,13,26} + 3.5 → {-22.5,-9.5,16.5,29.5}, both sides;
+            // SidewalkZ(±4.7) = ±8.0 (StreetLayout.cs:9-10). The S03 turning filter above drops the
+            // x = -13 site when DirectionForLane(0) = +1 and the x = 13 site when it is -1, so the
+            // registry records the union of all build sites (one or two of these anchors may be
+            // unoccupied in a given scenario — the audit flags actual objects, anchors state intent).
+            // Footprint 0.6 × 1.0 covers the Ø0.18 procedural pole (StreetWorld.cs:779-781) and the
+            // 0.55-wide street-name blade (StreetWorld.cs:789); z envelope 7.5..8.5 stays inside
+            // [RoadHalfWidth, SidewalkZ(11.3)] = [6.6, 14.6] as required by the sidewalk-band tests.
+            foreach (float siteX in new[] { -26f, -13f, 13f, 26f })
+            {
+                if (Mathf.Abs(siteX) <= 4f) continue; // StreetWorld.cs:311 filter, kept for parity.
+                float lampX = siteX + 3.5f;
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    anchors.Add(new SpatialAnchor($"lamp.{(side > 0 ? "n" : "s")}.{lampX:0.#}", AnchorKind.LampPost, side,
+                        new Vector3(lampX, 0f, StreetLayout.SidewalkZ(side * 4.7f)), new Vector2(0.6f, 1f)));
+                }
             }
 
             return anchors;

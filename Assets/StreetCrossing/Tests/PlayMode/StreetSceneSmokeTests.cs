@@ -24,8 +24,6 @@ namespace StreetCrossing.Tests.PlayMode
         [UnityTest]
         public IEnumerator S01BuildsFirstPersonStreetPausesAndResetsWithoutDuplicateCars()
         {
-            // 全身接线链每次场景加载会确定性输出 7 条一次性 info 日志（良性诊断），
-            // 在加载前显式登记为预期，保持 NoUnexpectedReceived 的真实纪律。
             FullBodyWiringLogs.ExpectWiringSequence();
             yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
             StreetGameManager game = Object.FindObjectOfType<StreetGameManager>();
@@ -40,8 +38,23 @@ namespace StreetCrossing.Tests.PlayMode
             Assert.That(QualitySettings.GetQualityLevel(), Is.EqualTo(quality));
             Assert.That(QualitySettings.vSyncCount, Is.EqualTo(vSync));
             Assert.That(Application.targetFrameRate, Is.EqualTo(target));
-            Assert.That(game.Player.View.transform.localPosition.y, Is.EqualTo(1.65f).Within(0.001f));
+            yield return null; // The avatar binds after the player camera is created.
+            var eyes = game.Player.transform.Find("FirstPersonFullBody(StreetCrossing)/BodyRoot/EyeCenter");
+            Assert.NotNull(eyes, "The active player must have the avatar eye anchor.");
+            Assert.That(game.Player.View.transform.position.y, Is.EqualTo(eyes.position.y).Within(.005f));
             game.StartPractice(); yield return null;
+            int lamps = 0;
+            foreach (MeshRenderer lamp in Object.FindObjectsOfType<MeshRenderer>())
+            {
+                Transform mount = lamp.transform;
+                while (mount && mount.name != "street_lamp_01 (imported)") mount = mount.parent;
+                if (!mount) continue;
+                lamps++;
+                Vector3 size = lamp.bounds.size;
+                Assert.That(size.y, Is.EqualTo(3.9f).Within(.05f), mount.position.ToString());
+                Assert.LessOrEqual(Mathf.Max(size.x, size.z), 1.6f, "A sideways lamp spans the street.");
+            }
+            Assert.GreaterOrEqual(lamps, 2, "Expected the actual street lamps beside the crossing.");
             Assert.That(game.Traffic.Active.Count, Is.EqualTo(4));
             game.Pause(); float frozen = game.WorldTime; TrafficPhase phase = game.Intersection.Phase;
             Vector3 position = game.Traffic.Active[0].transform.position;

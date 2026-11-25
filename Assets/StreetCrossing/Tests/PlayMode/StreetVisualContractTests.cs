@@ -23,7 +23,12 @@ namespace StreetCrossing.Tests.PlayMode
                 Transform environment = game.transform.Find(game.scenario.scenarioId + " Street Environment");
                 Transform details = environment.Find("Visual details - " + game.scenario.visualProfile.identity);
                 Assert.That(details, Is.Not.Null); Assert.That(details.Find(landmarks[index]), Is.Not.Null);
-                Assert.That(details.GetComponentsInChildren<Collider>(true), Is.Empty, "Decoration must not silently change route or observation occlusion.");
+                foreach (Collider obstacle in details.GetComponentsInChildren<Collider>(true))
+                {
+                    Assert.AreEqual("Tree trunk bounds", obstacle.name);
+                    Assert.AreEqual(StreetPhysicsLayers.PlayerObstacle, obstacle.gameObject.layer);
+                    Assert.That(obstacle.bounds.size.x, Is.InRange(.20f, .28f));
+                }
                 Assert.That(details.GetComponentsInChildren<MeshRenderer>(true).Length, Is.GreaterThan(100));
                 Transform signals = environment.Find("Intersection Signals");
                 Assert.That(signals.GetComponentsInChildren<Collider>(true).Length, Is.EqualTo(10), "Four overhead vehicle heads share two roadside supports; pedestrian poles/housings stay outside the crossing.");

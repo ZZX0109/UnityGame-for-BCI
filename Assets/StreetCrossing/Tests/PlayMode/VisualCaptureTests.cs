@@ -59,6 +59,11 @@ namespace StreetCrossing.Tests.PlayMode
         private StreetGameManager game;
         private CaptureInput input;
         private Texture2D pendingTexture;
+#if UNITY_EDITOR
+        private EditorWindow gameView;
+        private bool wasMaximized;
+        private int previousSize;
+#endif
         private bool initialized;
         private float previousTimeScale;
         private Canvas suppressedCanvas;
@@ -79,6 +84,22 @@ namespace StreetCrossing.Tests.PlayMode
             initialized = true;
             Time.timeScale = 1f;
 #if UNITY_EDITOR
+            gameView = EditorWindow.GetWindow(typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView"));
+            wasMaximized = gameView.maximized;
+            var sizeProperty = gameView.GetType().GetProperty("selectedSizeIndex",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            previousSize = (int)sizeProperty.GetValue(gameView);
+            var sizesType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameViewSizes");
+            var singleton = typeof(ScriptableSingleton<>).MakeGenericType(sizesType).GetProperty("instance").GetValue(null);
+            var getGroup = sizesType.GetMethod("GetGroup");
+            var standalone = Enum.Parse(getGroup.GetParameters()[0].ParameterType, "Standalone");
+            var sizes = getGroup.Invoke(singleton, new[] { standalone });
+            var names = (string[])sizes.GetType().GetMethod("GetDisplayTexts").Invoke(sizes, null);
+            int hd = Array.FindIndex(names, name => name.Contains("1920x1080") || name.Contains("1920 x 1080"));
+            if (hd >= 0) sizeProperty.SetValue(gameView, hd);
+            gameView.maximized = true;
+            gameView.Focus();
+            yield return null;
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/StreetCrossing/Scenes/StreetCrossingScene.unity", new LoadSceneParameters(LoadSceneMode.Single));
 #else
             yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
@@ -108,6 +129,8 @@ namespace StreetCrossing.Tests.PlayMode
                 game.StartPractice();
                 Assert.AreEqual("S0" + (index + 1), game.scenario.scenarioId);
                 yield return Capture(directory, manifest, "start");
+                if (Environment.GetEnvironmentVariable("BCI_CAPTURE_MOTION") == "1")
+                    yield return RecordStreetView(directory);
 
                 // Reach the waiting area with the actual CharacterController rather than teleporting the camera.
                 yield return WalkTo(-game.scenario.roadHalfWidth - 0.75f, 15f);
@@ -151,6 +174,26 @@ namespace StreetCrossing.Tests.PlayMode
             Assert.AreEqual(15, manifest.screenshots.Count);
             File.WriteAllText(manifestPath, JsonUtility.ToJson(manifest, true));
             LogAssert.NoUnexpectedReceived();
+        }
+
+        private IEnumerator RecordStreetView(string directory)
+        {
+            string frames = Path.Combine(directory, game.scenario.scenarioId + "-motion");
+            Directory.CreateDirectory(frames);
+            float start = Time.realtimeSinceStartup;
+            float next = start;
+            while (Time.realtimeSinceStartup - start < 5f)
+            {
+                yield return new WaitForEndOfFrame();
+                float now = Time.realtimeSinceStartup;
+                if (now < next) continue;
+                pendingTexture = ScreenCapture.CaptureScreenshotAsTexture();
+                int milliseconds = Mathf.RoundToInt((now - start) * 1000f);
+                File.WriteAllBytes(Path.Combine(frames, milliseconds.ToString("D6") + ".jpg"), pendingTexture.EncodeToJPG(85));
+                Object.Destroy(pendingTexture);
+                pendingTexture = null;
+                next = now + .1f;
+            }
         }
 
         private IEnumerator WalkTo(float z, float seconds, bool acceptSafeArrival = false)
@@ -237,6 +280,15 @@ namespace StreetCrossing.Tests.PlayMode
         {
             if (pendingTexture) Object.Destroy(pendingTexture);
             if (suppressedCanvas != null) suppressedCanvas.enabled = previousCanvasEnabled;
+#if UNITY_EDITOR
+            if (gameView)
+            {
+                gameView.GetType().GetProperty("selectedSizeIndex",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                    .SetValue(gameView, previousSize);
+                gameView.maximized = wasMaximized;
+            }
+#endif
             if (!initialized) return;
             if (game) { game.ReturnToMenu(); game.AutoPauseOnFocusLoss = true; }
             Time.timeScale = previousTimeScale;

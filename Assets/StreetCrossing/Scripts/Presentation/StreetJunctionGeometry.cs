@@ -11,6 +11,8 @@ namespace StreetCrossing.Presentation
         public const float VehicleHalfLength = 2.4f;
         public const float VehicleHalfWidth = 1.08f;
         public const float Clearance = .12f;
+        // Additional pavement between the audited vehicle envelope and the outer kerbstones.
+        private const float ShoulderMargin = .42f;
         /// <summary>Finished tops of the two existing surfaces the apron must meet flush.</summary>
         public const float MainRoadTopY = -.010f;
         public const float SideStreetTopY = .0205f;
@@ -36,7 +38,7 @@ namespace StreetCrossing.Presentation
                         var footprint = new List<Vector2>(4);
                         foreach (Vector2 corner in new[] { new Vector2(-1, -1), new Vector2(-1, 1), new Vector2(1, 1), new Vector2(1, -1) })
                         {
-                            Vector3 p = centre + heading * new Vector3(corner.x * (VehicleHalfWidth + Clearance), 0, corner.y * (VehicleHalfLength + Clearance));
+                            Vector3 p = centre + heading * new Vector3(corner.x * (VehicleHalfWidth + Clearance + ShoulderMargin), 0, corner.y * (VehicleHalfLength + Clearance + ShoulderMargin));
                             footprint.Add(new Vector2(p.x, p.z));
                         }
                         // Only add road surface outside the existing main/side-road union.

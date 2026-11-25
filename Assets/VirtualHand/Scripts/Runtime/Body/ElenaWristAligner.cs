@@ -3,23 +3,7 @@ using UnityEngine;
 
 namespace Neuralife.VirtualHand.Body
 {
-    /// <summary>
-    /// V5-075 修复①（ClipAudit 缺陷①，DEFECT/HIGH）：Elena GLB 的内部节点链
-    /// （根节点 0.0145249× 均匀缩放 × Armature 100×）使得手部实例在
-    /// localPosition=(0,0,0)、单位旋转下，其腕部地标 hand.L_02/hand.R_02 相对
-    /// 身体腕骨 hand_l/hand_r 存在约 2.8166 m 的固有偏移
-    /// （见 Game03-Integration/Logs/WristOffsetAnalysis.txt 的 DEFECT 判定）。
-    ///
-    /// 本组件在挂载/绑定时测量“地标 − 腕骨”的世界差，并在手部实例父级的局部空间里
-    /// 施加一次反向平移将其抵消：InverseTransformVector 自动吸收父链旋转与逐轴
-    /// lossyScale（含身体侧约 101.65× 的授权骨骼缩放——该数值为算术推断，非解析 FBX）。
-    /// 仅平移补偿：不改任何 localScale（验收 A3 守护）、不重蒙皮、不重绑骨。
-    /// 幂等：补偿后差值 ≈0，重复调用为 no-op（容差 toleranceMeters，默认 2 cm）。
-    ///
-    /// 引用按名字在运行时解析（不序列化 Transform 引用）——嵌套预制体内部对象
-    /// 无法从外部组件持久引用，且出厂预制体（旧构建器产出）没有本组件，
-    /// 由 SokobanFullBodyBinding/StreetCrossingFullBodyBinding 调 HealBody 补挂并自愈。
-    /// </summary>
+    /// <summary>Fits the normalized Elena palm to the avatar wrist and finger bases in the bind pose.</summary>
     [DisallowMultipleComponent]
     public sealed class ElenaWristAligner : MonoBehaviour
     {
@@ -31,6 +15,7 @@ namespace Neuralife.VirtualHand.Body
 
         const string LogPrefix = "[ElenaWristAligner] ";
 
+        [SerializeField, HideInInspector] bool palmFitted;
         Transform _landmark;
         Transform _wristBone;
         Transform _scopeRoot;
@@ -63,29 +48,52 @@ namespace Neuralife.VirtualHand.Body
                 return false;
             }
 
-            Vector3 worldDelta = _landmark.position - _wristBone.position;
-            float before = worldDelta.magnitude;
-            if (before <= toleranceMeters) return true; // 已对齐：幂等 no-op
-
-            Transform parent = transform.parent;
-            Vector3 localShift = parent != null ? parent.InverseTransformVector(worldDelta) : worldDelta;
-            if (!IsFinite(localShift) || localShift.sqrMagnitude < 1e-12f)
+            if (!palmFitted)
             {
-                Debug.LogWarning($"{LogPrefix}{SideLabel()} 局部平移无效（父级缩放退化或计算溢出），放弃补偿。");
-                return false;
+                string suffix = isLeft ? "_l" : "_r";
+                Transform middle = FindExact(transform, "middle_01.R_025");
+                Transform index = FindExact(transform, "index_01.R_017");
+                Transform tip = FindExact(transform, "middle_tip.R_045");
+                Transform bodyMiddle = FindExact(_wristBone, "middle_01" + suffix);
+                Transform bodyIndex = FindExact(_wristBone, "index_01" + suffix);
+                if (middle == null || index == null || tip == null || bodyMiddle == null || bodyIndex == null)
+                {
+                    Debug.LogWarning(LogPrefix + SideLabel() + " missing palm calibration landmarks.");
+                    return false;
+                }
+                float length = Vector3.Distance(_landmark.position, tip.position);
+                if (!(length > 1e-6f) || float.IsInfinity(length)) return false;
+                Quaternion source, target;
+                if (!TryPalmFrame(_landmark, middle, index, out source) ||
+                    !TryPalmFrame(_wristBone, bodyMiddle, bodyIndex, out target)) return false;
+                // A uniform factor preserves the authored left-hand reflection. World-space
+                // landmarks include both the FBX wrist scale and the GLB normalization.
+                transform.localScale *= 0.19f / length;
+                transform.rotation = target * Quaternion.Inverse(source) * transform.rotation;
+                palmFitted = true;
             }
-            // 审计采纳（audit-math LOW）：父级某轴缩放极小但非零时局部平移可能巨大且有限，
-            // 与世界差比例失真即拒绝写入（<1 µm 下限已由 sqrMagnitude 守护）。
-            if (localShift.magnitude > 1000f * Mathf.Max(before, 1f))
-            {
-                Debug.LogWarning($"{LogPrefix}{SideLabel()} 局部平移 {localShift.magnitude:F4} 与世界差 {before:F4} m 比例异常，放弃补偿。");
-                return false;
-            }
-            transform.localPosition -= localShift;
 
-            float after = (_landmark.position - _wristBone.position).magnitude;
-            Debug.Log($"{LogPrefix}{SideLabel()} 腕部补偿：{before:F4} m → {after:F4} m（localPosition -= {localShift:F6}）。");
-            return after <= toleranceMeters;
+            Vector3 shift = transform.parent.InverseTransformVector(_landmark.position - _wristBone.position);
+            if (!IsFinite(shift)) return false;
+            transform.localPosition -= shift;
+            return Vector3.Distance(_landmark.position, _wristBone.position) <= toleranceMeters;
+        }
+
+        static Transform FindExact(Transform root, string name)
+        {
+            foreach (Transform bone in root.GetComponentsInChildren<Transform>(true))
+                if (bone.name == name) return bone;
+            return null;
+        }
+
+        static bool TryPalmFrame(Transform wrist, Transform middle, Transform index, out Quaternion frame)
+        {
+            Vector3 forward = middle.position - wrist.position;
+            Vector3 normal = Vector3.Cross(forward, index.position - wrist.position);
+            frame = Quaternion.identity;
+            if (forward.sqrMagnitude < 1e-12f || normal.sqrMagnitude < 1e-16f) return false;
+            frame = Quaternion.LookRotation(forward, normal);
+            return true;
         }
 
         /// <summary>

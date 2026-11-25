@@ -53,6 +53,7 @@ namespace StreetCrossing.Presentation
         public Material AsphaltMaterial => modules.Asphalt;
         public Material PavingMaterial => modules.Paving;
         public Transform CreateRefinedTree(Transform parent, Vector3 position, int variant) => modules.CreateRefinedTree(parent, position, variant);
+        public Transform CreateLodgedTree(Transform parent, Vector3 position, int variant) => modules.CreateLodgedTree(parent, position, variant);
         public (Transform root, Animator animator) CreatePedestrian(Transform parent, int variant) => modules.CreatePedestrian(parent, variant);
         /// <summary>Real transparent glass for windows; alpha tinted so recessed backing reads through.</summary>
         public Material GlassMaterial
@@ -165,10 +166,22 @@ namespace StreetCrossing.Presentation
                 Renderer renderer = filter.GetComponent<Renderer>();
                 if (renderer == null || !renderer.enabled || filter.sharedMesh == null || filter.GetComponent<Collider>() != null) continue;
                 if (filter.transform == group || filter.GetComponentInParent<LODGroup>() != null) continue;
-                Material material = renderer.sharedMaterial; if (material == null) continue;
-                if (!buckets.TryGetValue(material, out List<CombineInstance> instances))
-                { instances = new List<CombineInstance>(); buckets.Add(material, instances); }
-                instances.Add(new CombineInstance { mesh = filter.sharedMesh, transform = group.worldToLocalMatrix * filter.transform.localToWorldMatrix });
+                Mesh sourceMesh = filter.sharedMesh;
+                Material[] slots = renderer.sharedMaterials;
+                // Keep renderers intact when batching cannot reproduce their draw calls.
+                if (!sourceMesh.isReadable || slots.Length != sourceMesh.subMeshCount ||
+                    System.Array.Exists(slots, material => material == null)) continue;
+                Matrix4x4 matrix = group.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                for (int slot = 0; slot < slots.Length; slot++)
+                {
+                    Material material = slots[slot];
+                    if (!buckets.TryGetValue(material, out List<CombineInstance> instances))
+                    {
+                        instances = new List<CombineInstance>();
+                        buckets.Add(material, instances);
+                    }
+                    instances.Add(new CombineInstance { mesh = sourceMesh, subMeshIndex = slot, transform = matrix });
+                }
                 originals.Add(filter.gameObject);
             }
             foreach (KeyValuePair<Material, List<CombineInstance>> entry in buckets)
@@ -184,10 +197,14 @@ namespace StreetCrossing.Presentation
         {
             // A second LODGroup on the same object is rejected by Unity, so keep the first one.
             if (group.gameObject.GetComponent<LODGroup>() != null) return;
+            var renderers = new List<Renderer>();
+            foreach (Renderer renderer in group.GetComponentsInChildren<Renderer>())
+                if (renderer.GetComponentInParent<LODGroup>() == null) renderers.Add(renderer);
+            if (renderers.Count == 0) return;
             LODGroup lod = group.gameObject.AddComponent<LODGroup>();
             // Single-level distance culling. Cross-fading needs real lower-detail levels; forcing it
             // on a one-level group only ghosts objects, which is uncomfortable in VR.
-            lod.SetLODs(new[] { new LOD(cullHeight, group.GetComponentsInChildren<Renderer>()) });
+            lod.SetLODs(new[] { new LOD(cullHeight, renderers.ToArray()) });
             lod.RecalculateBounds();
         }
         public Renderer VisualRounded(Transform parent, string name, Vector3 position, Vector3 size, string color, float radius = .07f, float smoothness = .18f)
@@ -295,7 +312,7 @@ namespace StreetCrossing.Presentation
                 float z = s.LaneZ(lane);
                 laneRoadTargets[lane] = new[] { new Vector3(-14 * direction, 1.1f, z), new Vector3(-20 * direction, 1.1f, z), new Vector3(-28 * direction, 1.1f, z) };
             }
-            Box("Road asphalt", new Vector3(0, -0.16f, 0), new Vector3(s.roadHalfLength * 2 + 4, 0.3f, width * 2), "53534D");
+            Box("Road asphalt", new Vector3(0, -0.16f, 0), new Vector3(s.roadHalfLength * 2 + 4, 0.3f, width * 2), "53534D").layer = StreetPhysicsLayers.WalkableGround;
             for (int side = -1; side <= 1; side += 2)
             {
                 BuildFootway(s, side);
@@ -561,11 +578,13 @@ namespace StreetCrossing.Presentation
             Transform stop = new GameObject("Corner bus stop").transform;
             stop.SetParent(root, false);
             stop.localPosition = new Vector3(-2.15f, 0, -width - 1.48f);
-            GameObject panel = Box("Opaque route board", new Vector3(0, 1.19f, 0), new Vector3(.15f, 2.08f, 2.28f), "285D65", true, stop);
+            // Dual lock: south face >= -9.205 keeps the spawn corridor spare >= 0.42 m;
+            // north face <= -6.96 keeps the S03 blocked-sightline acceptance margin (eye x = 0).
+            GameObject panel = Box("Opaque route board", new Vector3(0, 1.19f, 0), new Vector3(.15f, 2.08f, 2.24f), "285D65", true, stop);
             stopPanel = panel.GetComponent<Collider>();
             Inspectable(panel, "街角公交站", "站牌挡住左侧近车道。在人行道上靠近斑马线，绕过牌边再看；不用踏进车道。");
             // Keep the tested obstacle envelopes; the small construction details are visual only.
-            GameObject roof = Box("Stop canopy", new Vector3(-1.18f, 2.31f, 0), new Vector3(2.85f, .16f, 2.45f), "32717A", true, stop);
+            GameObject roof = Box("Stop canopy", new Vector3(-1.18f, 2.31f, 0), new Vector3(2.85f, .16f, 1.9f), "32717A", true, stop);
             roof.GetComponent<Renderer>().enabled = false;
             Box("Stop post", new Vector3(-2.38f, 1.12f, -.91f), new Vector3(.10f, 2.24f, .10f), "344D50", true, stop);
             GameObject seat = Box("Waiting bench", new Vector3(-1.27f, .46f, -.7f), new Vector3(1.82f, .13f, .46f), "A97850", true, stop);
@@ -668,8 +687,15 @@ namespace StreetCrossing.Presentation
                 StreetDistrictBuilder.CafeSeating(block);
             }
             else if (side < 0 && bay == 0)
+            {
                 block = modules.CreateRefinedBuilding(root, p, side, height);
-            else block = StreetDistrictBuilder.Building(root, this, profile, p, side, height, profile.FacadeAt(type));
+                // The imported residential mesh has no gameplay entrance transform.
+                Vector3 doorstep = StreetMissionGeometry.Doorstep(StreetDestinationKind.Residence);
+                GameObject threshold = Box("Doorway Residence", doorstep + new Vector3(0, .018f, -.24f),
+                    new Vector3(1.35f, .036f, .48f), "A9A69A", false);
+                threshold.transform.SetParent(block, true);
+            }
+            else block = StreetDistrictBuilder.Building(root, this, profile, p, side, height, side > 0 && bay == 0 ? StreetFacadeKind.Convenience : profile.FacadeAt(type));
             // Refined facades carry their own unscaled "Collision proxy" child; every other facade
             // still needs the shared envelope collider on the block root.
             BoxCollider collider = block.gameObject.GetComponent<BoxCollider>();
@@ -686,11 +712,12 @@ namespace StreetCrossing.Presentation
             Transform geometry = root.Find("Additional world geometry");
             if (geometry == null) { geometry = new GameObject("Additional world geometry").transform; geometry.SetParent(root, false); }
             GameObject obstacle = new GameObject(name); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = centre;
+            obstacle.layer = StreetPhysicsLayers.PlayerObstacle;
             obstacle.AddComponent<BoxCollider>().size = size;
         }
         private void BuildFurnitureBounds(StreetScenarioDefinition s)
         {
-            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.5f)), new Vector3(2.25f, 1, .65f));
+            PhysicalBounds("Neighbourhood bench bounds", new Vector3(6.8f, .5f, StreetLayout.SidewalkZ(-7.8f)), new Vector3(2.25f, 1, .65f));
             // Pergola columns (StreetVisualDetails.GardenEntrance) are visual-only; these blockers stop
             // the player from clipping through them on the way to the residence doorstep. The pergola
             // visual only exists in the Residential district, so the blockers must follow the same gate.
@@ -728,6 +755,7 @@ namespace StreetCrossing.Presentation
                 Vector3 corner = new Vector3(s.turningTraffic ? (-9 - 8.4f) * s.DirectionForLane(0) : 36, height * .5f, StreetLayout.SidewalkZ(side * (s.turningTraffic ? 12 : 11.3f)));
                 Transform geometry = root.Find("Additional world geometry");
                 GameObject obstacle = new GameObject("Corner building bounds"); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = corner;
+                obstacle.layer = StreetPhysicsLayers.PlayerObstacle;
                 obstacle.transform.localRotation = Quaternion.Euler(0, side > 0 ? 0 : 180, 0);
                 // Match the visible cut corner rather than leaving an invisible rectangular obstruction outside its doorway.
                 obstacle.AddComponent<MeshCollider>().sharedMesh = CornerMesh(new Vector3(s.turningTraffic ? 6.6f : 7.1f, height, 4), side > 0 ? 1.15f : .7f, side > 0);
@@ -765,17 +793,21 @@ namespace StreetCrossing.Presentation
         }
         private void Tree(Vector3 p)
         {
-            // Keep the original planter collider used by clearance tests; replace only the
-            // primitive trunk and low-poly crown with the refined procedural tree model.
-            Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 1.4f), "9D967C");
+            // Keep the original planter collider used by clearance tests; the refined FBX model
+            // serves near range and drops to a procedural trunk-plus-crown proxy at distance.
+            Box("Tree pit", p + new Vector3(0, 0.07f, 0), new Vector3(1.4f, 0.14f, 0.8f), "9D967C");
             int variant = Mathf.Abs(Mathf.RoundToInt(p.x * 13f + p.z * 7f)) % 3;
-            Transform tree = modules.CreateRefinedTree(root, p, variant);
-            AddVisualLod(tree, .006f);
+            modules.CreateLodgedTree(root, p, variant);
         }
         private void Lamp(Vector3 p)
         {
             // Try the imported CC0 cast-iron street lamp first; fall back to the procedural assembly.
             Transform imported = modules.SpawnImported(root, "street_lamp_01", p, 3.9f);
+            GameObject poleBounds = new GameObject("Street lamp pole bounds");
+            poleBounds.transform.SetParent(root, false);
+            poleBounds.transform.localPosition = p + new Vector3(0, 1.95f, 0);
+            poleBounds.layer = StreetPhysicsLayers.PlayerObstacle;
+            poleBounds.AddComponent<BoxCollider>().size = new Vector3(.18f, 3.9f, .18f);
             if (imported != null)
             {
                 AddVisualLod(imported, .012f);
@@ -787,14 +819,14 @@ namespace StreetCrossing.Presentation
                 }
                 return;
             }
-            Shape(PrimitiveType.Cylinder, "Streetlight pole", root, p + Vector3.up * 2.2f, new Vector3(0.09f, 2.2f, 0.09f), "686D60");
-            Box("Streetlight arm", p + new Vector3(0, 4.35f, -0.3f), new Vector3(0.12f, 0.12f, 0.8f), "686D60", false);
-            Box("Streetlight head", p + new Vector3(0, 4.3f, -0.65f), new Vector3(0.4f, 0.16f, 0.55f), "C7C4A8", false);
+            Shape(PrimitiveType.Cylinder, "Streetlight pole", root, p + Vector3.up * 1.95f, new Vector3(0.09f, 1.95f, 0.09f), "686D60", false);
+            Box("Streetlight arm", p + new Vector3(0, 3.84f, -0.3f), new Vector3(0.12f, 0.12f, 0.8f), "686D60", false);
+            Box("Streetlight head", p + new Vector3(0, 3.80f, -0.65f), new Vector3(0.4f, 0.16f, 0.55f), "C7C4A8", false);
             // Base flange, diagonal brace and an opal diffuser so the head stops reading as a bare block.
             Box("Streetlight base flange", p + new Vector3(0, .03f, 0), new Vector3(.22f, .06f, .22f), "5E635A", false);
-            GameObject brace = Box("Streetlight arm brace", p + new Vector3(0, 4.12f, -.28f), new Vector3(.045f, .045f, .72f), "686D60", false);
+            GameObject brace = Box("Streetlight arm brace", p + new Vector3(0, 3.64f, -.28f), new Vector3(.045f, .045f, .72f), "686D60", false);
             brace.transform.rotation = Quaternion.Euler(-34, 0, 0);
-            GameObject diffuser = Box("Streetlight diffuser", p + new Vector3(0, 4.21f, -.65f), new Vector3(.34f, .02f, .47f), "E9E4CE", false);
+            GameObject diffuser = Box("Streetlight diffuser", p + new Vector3(0, 3.71f, -.65f), new Vector3(.34f, .02f, .47f), "E9E4CE", false);
             diffuser.GetComponent<Renderer>().sharedMaterial = Material("E9E4CE", .55f);
             if (Mathf.Abs(p.x) <= 17f)
             {

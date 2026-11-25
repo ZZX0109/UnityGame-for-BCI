@@ -1,3 +1,8 @@
+using System.Linq;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+using Neuralife.VirtualHand.Body;
 using NUnit.Framework;
 
 namespace Neuralife.VirtualHand.Editor.Tests
@@ -16,6 +21,32 @@ namespace Neuralife.VirtualHand.Editor.Tests
     [TestFixture]
     public class FullBodyBuilderTests
     {
+        [Test]
+        public void SavedPrefabHasDisjointBodyAndHeadAndMappedMaterials()
+        {
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/StreetCrossing/Resources/FirstPersonFullBody.prefab");
+            var visual = root.transform.Find("BodyRoot/Visuals").GetComponentsInChildren<SkinnedMeshRenderer>();
+            var hidden = root.GetComponent<FirstPersonVisibility>().HiddenRenderers;
+            var torso = visual.Single(r => r.sharedMesh.name == "Human_Body");
+            var head = visual.Single(r => r.sharedMesh.name == "Human_Head");
+            var torsoFaces = new HashSet<(int, int, int)>(Triangles(torso.sharedMesh));
+            Assert.IsFalse(Triangles(head.sharedMesh).Any(torsoFaces.Contains));
+            CollectionAssert.AreEquivalent(visual.Where(r => r.name == "Head").ToArray(), hidden);
+            foreach (var material in visual.SelectMany(r => r.sharedMaterials))
+            {
+                Assert.NotNull(material);
+                if (material.name.Contains("eyebrows")) continue; // authored solid pigment
+                Assert.NotNull(material.mainTexture, material.name);
+            }
+        }
+
+        static IEnumerable<(int, int, int)> Triangles(Mesh mesh)
+        {
+            int[] indices = mesh.triangles;
+            for (int i = 0; i < indices.Length; i += 3)
+                yield return (indices[i], indices[i + 1], indices[i + 2]);
+        }
+
         // ------------------------------------------------------------------ required cases
 
         [Test]

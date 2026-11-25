@@ -20,7 +20,12 @@ namespace Neuralife.VirtualHand.PlayTests
         [UnitySetUp]
         public IEnumerator LoadSavedDemo()
         {
+#if UNITY_EDITOR
+            var op = UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(
+                "Assets/VirtualHand/Scenes/Demo.unity", new LoadSceneParameters(LoadSceneMode.Single));
+#else
             var op = SceneManager.LoadSceneAsync(SceneName);
+#endif
             Assert.IsNotNull(op, "Demo must be registered in Build Settings; regenerate the scene first.");
             while (!op.isDone) yield return null;
             yield return null;

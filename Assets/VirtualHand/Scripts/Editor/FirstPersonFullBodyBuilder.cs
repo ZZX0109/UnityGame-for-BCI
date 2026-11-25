@@ -17,27 +17,16 @@ namespace Neuralife.VirtualHand.Editor
     /// BodyRoot -> Skeleton (FBX instance, source renderers replaced) + Visuals (Body/Clothing/Shoes/Head SMRs)
     /// + Elena first-person hands parented to the FBX wrist bones.
     ///
-    /// Design notes:
-    /// - Per-part SMRs (Body/Clothing/Shoes) SHARE the original mesh asset. Each part SMR carries the full
-    ///   original material array with null in every slot that does not belong to that part. Unity 2022.2+
-    ///   skips submeshes whose material slot is null, so each part renders only its own submeshes without
-    ///   duplicating the mesh asset (no new mesh assets are created for the parts).
-    /// - The Head SMR is a true vertex-weight split (head/neck_01 chain, normalized weight >= 0.5 per vertex,
-    ///   triangle accepted only when all three vertices agree) so first-person hiding can disable exactly the
-    ///   head geometry. When the mesh is not readable the split degrades to a wholesale submesh assignment
-    ///   and logs a [FullBodyBuilder] WARN - it never silently skips the head split.
-    /// - Runtime body components (FullBodyPoseController, LowerBodyPoseController, WalkCycleDriver,
-    ///   FirstPersonVisibility, FullBodyAppearanceController) are attached by name via reflection so this editor utility keeps
-    ///   compiling even if the runtime side lands later; missing types are logged, never silently skipped.
-    ///   SeatedArmSolver and AvatarBodyCalibration are not MonoBehaviours and are intentionally not attached.
-    ///   GameIntegrationAdapter is deliberately NOT attached (it belongs to Game02/Game03).
+    /// Skin-weighted triangles are partitioned into visible body, hidden head, and replaced
+    /// hand regions. Derived mesh and material assets persist alongside the source FBX.
     /// </summary>
     public static class FirstPersonFullBodyBuilder
     {
         const string LogPrefix = "[FullBodyBuilder] ";
         const string WarnPrefix = "[FullBodyBuilder] WARN ";
         const string SourceFbxPath = "Assets/VirtualHand/Models/FullBody/neutral_adult_avatar.fbx";
-        const string PrefabOutputPath = "Assets/VirtualHand/Prefabs/FirstPersonFullBody.prefab";
+        // Keep the generated asset at the Resources path used by StreetCrossingFullBodyBinding.
+        const string PrefabOutputPath = "Assets/StreetCrossing/Resources/FirstPersonFullBody.prefab";
         const string HandLeftPrefabPath = "Assets/VirtualHand/Prefabs/ElenaFF/ElenaHand_L.prefab";
         const string HandRightPrefabPath = "Assets/VirtualHand/Prefabs/ElenaFF/ElenaHand_R.prefab";
 
@@ -50,7 +39,7 @@ namespace Neuralife.VirtualHand.Editor
         /// <summary>Material/mesh name keywords mapped to explicit Body membership (no warning).</summary>
         static readonly string[] BodyKeywords = {
             "skin", "face", "head", "body", "torso", "eye", "brow", "hair", "lash", "neck",
-            "arm", "leg", "hand", "foot", "toe", "mouth", "teeth", "tongue", "nail", "gum"
+            "arm", "leg", "hand", "foot", "toe", "mouth", "teeth", "tongue", "nail", "gum", "lips", "nipple", "ears", "low-poly", "blunt_bob"
         };
 
         static readonly string[] ClothingKeywords = {
@@ -77,7 +66,7 @@ namespace Neuralife.VirtualHand.Editor
                 if (fbx == null)
                     throw new InvalidOperationException($"Source FBX not found at '{SourceFbxPath}'.");
 
-                EnsureAssetFolder("Assets/VirtualHand/Prefabs");
+                EnsureAssetFolder(Path.GetDirectoryName(PrefabOutputPath).Replace('\\', '/'));
 
                 root = new GameObject("FirstPersonFullBody");
                 var bodyRoot = new GameObject("BodyRoot");
@@ -98,36 +87,41 @@ namespace Neuralife.VirtualHand.Editor
                 Debug.Log($"{LogPrefix}Source FBX contains {sourceRenderers.Length} SkinnedMeshRenderer(s).");
 
                 // --------------------------------------------------- 2) Per-part split of every source SMR
-                var classTally = new Dictionary<string, int> { { "Body", 0 }, { "Clothing", 0 }, { "Shoes", 0 } };
-                SkinnedMeshRenderer headRenderer = null;
-                string headSplitMode = "none";
                 int headVertices = 0, headTriangles = 0;
-                var primary = sourceRenderers.OrderByDescending(r => r.sharedMesh != null ? r.sharedMesh.subMeshCount : 0)
-                    .ThenByDescending(r => r.bones != null ? r.bones.Length : 0).First();
-
                 // Capture acceptance stats from the live FBX instance NOW: the source SMR components are
                 // destroyed in step 3 and the whole temp root goes away in the finally block, so the
                 // report must never rely on scene queries.
                 var acceptance = CaptureAcceptanceData(sourceRenderers);
-
-                foreach (var source in sourceRenderers)
-                    SplitSourceRenderer(source, visuals.transform, classTally, createdRenderers, missingRefs);
-
-                // Head split runs on the primary renderer (the merged body). If it yields nothing we try the
-                // remaining renderers before falling back, so the head region is never silently skipped.
-                headRenderer = TryBuildHeadRenderer(primary, visuals.transform, missingRefs, ref headSplitMode, ref headVertices, ref headTriangles);
-                if (headRenderer == null)
+                var eyes = sourceRenderers.Single(r => r.name == "Human.low-poly");
+                // The FBX mesh is authored in centimetres. Evaluate its bind matrices
+                // once in the editor so the runtime marker is in avatar metres.
+                Mesh eyeMesh = eyes.sharedMesh;
+                var vertices = eyeMesh.vertices;
+                var weights = eyeMesh.boneWeights;
+                var matrices = eyes.bones.Zip(eyeMesh.bindposes, (bone, bind) => bone.localToWorldMatrix * bind).ToArray();
+                Vector3 eyeCenter = Vector3.zero;
+                for (int i = 0; i < vertices.Length; i++)
                 {
-                    foreach (var source in sourceRenderers)
-                    {
-                        if (source == primary) continue;
-                        headRenderer = TryBuildHeadRenderer(source, visuals.transform, missingRefs, ref headSplitMode, ref headVertices, ref headTriangles);
-                        if (headRenderer != null) break;
-                    }
+                    var w = weights[i];
+                    var v = vertices[i];
+                    eyeCenter += matrices[w.boneIndex0].MultiplyPoint3x4(v) * w.weight0
+                        + matrices[w.boneIndex1].MultiplyPoint3x4(v) * w.weight1
+                        + matrices[w.boneIndex2].MultiplyPoint3x4(v) * w.weight2
+                        + matrices[w.boneIndex3].MultiplyPoint3x4(v) * w.weight3;
                 }
-                if (headRenderer != null) createdRenderers.Add(headRenderer);
-                else missingRefs.Add("Head SMR (no head/neck weights and no submesh fallback available)");
+                var eyeAnchor = new GameObject("EyeCenter").transform;
+                eyeAnchor.SetParent(bodyRoot.transform, false);
+                eyeAnchor.position = eyeCenter / vertices.Length;
+                if (eyeAnchor.localPosition.y < 1f || eyeAnchor.localPosition.y > 2f)
+                    throw new InvalidOperationException("Eye center outside the neutral adult avatar.");
+                Debug.Log($"{LogPrefix}Desktop eye center in avatar metres: {eyeAnchor.localPosition:F4}");
 
+                EnsureAssetFolder(GeneratedFolder);
+                foreach (var source in sourceRenderers)
+                    PartitionRenderer(source, visuals.transform, createdRenderers, ref headVertices, ref headTriangles);
+                var headRenderer = createdRenderers.FirstOrDefault(r => r.name == "Head");
+                if (headRenderer == null) throw new InvalidOperationException("Avatar has no head region.");
+                string headSplitMode = "exclusive triangle partition";
                 // --------------------------------------------------- 3) Retire the source renderers
                 foreach (var source in sourceRenderers)
                 {
@@ -196,64 +190,123 @@ namespace Neuralife.VirtualHand.Editor
         //  Part splitting
         // ============================================================================================
 
-        static void SplitSourceRenderer(SkinnedMeshRenderer source, Transform visualsParent,
-            Dictionary<string, int> classTally, List<SkinnedMeshRenderer> created, List<string> missingRefs)
+        const string GeneratedFolder = "Assets/VirtualHand/Models/FullBody/Generated";
+
+        // Every source triangle has one owner. The original hand surfaces are replaced by
+        // Elena below the wrist. Boundary triangles stay on the forearm for a closed cuff.
+        static void PartitionRenderer(SkinnedMeshRenderer source, Transform parent,
+            List<SkinnedMeshRenderer> created, ref int headVertices, ref int headTriangles, bool previewHeadOnly = false)
         {
-            var mesh = source.sharedMesh;
-            if (mesh == null) { missingRefs.Add($"Source renderer '{source.name}' has no sharedMesh"); return; }
+            Mesh mesh = source.sharedMesh;
+            var weights = mesh.boneWeights;
             var materials = source.sharedMaterials;
-
-            if (materials.Length != mesh.subMeshCount)
-                Debug.LogWarning($"{WarnPrefix}Renderer '{source.name}': material count {materials.Length} != submesh count {mesh.subMeshCount}; extra slots fall back to the mesh name for classification.");
-
-            // Group submesh slots by part.
-            var slotsByPart = new Dictionary<string, List<int>>();
+            var head = MarkHeadVertices(weights, FindHeadBoneIndices(source.bones), mesh.vertexCount, out int count);
+            var handIndices = source.bones.Select((bone, i) => new { bone, i })
+                .Where(x => x.bone != null && IsHandBone(x.bone)).Select(x => x.i).ToArray();
+            var hand = MarkHeadVertices(weights, handIndices, mesh.vertexCount, out _);
+            var groups = new Dictionary<string, SortedDictionary<int, List<int>>>();
             for (int slot = 0; slot < mesh.subMeshCount; slot++)
             {
-                string materialName = slot < materials.Length && materials[slot] != null ? materials[slot].name : mesh.name;
-                string part = ClassifyPart(materialName);
-                classTally[part]++;
-                if (!slotsByPart.TryGetValue(part, out var list)) slotsByPart[part] = list = new List<int>();
-                list.Add(slot);
+                string part = ClassifyPart(materials[slot].name);
+                bool accessory = source.name == "Human.low-poly" || source.name.Contains("eyebrows") || source.name.Contains("blunt_bob");
+                var indices = mesh.GetTriangles(slot);
+                for (int i = 0; i < indices.Length; i += 3)
+                {
+                    int a = indices[i], b = indices[i+1], c = indices[i+2];
+                    if (part == "Body" && hand[a] && hand[b] && hand[c]) continue;
+                    string region = accessory || (part == "Body" && head[a] && head[b] && head[c]) ? "Head" : part;
+                    if (!groups.TryGetValue(region, out var slots))
+                        groups.Add(region, slots = new SortedDictionary<int, List<int>>());
+                    if (!slots.TryGetValue(slot, out var triangles))
+                        slots.Add(slot, triangles = new List<int>());
+                    triangles.Add(a);
+                    triangles.Add(b);
+                    triangles.Add(c);
+                }
             }
-
-            foreach (var pair in slotsByPart)
+            foreach (var group in groups)
             {
-                string partName = pair.Key;
-                var slots = pair.Value;
-
-                var partObject = new GameObject(partName);
-                partObject.transform.SetParent(visualsParent, false);
-                var renderer = partObject.AddComponent<SkinnedMeshRenderer>();
-                renderer.sharedMesh = mesh; // original mesh asset, shared - no new mesh asset per part
-                renderer.sharedMaterials = BuildSlotMaterials(materials, mesh.subMeshCount, slots);
+                if (previewHeadOnly && group.Key != "Head") continue;
+                var renderer = new GameObject(group.Key).AddComponent<SkinnedMeshRenderer>();
+                renderer.transform.SetParent(parent, false);
+                int indexCount = group.Value.Values.Sum(list => list.Count);
+                if (indexCount == mesh.triangles.Length)
+                    renderer.sharedMesh = mesh;
+                else
+                {
+                    Mesh subset = Object.Instantiate(mesh);
+                    subset.name = mesh.name + "_" + group.Key;
+                    subset.subMeshCount = group.Value.Count;
+                    int i = 0;
+                    foreach (var triangles in group.Value.Values) subset.SetTriangles(triangles, i++, false);
+                    renderer.sharedMesh = previewHeadOnly ? subset : SaveGenerated(subset);
+                }
+                renderer.sharedMaterials = group.Value.Keys.Select(i => previewHeadOnly ? materials[i] : AvatarMaterial(materials[i])).ToArray();
                 CopySkinning(source, renderer);
-
-                int vertices = CountSlotVertices(mesh, slots);
-                Debug.Log($"{LogPrefix}Part SMR '{partName}' <- '{GetPath(source.transform)}': submeshes {slots.Count}/{mesh.subMeshCount}, vertices {vertices}/{mesh.vertexCount}, materials {slots.Count} of {materials.Length} (null slots skip rendering, Unity {Application.unityVersion}).");
                 created.Add(renderer);
+                if (group.Key == "Head")
+                {
+                    headVertices += count;
+                    headTriangles += indexCount / 3;
+                }
             }
         }
 
-        static Material[] BuildSlotMaterials(Material[] originals, int subMeshCount, List<int> ownedSlots)
+        static bool IsHandBone(Transform bone)
         {
-            var result = new Material[subMeshCount];
-            foreach (int slot in ownedSlots)
-                if (slot < originals.Length) result[slot] = originals[slot];
-            return result;
+            for (; bone != null; bone = bone.parent)
+                if (bone.name == "hand_l" || bone.name == "hand_r") return true;
+            return false;
         }
 
-        static int CountSlotVertices(Mesh mesh, List<int> slots)
+        static T SaveGenerated<T>(T asset) where T : Object
         {
-            int count = 0;
-            foreach (int slot in slots)
+            string extension = asset is Material ? ".mat" : ".asset";
+            string path = GeneratedFolder + "/" + asset.name + extension;
+            var existing = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (existing == null)
             {
-                if (mesh.isReadable) count += mesh.GetTriangles(slot).Length / 3;
-                else { count = -1; break; }
+                AssetDatabase.CreateAsset(asset, path);
+                return asset;
             }
-            return count;
+            EditorUtility.CopySerialized(asset, existing);
+            EditorUtility.SetDirty(existing);
+            Object.DestroyImmediate(asset);
+            return existing;
         }
 
+        static Material AvatarMaterial(Material original)
+        {
+            string map;
+            switch (original.name)
+            {
+                case "Human.low-poly": map = "Eyes"; break;
+                case "Human.toigo_blunt_bob": map = "Hair"; break;
+                case "Human.cortu_cargo_pants": map = "Pants"; break;
+                case "Human.toigo_fisherman_sweater": map = "Sweater"; break;
+                case "Human.toigo_mj_cloth_shoes": map = "Shoes"; break;
+                case "Human.mindfront_eyebrows_01": map = null; break;
+                default: map = "Skin"; break;
+            }
+            var mat = new Material(Shader.Find("Standard")) { name = original.name };
+            if (map != null)
+            {
+                mat.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    "Assets/VirtualHand/Models/FullBody/Textures/" + map + ".png");
+                if (!mat.mainTexture) throw new InvalidOperationException("Missing avatar texture: " + map);
+            }
+            else mat.color = new Color(0.14f, 0.09f, 0.06f);
+            mat.SetFloat("_Glossiness", map == "Eyes" ? 0.45f : 0.15f);
+            if (map == "Hair" || map == "Eyes" || map == "Pants")
+            {
+                mat.SetFloat("_Mode", 1);
+                mat.EnableKeyword("_ALPHATEST_ON");
+                mat.SetOverrideTag("RenderType", "TransparentCutout");
+                mat.renderQueue = (int)RenderQueue.AlphaTest;
+                mat.SetFloat("_Cutoff", 0.35f);
+            }
+            return SaveGenerated(mat);
+        }
         static void CopySkinning(SkinnedMeshRenderer source, SkinnedMeshRenderer target)
         {
             target.bones = source.bones;                 // preserve full bone reference array
@@ -277,94 +330,61 @@ namespace Neuralife.VirtualHand.Editor
         public static SkinnedMeshRenderer BuildHeadRenderer(SkinnedMeshRenderer sourceRenderer, Transform visualsParent)
         {
             if (sourceRenderer == null || sourceRenderer.sharedMesh == null) return null;
-            return TryBuildHeadRenderer(sourceRenderer, visualsParent, new List<string>(),
-                ref HeadSplitModeTrace, ref HeadVertexTrace, ref HeadTriangleTrace);
+            if (!sourceRenderer.sharedMesh.isReadable)
+                return BuildFallbackHeadRenderer(sourceRenderer, visualsParent);
+            var parts = new List<SkinnedMeshRenderer>();
+            int vertices = 0, triangles = 0;
+            PartitionRenderer(sourceRenderer, visualsParent, parts, ref vertices, ref triangles, true);
+            return parts.FirstOrDefault() ?? BuildFallbackHeadRenderer(sourceRenderer, visualsParent);
         }
 
-        // Trace fields keep BuildHeadRenderer's public signature simple while TryBuild* reports details.
-        static string HeadSplitModeTrace = "none";
-        static int HeadVertexTrace;
-        static int HeadTriangleTrace;
-
-        static SkinnedMeshRenderer TryBuildHeadRenderer(SkinnedMeshRenderer source, Transform visualsParent,
-            List<string> missingRefs, ref string headSplitMode, ref int headVertices, ref int headTriangles)
+        // Preserve the Repair branch's explicit unreadable-mesh fallback for this public
+        // helper. The production Build path uses the imported, readable FBX and writes a
+        // disjoint persistent head mesh through PartitionRenderer.
+        static SkinnedMeshRenderer BuildFallbackHeadRenderer(SkinnedMeshRenderer source, Transform visualsParent)
         {
-            var mesh = source.sharedMesh;
+            Mesh mesh = source.sharedMesh;
             if (mesh == null) return null;
-
-            int[] headIndices = FindHeadBoneIndices(source.bones);
-            if (headIndices.Length == 0)
-            {
-                Debug.LogWarning($"{WarnPrefix}Renderer '{source.name}' owns no head/neck bones; head split cannot run on it.");
-                return null;
-            }
-
-            if (!mesh.isReadable)
-            {
-                // Allowed fallback: assign head/neck submeshes wholesale, never silently skip.
-                headSplitMode = "fallback (mesh not readable)";
-                var renderer = BuildFallbackHeadRenderer(source, visualsParent, headIndices);
-                if (renderer == null)
-                    missingRefs.Add($"Head SMR fallback for '{source.name}' matched no submesh");
-                return renderer;
-            }
-
-            headSplitMode = $"vertex-weight split (threshold {HeadWeightThreshold})";
-            var weights = mesh.boneWeights;
-            if (weights.Length != mesh.vertexCount)
-            {
-                Debug.LogWarning($"{WarnPrefix}Renderer '{source.name}': boneWeight count {weights.Length} != vertex count {mesh.vertexCount}; using fallback.");
-                headSplitMode = "fallback (boneWeight count mismatch)";
-                return BuildFallbackHeadRenderer(source, visualsParent, headIndices);
-            }
-
-            bool[] isHeadVertex = MarkHeadVertices(weights, headIndices, mesh.vertexCount, out int headVertexCount);
-            if (headVertexCount == 0)
-            {
-                Debug.LogWarning($"{WarnPrefix}Renderer '{source.name}': no vertex passes the head weight threshold ({HeadWeightThreshold}); head split yields nothing on it.");
-                return null;
-            }
-
-            // One output submesh per original material slot that contributed head triangles.
-            var contributingSlots = new List<int>();
-            var headTrisBySlot = new Dictionary<int, List<int>>();
+            Material[] materials = source.sharedMaterials;
+            var candidates = new List<int>();
             for (int slot = 0; slot < mesh.subMeshCount; slot++)
             {
-                var sourceTris = mesh.GetTriangles(slot);
-                var headTris = new List<int>();
-                for (int t = 0; t < sourceTris.Length; t += 3)
-                {
-                    if (isHeadVertex[sourceTris[t]] && isHeadVertex[sourceTris[t + 1]] && isHeadVertex[sourceTris[t + 2]])
-                        headTris.AddRange(new[] { sourceTris[t], sourceTris[t + 1], sourceTris[t + 2] });
-                }
-                if (headTris.Count > 0)
-                {
-                    headTrisBySlot[slot] = headTris;
-                    contributingSlots.Add(slot);
-                    headTriangles += headTris.Count / 3;
-                }
+                string materialName = slot < materials.Length && materials[slot] != null
+                    ? materials[slot].name : mesh.name;
+                string lowered = materialName.ToLowerInvariant();
+                if (lowered.Contains("head") || lowered.Contains("face") || lowered.Contains("eye") ||
+                    lowered.Contains("brow") || lowered.Contains("scalp") || lowered.Contains("hair") ||
+                    lowered.Contains("skull") || lowered.Contains("neck"))
+                    candidates.Add(slot);
             }
-            if (contributingSlots.Count == 0)
+            if (candidates.Count == 0)
             {
-                Debug.LogWarning($"{WarnPrefix}Renderer '{source.name}': {headVertexCount} head-weighted vertices exist but no triangle is fully head-weighted; using fallback.");
-                headSplitMode = "fallback (no fully head-weighted triangle)";
-                return BuildFallbackHeadRenderer(source, visualsParent, headIndices);
+                for (int slot = 0; slot < mesh.subMeshCount; slot++)
+                {
+                    string materialName = slot < materials.Length && materials[slot] != null
+                        ? materials[slot].name : mesh.name;
+                    if (ClassifyPart(materialName) == "Body") candidates.Add(slot);
+                }
             }
+            if (candidates.Count == 0) return null;
 
-            var headMesh = new Mesh { name = mesh.name + "_HeadRegion" };
-            CopyVertexData(mesh, headMesh, isHeadVertex, headTrisBySlot, source.bones.Length);
-
+            Debug.LogWarning($"{WarnPrefix}Head split fallback for '{GetPath(source.transform)}': " +
+                $"assigning submeshes {string.Join(", ", candidates)} wholesale to the Head SMR.");
             var headObject = new GameObject("Head");
             headObject.transform.SetParent(visualsParent, false);
-            var headRenderer = headObject.AddComponent<SkinnedMeshRenderer>();
-            headRenderer.sharedMesh = headMesh;
-            headRenderer.sharedMaterials = contributingSlots.Select(s => s < source.sharedMaterials.Length ? source.sharedMaterials[s] : null).ToArray();
-            CopySkinning(source, headRenderer); // bones array preserved verbatim -> boneWeight indices stay aligned
+            var renderer = headObject.AddComponent<SkinnedMeshRenderer>();
+            renderer.sharedMesh = mesh;
+            renderer.sharedMaterials = BuildSlotMaterials(materials, mesh.subMeshCount, candidates);
+            CopySkinning(source, renderer);
+            return renderer;
+        }
 
-            Debug.Log($"{LogPrefix}Head SMR built from '{GetPath(source.transform)}': {headVertexCount} vertices, {headTriangles} triangles, {contributingSlots.Count} material slot(s), bones {source.bones.Length} (preserved).");
-            headVertices = headVertexCount;
-            headTriangles = headTrisBySlot.Sum(pair => pair.Value.Count) / 3;
-            return headRenderer;
+        static Material[] BuildSlotMaterials(Material[] originals, int subMeshCount, List<int> ownedSlots)
+        {
+            var result = new Material[subMeshCount];
+            foreach (int slot in ownedSlots)
+                if (slot < originals.Length) result[slot] = originals[slot];
+            return result;
         }
 
         static int[] FindHeadBoneIndices(Transform[] bones)
@@ -400,84 +420,6 @@ namespace Neuralife.VirtualHand.Editor
             return isHead;
         }
 
-        static void CopyVertexData(Mesh sourceMesh, Mesh targetMesh, bool[] used, Dictionary<int, List<int>> trisBySlot, int boneCount)
-        {
-            var remap = new Dictionary<int, int>();
-            var indexList = new List<int>();
-            for (int v = 0; v < used.Length; v++)
-                if (used[v]) { remap[v] = indexList.Count; indexList.Add(v); }
-
-            targetMesh.indexFormat = indexList.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16;
-            targetMesh.vertices = indexList.Select(i => sourceMesh.vertices[i]).ToArray();
-            Vector3[] normals = indexList.Select(i => sourceMesh.normals[i]).ToArray();
-            if (normals.Any(n => !IsFinite(n))) normals = Array.Empty<Vector3>();
-            if (normals.Length > 0) targetMesh.normals = normals;
-            Vector4[] tangents = indexList.Select(i => sourceMesh.tangents[i]).ToArray();
-            if (tangents.Any(t => t.sqrMagnitude > 0f)) targetMesh.tangents = tangents;
-            if (sourceMesh.uv.Length > 0) targetMesh.uv = indexList.Select(i => sourceMesh.uv[i]).ToArray();
-            if (sourceMesh.uv2.Length > 0) targetMesh.uv2 = indexList.Select(i => sourceMesh.uv2[i]).ToArray();
-            if (sourceMesh.uv3.Length > 0) targetMesh.uv3 = indexList.Select(i => sourceMesh.uv3[i]).ToArray();
-            if (sourceMesh.uv4.Length > 0) targetMesh.uv4 = indexList.Select(i => sourceMesh.uv4[i]).ToArray();
-            if (sourceMesh.colors.Length > 0) targetMesh.colors = indexList.Select(i => sourceMesh.colors[i]).ToArray();
-            targetMesh.boneWeights = indexList.Select(i => sourceMesh.boneWeights[i]).ToArray();
-            targetMesh.bindposes = sourceMesh.bindposes; // full array: preserved with the source bones
-
-            targetMesh.subMeshCount = trisBySlot.Count;
-            int sub = 0;
-            foreach (var pair in trisBySlot.OrderBy(p => p.Key))
-                targetMesh.SetTriangles(pair.Value.Select(t => remap[t]).ToArray(), sub++);
-
-            Debug.Assert(targetMesh.boneWeights.Length <= boneCount, "head vertex weights must stay inside the preserved bones array");
-        }
-
-        static bool IsFinite(Vector3 v)
-        {
-            // NaN/Infinity checks instead of float.IsFinite: valid on every API compatibility level.
-            return !float.IsNaN(v.x) && !float.IsInfinity(v.x)
-                && !float.IsNaN(v.y) && !float.IsInfinity(v.y)
-                && !float.IsNaN(v.z) && !float.IsInfinity(v.z);
-        }
-
-        static SkinnedMeshRenderer BuildFallbackHeadRenderer(SkinnedMeshRenderer source, Transform visualsParent, int[] headIndices)
-        {
-            var mesh = source.sharedMesh;
-            var materials = source.sharedMaterials;
-
-            // Prefer submeshes whose material name describes head/neck parts; else every slot already
-            // classified as Body. The rule actually used is always logged via WARN.
-            var candidates = new List<int>();
-            for (int slot = 0; slot < mesh.subMeshCount; slot++)
-            {
-                string materialName = slot < materials.Length && materials[slot] != null ? materials[slot].name : mesh.name;
-                string lowered = materialName.ToLowerInvariant();
-                if (lowered.Contains("head") || lowered.Contains("face") || lowered.Contains("eye") ||
-                    lowered.Contains("brow") || lowered.Contains("scalp") || lowered.Contains("hair") ||
-                    lowered.Contains("skull") || lowered.Contains("neck"))
-                    candidates.Add(slot);
-            }
-            if (candidates.Count == 0)
-                for (int slot = 0; slot < mesh.subMeshCount; slot++)
-                {
-                    string materialName = slot < materials.Length && materials[slot] != null ? materials[slot].name : mesh.name;
-                    if (ClassifyPart(materialName) == "Body") candidates.Add(slot);
-                }
-            if (candidates.Count == 0) return null;
-
-            Debug.LogWarning($"{WarnPrefix}Head split fallback for '{GetPath(source.transform)}': mesh not readable or no head-weighted triangle; assigning submeshes {string.Join(", ", candidates)} wholesale to the Head SMR (head bones: {string.Join(", ", headIndices.Select(i => source.bones[i].name))}).");
-
-            var headObject = new GameObject("Head");
-            headObject.transform.SetParent(visualsParent, false);
-            var renderer = headObject.AddComponent<SkinnedMeshRenderer>();
-            renderer.sharedMesh = mesh; // shared original mesh; null slots skip rendering
-            renderer.sharedMaterials = BuildSlotMaterials(materials, mesh.subMeshCount, candidates);
-            CopySkinning(source, renderer);
-            return renderer;
-        }
-
-        // ============================================================================================
-        //  Elena hands
-        // ============================================================================================
-
         static List<string> AttachHands(Transform skeleton, List<string> missingRefs)
         {
             var paths = new List<string>();
@@ -506,35 +448,24 @@ namespace Neuralife.VirtualHand.Editor
             hand.transform.localPosition = Vector3.zero;    // spec: exact wrist alignment
             hand.transform.localRotation = Quaternion.identity;
 
-            var elenaWrist = FindElenaWrist(hand.transform, left);
-            string delta = "n/a (landmark not found)";
-            if (elenaWrist != null)
-            {
-                var d = elenaWrist.position - wristBone.position;
-                // V5-075 fix (1) (ClipAudit DEFECT (1)): bake the wrist-landmark compensation at attach
-                // time. The GLB-internal node chain (0.0145x root scale x Armature 100x) leaves the Elena
-                // wrist landmark ~2.8 m off the body wrist bone at localPosition zero.
-                // InverseTransformPoint absorbs parent-chain rotation + per-axis lossyScale (incl. the
-                // ~101.65x body-side authored bone scale, arithmetically inferred) in one step and is
-                // idempotent (d ~= 0 writes ~= 0). Runtime counterpart: ElenaWristAligner.
-                hand.transform.localPosition = wristBone.InverseTransformPoint(wristBone.position - d);
-                var post = elenaWrist.position - wristBone.position;
-                delta = $"pre {d.magnitude:F4} m -> post {post.magnitude:F4} m {post}";
-            }
-            else missingRefs.Add($"Elena wrist landmark on '{hand.name}'");
+            var aligner = hand.AddComponent<Neuralife.VirtualHand.Body.ElenaWristAligner>();
+            aligner.Configure(left, skeleton);
+            if (!aligner.AlignNow())
+                throw new InvalidOperationException($"Could not fit {hand.name} to {wristBone.name}.");
+            PrefabUtility.RecordPrefabInstancePropertyModifications(hand.transform);
+            paths.Add($"{hand.name} -> {GetPath(wristBone)} (palm fitted, wrist aligned)");
 
-            string parentPath = GetPath(wristBone);
-            paths.Add($"{hand.name} -> {parentPath} (localPos {hand.transform.localPosition}, localRot {hand.transform.localRotation.eulerAngles}), wrist delta {delta}");
-            Debug.Log($"{LogPrefix}Hand '{hand.name}' parented to '{parentPath}'; Elena landmark '{(elenaWrist != null ? elenaWrist.name : "?")}'; wrist world-position delta: {delta}.");
         }
 
         // Wires the FullBodyPoseController rig fields to manifest bones so the SeatedArmSolver output
-        // actually reaches the skeleton (bodySpace = pelvis origin, elbows = lowerarm_*, wrists = hand_*).
+        // actually reaches the skeleton (bodySpace = pelvis, upper arms = upperarm_*, elbows = lowerarm_*, wrists = hand_*).
         static void WirePoseControllerRig(Component poseController, Transform skeleton, List<string> missingRefs, List<string> attachLog)
         {
             var bindings = new (string field, string bone)[]
             {
                 ("bodySpace", "pelvis"),
+                ("leftUpperArm", "upperarm_l"),
+                ("rightUpperArm", "upperarm_r"),
                 ("leftElbow", "lowerarm_l"),
                 ("rightElbow", "lowerarm_r"),
                 ("leftWrist", "hand_l"),
@@ -562,7 +493,7 @@ namespace Neuralife.VirtualHand.Editor
             }
             serialized.ApplyModifiedProperties();
             EditorUtility.SetDirty(poseController);
-            Debug.Log($"{LogPrefix}Wired FullBodyPoseController rig fields: {wired}/{bindings.Length} (bodySpace=pelvis, elbows=lowerarm_*, wrists=hand_*).");
+            Debug.Log($"{LogPrefix}Wired FullBodyPoseController rig fields: {wired}/{bindings.Length} (bodySpace=pelvis, upper arms=upperarm_*, elbows=lowerarm_*, wrists=hand_*).");
         }
 
         static Transform FindWristBone(Transform skeleton, string wristBoneName)
@@ -615,28 +546,6 @@ namespace Neuralife.VirtualHand.Editor
             Debug.Log($"{LogPrefix}Wired WalkCycleDriver refs: {wired}/{bindings.Length} (locomotion + thigh/calf/foot × l/r).");
         }
 
-        static Transform FindElenaWrist(Transform handRoot, bool left)
-        {
-            // V5-075 门禁实测：两个 Elena 手部 prefab 的 m_SourcePrefab 均指向 ElenaHand_R.glb，
-            // 其内部只有 hand.R_02 / hand.R.001_011，没有 hand.L_*；左手实例的腕部地标实际
-            // 名为 hand.R_02。先按本侧精确名，再按对侧精确名，最后宽松回退（保持旧行为）。
-            string primary = left ? "hand.L_02" : "hand.R_02";
-            string secondary = left ? "hand.R_02" : "hand.L_02";
-            var children = handRoot.GetComponentsInChildren<Transform>(true);
-            foreach (var t in children)
-                if (ElenaNativeRigProfile.MatchesBone(t.name, primary)) return t;
-            foreach (var t in children)
-                if (ElenaNativeRigProfile.MatchesBone(t.name, secondary)) return t;
-            foreach (var t in children)
-                if (t != handRoot && (ElenaNativeRigProfile.MatchesBone(t.name, "hand") || t.name.ToLowerInvariant().Contains("wrist")))
-                    return t;
-            return null;
-        }
-
-        // ============================================================================================
-        //  Root runtime components
-        // ============================================================================================
-
         static void AttachRootComponents(GameObject root, Transform skeleton, List<SkinnedMeshRenderer> createdRenderers,
             SkinnedMeshRenderer headRenderer, List<string> missingRefs, List<string> attachLog)
         {
@@ -656,7 +565,7 @@ namespace Neuralife.VirtualHand.Editor
             if (visibility != null)
             {
                 if (headRenderer == null) missingRefs.Add("FirstPersonVisibility.HiddenRenderers <- Head SMR (head SMR missing)");
-                else SetReferenceList(visibility, "HiddenRenderers", new[] { headRenderer }, attachLog);
+                else SetReferenceList(visibility, "HiddenRenderers", createdRenderers.Where(r => r.name == "Head").ToArray(), attachLog);
             }
 
             var appearance = AttachRuntimeComponent(root, "FullBodyAppearanceController", new[]
@@ -773,8 +682,8 @@ namespace Neuralife.VirtualHand.Editor
             Debug.Log($"{LogPrefix}ACCEPT 6/9 Missing references: {(missingRefs.Count == 0 ? "none" : string.Join("; ", missingRefs))}");
             Debug.Log($"{LogPrefix}ACCEPT 7/9 Classification tallies recorded during split; unmatched names: {UnmatchedNames.Count} ({string.Join(", ", UnmatchedNames.Take(5))}{(UnmatchedNames.Count > 5 ? ", ..." : "")})");
             Debug.Log($"{LogPrefix}ACCEPT 8/9 Root components: {(attachLog.Count == 0 ? "none" : string.Join("; ", attachLog))}");
-            Debug.Log($"{LogPrefix}ACCEPT 9/9 Head split: {headSplitMode}{(headSplitMode.StartsWith("vertex") ? $", {headVertices} head vertices, {headTriangles} head triangles" : "")}");
-            Debug.Log($"{LogPrefix}Acceptance log complete; Unity {Application.unityVersion} skips submeshes with null material slots (required for the shared-mesh part split).");
+            Debug.Log($"{LogPrefix}ACCEPT 9/9 Head split: {headSplitMode}, {headVertices} weighted vertices, {headTriangles} triangles");
+
         }
 
         /// <summary>

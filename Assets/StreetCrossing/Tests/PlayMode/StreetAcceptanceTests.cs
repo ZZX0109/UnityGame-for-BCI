@@ -68,7 +68,10 @@ namespace StreetCrossing.Tests.PlayMode
         {
             game.SelectScenario(scenarioIndex); game.SetInputSource(input); game.StartPractice();
             Assert.That(game.scenario.scenarioId, Is.EqualTo("S0" + (scenarioIndex + 1)));
-            Assert.That(game.Player.View.transform.localPosition.y, Is.EqualTo(1.65f).Within(0.001f));
+            yield return null; // The avatar binds after the player camera is created.
+            var eyes = game.Player.transform.Find("FirstPersonFullBody(StreetCrossing)/BodyRoot/EyeCenter");
+            Assert.NotNull(eyes, "The active player must have the avatar eye anchor.");
+            Assert.That(game.Player.View.transform.position.y, Is.EqualTo(eyes.position.y).Within(.005f));
             int hazard = 0, protectedCount = 0, route = 0;
             foreach (CrossingZone zone in game.Zones)
             {

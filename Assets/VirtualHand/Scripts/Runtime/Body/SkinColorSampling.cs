@@ -50,7 +50,7 @@ namespace Neuralife.VirtualHand.Body
         /// temporary render target + ReadPixels), which also works for non-readable textures.
         /// White is returned for a null texture (tint-only materials).
         /// </summary>
-        public static bool TryGetTextureAverage(Texture texture, out Color average)
+        public static bool TryGetTextureAverage(Texture texture, out Color average, bool excludeBlackPadding = false)
         {
             average = Color.white;
             if (texture == null)
@@ -73,14 +73,20 @@ namespace Neuralife.VirtualHand.Body
                         return false;
 
                     var sum = new Vector4(0f, 0f, 0f, 0f);
+                    int count = 0;
                     for (int i = 0; i < pixels.Length; i++)
                     {
+                        // Elena's opaque black atlas background covers over half the image
+                        // and is outside the mapped skin. Including it darkens the avatar face.
+                        if (excludeBlackPadding && pixels[i].maxColorComponent < 0.02f) continue;
+                        count++;
                         sum.x += pixels[i].r;
                         sum.y += pixels[i].g;
                         sum.z += pixels[i].b;
                         sum.w += pixels[i].a;
                     }
-                    float inv = 1f / pixels.Length;
+                    if (count == 0) return false;
+                    float inv = 1f / count;
                     average = new Color(sum.x * inv, sum.y * inv, sum.z * inv, sum.w * inv);
                     return true;
                 }
@@ -119,7 +125,7 @@ namespace Neuralife.VirtualHand.Body
 
             Color tint = GetTint(material);
             Texture tex = GetBaseTexture(material);
-            if (!TryGetTextureAverage(tex, out Color average))
+            if (!TryGetTextureAverage(tex, out Color average, tex != null && tex.name == "ElenaHand_BaseColor"))
                 return false;
 
             combined = Color.white;

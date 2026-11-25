@@ -16,10 +16,10 @@ namespace VRUsability.Tests
         [UnityTest]
         public IEnumerator RealMenuStartsAndResumesWithAWithoutControllerAim()
         {
-            bool preview = EditorPrefs.GetBool(PicoXR.PreviewKey, false);
+            bool preview = SessionState.GetBool(PicoXR.PreviewKey, false);
             try
             {
-                EditorPrefs.SetBool(PicoXR.PreviewKey, true);
+                SessionState.SetBool(PicoXR.PreviewKey, true);
                 yield return SceneManager.LoadSceneAsync("StreetCrossingScene", LoadSceneMode.Single);
                 var game = Object.FindObjectOfType<StreetCrossing.Core.StreetGameManager>();
                 game.AutoPauseOnFocusLoss = false;
@@ -102,7 +102,7 @@ namespace VRUsability.Tests
                 foreach (var runtime in Object.FindObjectsOfType<PicoXR>()) Object.DestroyImmediate(runtime.gameObject);
                 Time.timeScale = 1;
                 
-                EditorPrefs.SetBool(PicoXR.PreviewKey, preview);
+                SessionState.SetBool(PicoXR.PreviewKey, preview);
                 Set("Ready", false); Set("HeadTracked", false); Set("RightTracked", false);
             }
         }

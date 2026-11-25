@@ -133,9 +133,13 @@ namespace Neuralife.VirtualHand
         }
 
         /// <summary>
-        /// Flexion of one finger from the angle between consecutive joint segments.
+        /// Flexion of one finger from its tracked joint POSITIONS. The bend is the
+        /// interior angle of each successive segment pair of the measured polyline
+        /// (wrist→metacarpal→proximal→intermediate→distal→tip), so a straight finger
+        /// reports ~0 and a folded one ~1 regardless of how the whole hand is
+        /// oriented or how the tracking provider rotates its joint frames.
         /// <paramref name="joints"/> is indexed by <see cref="TrackedJoint"/>;
-        /// missing or invalid joints make the result fall back to
+        /// missing or degenerate measurements make the result fall back to
         /// <paramref name="fallback"/> rather than reporting a false straight finger.
         /// </summary>
         public static float FingerCurl(Pose[] joints, bool[] validity, int finger, float maxAngleDeg, float fallback)
@@ -143,38 +147,29 @@ namespace Neuralife.VirtualHand
             if (joints == null || finger < 0 || finger > 4)
                 return fallback;
 
-            var chain = ChainOf(finger);
             float sum = 0f;
             int used = 0;
-
-            for (int i = 0; i < chain.Length - 1; i++)
+            for (int channel = 0; channel < 3; channel++)
             {
-                int a = (int)chain[i];
-                int b = (int)chain[i + 1];
-                if (!IsValid(validity, a) || !IsValid(validity, b))
-                    continue;
-
-                Vector3 dirA = joints[b].position - joints[a].position;
-                if (dirA.sqrMagnitude < 1e-10f)
-                    continue;
-
-                // Reference direction: the palm's forward axis, so a straight finger
-                // reports ~0 regardless of how the whole hand is oriented.
-                float angle = Vector3.Angle(joints[a].rotation * Vector3.up, dirA.normalized);
-                sum += Mathf.Clamp01(angle / Mathf.Max(1f, maxAngleDeg));
+                float curl = ChannelCurl(joints, validity, finger, channel, maxAngleDeg);
+                if (curl < 0f)
+                    continue;                       // unmeasurable channel
+                sum += curl;
                 used++;
             }
 
-            if (used == 0)
-                return fallback;
-
-            return Mathf.Clamp01(sum / used);
+            return used == 0 ? fallback : Mathf.Clamp01(sum / used);
         }
 
         /// <summary>
-        /// Writes a full 20-control array from tracked joints. Each finger gets its
-        /// own curl; spread comes from the lateral splay between adjacent proximal
-        /// joints. Unmeasured fingers keep <paramref name="fallbackPose"/> values.
+        /// Writes a full 20-control array from tracked joints. Each digit's three
+        /// flexion channels are measured independently from its own joint chain
+        /// (base/middle/distal joint bend), so a curl at one joint no longer
+        /// smears across the whole finger. Unmeasurable channels keep
+        /// <paramref name="fallbackPose"/>. Thumb opposition is estimated from the
+        /// actual thumb-tip/index-tip proximity normalized by palm scale; when it
+        /// cannot be measured the fallback value is kept. Spread comes from the
+        /// lateral splay between adjacent proximal joints.
         /// </summary>
         public static void FillControls(float[] destination, Pose[] joints, bool[] validity,
                                         float[] fallbackPose, float maxAngleDeg = 90f)
@@ -182,63 +177,210 @@ namespace Neuralife.VirtualHand
             if (destination == null || destination.Length != 20)
                 return;
 
-            if (fallbackPose != null && fallbackPose.Length == 20)
+            bool hasFallback = fallbackPose != null && fallbackPose.Length == 20;
+            if (hasFallback)
                 Array.Copy(fallbackPose, destination, 20);
             else
                 Array.Clear(destination, 0, 20);
 
             for (int finger = 0; finger < 5; finger++)
             {
-                float curl = FingerCurl(joints, validity, finger, maxAngleDeg,
-                                        fallbackPose != null && fallbackPose.Length == 20
-                                            ? fallbackPose[Mathf.Min(19, finger * 4)]
-                                            : 0f);
-                if (finger == 0)
-                {
-                    destination[0] = curl;
-                    destination[1] = curl;
-                    destination[2] = curl;
-                    // opposition is not recoverable from the chain alone
-                    if (fallbackPose != null) destination[3] = fallbackPose[3];
-                    continue;
-                }
-
                 int o = finger * 4;
-                destination[o] = curl;
-                destination[o + 1] = curl;
-                destination[o + 2] = curl * 0.9f;
+                for (int channel = 0; channel < 3; channel++)
+                {
+                    float curl = ChannelCurl(joints, validity, finger, channel, maxAngleDeg);
+                    if (curl < 0f)
+                        continue;                   // channel keeps its fallback value
+                    destination[o + channel] = curl;
+                }
             }
+
+            if (joints != null)
+                destination[3] = ThumbOpposition(joints, validity, destination[3]);
 
             ApplySpread(destination, joints, validity);
         }
 
-        /// <summary>Lateral splay of index/ring/little relative to middle.</summary>
-        static void ApplySpread(float[] c, Pose[] joints, bool[] validity)
-        {
-            var reference = SegmentDirection(joints, validity, TrackedJoint.MiddleProximal, TrackedJoint.MiddleIntermediate);
-            if (reference == Vector3.zero)
-                return;
+        // -- flexion measurement -------------------------------------------------
 
-            SetSpread(c, 1, joints, validity, reference, TrackedJoint.IndexProximal, TrackedJoint.IndexIntermediate, +1f);
-            SetSpread(c, 3, joints, validity, reference, TrackedJoint.RingProximal, TrackedJoint.RingIntermediate, -1f);
-            SetSpread(c, 4, joints, validity, reference, TrackedJoint.LittleProximal, TrackedJoint.LittleIntermediate, -1f);
+        /// <summary>
+        /// For each finger (0=thumb..4=little) and flexion channel (0..2), the joint
+        /// triplet whose interior angle is that channel's flexion. The first channel
+        /// anchors on the metacarpal (wrist for the thumb's CMC joint), so the base
+        /// joint's bend is measured from bone geometry and not from the palm plane.
+        /// Built once; the per-frame path reads it without allocating.
+        /// </summary>
+        static readonly int[] FlexionTriplets = BuildFlexionTriplets();
+
+        static int[] BuildFlexionTriplets()
+        {
+            var t = new int[5 * 3 * 3];
+
+            // Thumb: wrist → metacarpal → proximal → distal → tip (CMC, MCP, IP joints).
+            SetTriplet(t, 0, 0, TrackedJoint.Wrist, TrackedJoint.ThumbMetacarpal, TrackedJoint.ThumbProximal);
+            SetTriplet(t, 0, 1, TrackedJoint.ThumbMetacarpal, TrackedJoint.ThumbProximal, TrackedJoint.ThumbDistal);
+            SetTriplet(t, 0, 2, TrackedJoint.ThumbProximal, TrackedJoint.ThumbDistal, TrackedJoint.ThumbTip);
+
+            // Fingers: metacarpal → proximal → intermediate → distal → tip (MCP, PIP, DIP).
+            for (int finger = 1; finger <= 4; finger++)
+            {
+                int mc = (int)TrackedJoint.IndexMetacarpal + (finger - 1) * 5;
+                SetTriplet(t, finger, 0, (TrackedJoint)mc, (TrackedJoint)(mc + 1), (TrackedJoint)(mc + 2));
+                SetTriplet(t, finger, 1, (TrackedJoint)(mc + 1), (TrackedJoint)(mc + 2), (TrackedJoint)(mc + 3));
+                SetTriplet(t, finger, 2, (TrackedJoint)(mc + 2), (TrackedJoint)(mc + 3), (TrackedJoint)(mc + 4));
+            }
+            return t;
         }
 
-        static void SetSpread(float[] c, int finger, Pose[] joints, bool[] validity,
-                              Vector3 reference, TrackedJoint a, TrackedJoint b, float sign)
+        static void SetTriplet(int[] t, int finger, int channel, TrackedJoint a, TrackedJoint m, TrackedJoint b)
         {
-            Vector3 dir = SegmentDirection(joints, validity, a, b);
+            int i = (finger * 3 + channel) * 3;
+            t[i] = (int)a;
+            t[i + 1] = (int)m;
+            t[i + 2] = (int)b;
+        }
+
+        /// <summary>Normalized 0..1 flexion of one channel, or -1 when unmeasurable.</summary>
+        static float ChannelCurl(Pose[] joints, bool[] validity, int finger, int channel, float maxAngleDeg)
+        {
+            int t = (finger * 3 + channel) * 3;
+            float bend = InteriorBendDeg(joints, validity,
+                                         FlexionTriplets[t], FlexionTriplets[t + 1], FlexionTriplets[t + 2]);
+            if (bend < 0f)
+                return -1f;
+            return Mathf.Clamp01(bend / Mathf.Max(1f, maxAngleDeg));
+        }
+
+        /// <summary>
+        /// Flexion in degrees at the middle joint of a→m→b (0 = straight, 180 = fully
+        /// folded), or -1 when a joint is missing, a segment degenerates or the data
+        /// is not finite. Derived purely from positions, so it is invariant under
+        /// any rigid transform of the whole hand.
+        /// </summary>
+        static float InteriorBendDeg(Pose[] joints, bool[] validity, int a, int m, int b)
+        {
+            if (joints == null || joints.Length <= b ||
+                !IsValid(validity, a) || !IsValid(validity, m) || !IsValid(validity, b))
+                return -1f;
+
+            Vector3 incoming = joints[m].position - joints[a].position;
+            Vector3 outgoing = joints[b].position - joints[m].position;
+            if (incoming.sqrMagnitude < 1e-10f || outgoing.sqrMagnitude < 1e-10f)
+                return -1f;
+
+            // Deviation from straight travel: both segment vectors point the same way
+            // when the chain is straight (0°) and opposite when fully folded (180°).
+            float bend = Vector3.Angle(incoming, outgoing);
+            return bend >= 0f && bend <= 180f ? bend : -1f;   // rejects NaN/∞
+        }
+
+        // -- thumb opposition ----------------------------------------------------
+
+        /// <summary>
+        /// Thumb opposition estimated from the real thumb-tip to index-tip distance,
+        /// normalized by palm scale: touching tips report 1, a gap of one palm
+        /// length (or more) reports 0. Falls back when the required joints are
+        /// missing or the palm scale cannot be measured.
+        /// </summary>
+        static float ThumbOpposition(Pose[] joints, bool[] validity, float fallback)
+        {
+            float palmScale = PalmScale(joints, validity);
+            if (palmScale <= 0f || joints.Length <= (int)TrackedJoint.IndexTip ||
+                !IsValid(validity, (int)TrackedJoint.ThumbTip) ||
+                !IsValid(validity, (int)TrackedJoint.IndexTip))
+                return fallback;
+
+            Vector3 gap = joints[(int)TrackedJoint.IndexTip].position
+                        - joints[(int)TrackedJoint.ThumbTip].position;
+            float normalized = gap.magnitude / palmScale;
+            if (float.IsNaN(normalized) || float.IsInfinity(normalized))
+                return fallback;                          // non-finite tracked data
+            return Mathf.Clamp01(1f - normalized);
+        }
+
+        /// <summary>
+        /// Characteristic palm length from the wrist to a metacarpal head, used to
+        /// normalize proximity measures across hand sizes and tracking volumes.
+        /// </summary>
+        static float PalmScale(Pose[] joints, bool[] validity)
+        {
+            float scale = JointDistance(joints, validity, TrackedJoint.Wrist, TrackedJoint.MiddleProximal);
+            if (scale > 0f) return scale;
+            scale = JointDistance(joints, validity, TrackedJoint.Wrist, TrackedJoint.MiddleMetacarpal);
+            if (scale > 0f) return scale;
+            scale = JointDistance(joints, validity, TrackedJoint.Wrist, TrackedJoint.IndexMetacarpal);
+            if (scale > 0f) return scale;
+            return JointDistance(joints, validity, TrackedJoint.Wrist, TrackedJoint.Palm);
+        }
+
+        static float JointDistance(Pose[] joints, bool[] validity, TrackedJoint a, TrackedJoint b)
+        {
+            if (joints == null || joints.Length <= Mathf.Max((int)a, (int)b) ||
+                !IsValid(validity, (int)a) || !IsValid(validity, (int)b))
+                return 0f;
+
+            Vector3 d = joints[(int)b].position - joints[(int)a].position;
+            float length = d.magnitude;
+            return length > 1e-6f && length < float.PositiveInfinity ? length : 0f;
+        }
+
+        /// <summary>
+        /// Signed palm-plane splay of index/ring/little. The palm plane is spanned by
+        /// the measured wrist→middle-proximal axis and the little↔index knuckle line,
+        /// so the measure is anatomical and mirror-symmetric between hands: each
+        /// finger's proximal segment is compared with the palm's forward axis within
+        /// that plane, outward (away from the middle finger) positive, inward
+        /// negative. Neutral splay writes 0.5, outward up to 1, inward down to 0.
+        /// Flexion rotates a finger out of the palm plane and therefore cannot fake
+        /// lateral splay; missing, degenerate or near-vertical (heavily curled)
+        /// segments preserve the fallback control.
+        /// </summary>
+        static void ApplySpread(float[] c, Pose[] joints, bool[] validity)
+        {
+            Vector3 forward = SegmentDirection(joints, validity, TrackedJoint.Wrist, TrackedJoint.MiddleProximal);
+            Vector3 knuckles = SegmentDirection(joints, validity, TrackedJoint.LittleProximal, TrackedJoint.IndexProximal);
+            if (forward == Vector3.zero || knuckles == Vector3.zero)
+                return;
+
+            // Orthogonal in-plane axes. Both co-transform under left/right mirroring,
+            // so signed splay values are identical for mirrored hands.
+            Vector3 lateral = knuckles - forward * Vector3.Dot(knuckles, forward);
+            if (lateral.sqrMagnitude < 1e-6f)            // knuckle line parallel to the palm axis
+                return;
+            lateral.Normalize();
+
+            WriteSplay(c, 1, +1f, joints, validity, forward, lateral);   // index: outward = +lateral
+            WriteSplay(c, 3, -1f, joints, validity, forward, lateral);   // ring/little: outward = -lateral
+            WriteSplay(c, 4, -1f, joints, validity, forward, lateral);
+        }
+
+        /// <summary>
+        /// Writes one finger's splay control from its proximal segment's in-plane
+        /// direction, or nothing (keeping the fallback) when unmeasurable.
+        /// </summary>
+        static void WriteSplay(float[] c, int finger, float outwardSign, Pose[] joints, bool[] validity,
+                               Vector3 forward, Vector3 lateral)
+        {
+            int proximal = (int)TrackedJoint.IndexProximal + (finger - 1) * 5;
+            Vector3 dir = SegmentDirection(joints, validity, (TrackedJoint)proximal, (TrackedJoint)(proximal + 1));
             if (dir == Vector3.zero)
                 return;
 
-            float angle = Vector3.Angle(reference, dir) * sign;
-            c[finger * 4 + 3] = Mathf.Clamp01(Mathf.Abs(angle) / 25f);
+            float inPlaneForward = Vector3.Dot(dir, forward);
+            float inPlaneLateral = Vector3.Dot(dir, lateral);
+            float inPlaneSq = inPlaneForward * inPlaneForward + inPlaneLateral * inPlaneLateral;
+            if (float.IsNaN(inPlaneSq) || inPlaneSq < 0.25f)
+                return;                      // near-vertical curl: no reliable in-plane projection
+
+            float angleDeg = Mathf.Atan2(inPlaneLateral, inPlaneForward) * Mathf.Rad2Deg;
+            float signed = angleDeg * outwardSign / 25f;   // ±25° spans the control range
+            c[finger * 4 + 3] = Mathf.Clamp01(0.5f + 0.5f * Mathf.Clamp(signed, -1f, 1f));
         }
 
         static Vector3 SegmentDirection(Pose[] joints, bool[] validity, TrackedJoint a, TrackedJoint b)
         {
             int ia = (int)a, ib = (int)b;
-            if (!IsValid(validity, ia) || !IsValid(validity, ib))
+            if (joints == null || joints.Length <= Mathf.Max(ia, ib) || !IsValid(validity, ia) || !IsValid(validity, ib))
                 return Vector3.zero;
 
             Vector3 d = joints[ib].position - joints[ia].position;

@@ -63,12 +63,18 @@ namespace StreetCrossing.Player
             Vector3 displacement = (transform.right * motion.x + transform.forward * motion.y) * speed;
             displacement.y = gravity; body.Move(displacement * Mathf.Min(Time.deltaTime, 0.1f));
             if (transform.position.y < -2) game.RequestRestart();
-            if (input.InteractPressed && Physics.Raycast(View.transform.position, View.transform.forward, out RaycastHit hit, 3))
+            if (input.InteractPressed) InspectFacingSign();
+        }
+        public void InspectFacingSign()
+        {
+            if (!game || !game.IsPlaying || !View) return;
+            if (Physics.Raycast(View.transform.position, View.transform.forward, out RaycastHit hit, 3))
             {
                 StreetInspectable sign = hit.collider.GetComponentInParent<StreetInspectable>();
                 if (sign != null) game.Inspect(sign);
             }
         }
+
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
             VehicleController vehicle = hit.collider.GetComponentInParent<VehicleController>();
@@ -83,11 +89,7 @@ namespace StreetCrossing.Player
             gravity = Mathf.Max(-20, gravity - 9.81f * Time.deltaTime);
             displacement.y = gravity; body.Move(displacement * Mathf.Min(Time.deltaTime, 0.1f));
             if (transform.position.y < -2) game.RequestRestart();
-            if (input.InteractPressed && Physics.Raycast(View.transform.position, View.transform.forward, out RaycastHit hit, 3))
-            {
-                StreetInspectable sign = hit.collider.GetComponentInParent<StreetInspectable>();
-                if (sign != null) game.Inspect(sign);
-            }
+            if (input.InteractPressed) InspectFacingSign();
         }
     }
 }

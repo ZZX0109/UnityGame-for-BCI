@@ -23,32 +23,38 @@ namespace StreetCrossing.Presentation
                     if (scenario.turningTraffic && segment == -1)
                     {
                         // S03 runtime baseline measured a 10.30 m rendered guide gap across the flush side-street
-                        // mouth (west end -15.15, east start -4.85), with the mouth's warning strip 0.8 m off the
-                        // guide line and tactily unconnected. Bridge the walking line in spans that follow the
-                        // measured surface steps (-12.3/-5.7, raised over the side-street asphalt like the warning
-                        // strip) and tie the warning strip into the guided route at the mouth centre.
+                        // mouth, with the mouth's warning strip 0.8 m off the guide line and tactily unconnected.
+                        // Bridge the walking line in spans that follow the measured surface steps (-12.3/-5.7,
+                        // raised over the side-street asphalt like the warning strip) and close the bridge flush
+                        // with the adjacent 10.0 m straight segments at x = junctionX -/+ 6 (junctionX -/- 15 and
+                        // -/- 5 for the measured right-hand configuration), so the guide line has no gap left.
                         float junctionX = -9 * scenario.DirectionForLane(0);
                         float raised = .04f;
-                        Part(world, furniture, "Directional tactile paving", new Vector3(-13.725f, .013f, z), new Vector3(2.85f, .012f, .34f), "B9A16B", .008f);
+                        Part(world, furniture, "Directional tactile paving", new Vector3(junctionX - 4.65f, .013f, z), new Vector3(2.7f, .012f, .34f), "B9A16B", .008f);
                         Part(world, furniture, "Directional tactile paving", new Vector3(junctionX, raised, z), new Vector3(6.6f, .015f, .34f), "B9A16B", .008f);
-                        Part(world, furniture, "Directional tactile paving", new Vector3(-5.275f, .013f, z), new Vector3(.85f, .012f, .34f), "B9A16B", .008f);
+                        Part(world, furniture, "Directional tactile paving", new Vector3(junctionX + 3.65f, .013f, z), new Vector3(.7f, .012f, .34f), "B9A16B", .008f);
                         for (int ridge = -1; ridge <= 1; ridge++)
                         {
-                            Part(world, furniture, "Tactile guide ridge", new Vector3(-13.725f, .023f, z + ridge * .09f), new Vector3(2.75f, .006f, .025f), "C5AE7B", .004f);
+                            Part(world, furniture, "Tactile guide ridge", new Vector3(junctionX - 4.65f, .023f, z + ridge * .09f), new Vector3(2.6f, .006f, .025f), "C5AE7B", .004f);
                             Part(world, furniture, "Tactile guide ridge", new Vector3(junctionX, raised + .01f, z + ridge * .09f), new Vector3(6.5f, .006f, .025f), "C5AE7B", .004f);
-                            Part(world, furniture, "Tactile guide ridge", new Vector3(-5.275f, .023f, z + ridge * .09f), new Vector3(.75f, .006f, .025f), "C5AE7B", .004f);
+                            Part(world, furniture, "Tactile guide ridge", new Vector3(junctionX + 3.65f, .023f, z + ridge * .09f), new Vector3(.6f, .006f, .025f), "C5AE7B", .004f);
                         }
                         Part(world, furniture, "Corner warning connection", new Vector3(junctionX, raised, z + side * .36f), new Vector3(.34f, .015f, .55f), "B9A16B", .008f);
                         Part(world, furniture, "Corner warning connection ridge", new Vector3(junctionX, raised + .01f, z + side * .36f), new Vector3(.025f, .006f, .45f), "C5AE7B", .004f);
                         continue;
                     }
-                    Part(world, furniture, "Directional tactile paving", new Vector3(x, .013f, z), new Vector3(9.7f, .012f, .34f), "B9A16B", .008f);
+                    // 10.0 m pieces centred on x = segment * 10 butt-joint exactly (shared vertical end
+                    // faces, distinct top y), closing the 0.3 m gaps the former 9.7 m pieces left at x = +/- 5,
+                    // +/- 15, +/- 25; ridges keep a 0.05 m inset from each end instead of 0.2.
+                    Part(world, furniture, "Directional tactile paving", new Vector3(x, .013f, z), new Vector3(10f, .012f, .34f), "B9A16B", .008f);
                     for (int ridge = -1; ridge <= 1; ridge++)
-                        Part(world, furniture, "Tactile guide ridge", new Vector3(x, .023f, z + ridge * .09f), new Vector3(9.6f, .006f, .025f), "C5AE7B", .004f);
+                        Part(world, furniture, "Tactile guide ridge", new Vector3(x, .023f, z + ridge * .09f), new Vector3(9.9f, .006f, .025f), "C5AE7B", .004f);
                 }
-                Part(world, furniture, "Tactile crossing connection", new Vector3(0, .014f, Z(side, 5.3f)), new Vector3(.34f, .014f, 2.4f), "B9A16B", .008f);
+                // 2.5 m deep so the strip reaches the z = 9.83 guide-line edge (2 cm overlap under a
+                // 2 mm step) instead of leaving a 3 cm unguided sliver; the waiting paving ends at 7.475.
+                Part(world, furniture, "Tactile crossing connection", new Vector3(0, .014f, Z(side, 5.3f)), new Vector3(.34f, .014f, 2.5f), "B9A16B", .008f);
                 for (int ridge = -1; ridge <= 1; ridge++)
-                    Part(world, furniture, "Crossing connection ridge", new Vector3(ridge * .09f, .024f, Z(side, 5.3f)), new Vector3(.025f, .006f, 2.35f), "C5AE7B", .004f);
+                    Part(world, furniture, "Crossing connection ridge", new Vector3(ridge * .09f, .024f, Z(side, 5.3f)), new Vector3(.025f, .006f, 2.45f), "C5AE7B", .004f);
                 for (int bay = -2; bay <= 2; bay++)
                 {
                     if (bay == 0 || (scenario.turningTraffic && bay == -1)) continue;

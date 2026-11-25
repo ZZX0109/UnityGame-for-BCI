@@ -11,10 +11,58 @@ using UnityEngine.SceneManagement;
 
 namespace StreetCrossing.Editor
 {
+    [InitializeOnLoad]
     public static class StreetSceneBuilder
     {
         public const string ScenePath = "Assets/StreetCrossing/Scenes/StreetCrossingScene.unity";
         public const string ScenarioPath = "Assets/StreetCrossing/Scenarios/S01.asset";
+        const string LaunchGuardKey = "StreetCrossing.EntrySceneGuardEvaluated";
+
+        static StreetSceneBuilder() { EditorApplication.delayCall += OnEditorLaunch; }
+
+        // Runs once per editor launch (SessionState survives domain reloads, resets on relaunch).
+        // Only evaluates on a normal graphical launch; batch mode covers -batchmode/-runTests/-executeMethod.
+        static void OnEditorLaunch()
+        {
+            if (SessionState.GetBool(LaunchGuardKey, false)) return;
+            SessionState.SetBool(LaunchGuardKey, true);
+            if (Application.isBatchMode || EditorApplication.isPlayingOrWillChangePlaymode ||
+                Environment.GetCommandLineArgs().Any(arg => arg.Equals("-runTests", StringComparison.OrdinalIgnoreCase)
+                    || arg.Equals("-executeMethod", StringComparison.OrdinalIgnoreCase))) return;
+            if (!File.Exists(ScenePath)) return;
+            EditorApplication.update += WaitForEditorSettled;
+        }
+        static void WaitForEditorSettled()
+        {
+            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer) return;
+            EditorApplication.update -= WaitForEditorSettled;
+            EditorApplication.delayCall += OpenEntrySceneIfPristineLaunch;
+        }
+        // Opens the entry scene only when the active scene is still the untouched untitled default
+        // (empty, or exactly the default Camera + Directional Light pair); never discards user content.
+        static void OpenEntrySceneIfPristineLaunch()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (SceneManager.loadedSceneCount != 1) return;
+            Scene scene = SceneManager.GetActiveScene();
+            if (scene.isDirty || !string.IsNullOrEmpty(scene.path)) return;
+            if (!SceneIsPristineDefault(scene)) return;
+            EditorSceneManager.OpenScene(ScenePath);
+            Debug.Log("Pristine untitled default scene detected at launch; opened " + ScenePath + ".");
+        }
+        static bool SceneIsPristineDefault(Scene scene)
+        {
+            int cameras = 0, lights = 0;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                if (root.transform.childCount != 0 || root.GetComponent<Renderer>() != null) return false;
+                if (root.GetComponent<Camera>() != null) { cameras++; continue; }
+                Light light = root.GetComponent<Light>();
+                if (light != null && light.type == LightType.Directional) { lights++; continue; }
+                return false;
+            }
+            return cameras <= 1 && lights <= 1;
+        }
         [MenuItem("Street Crossing/Prepare/Validate Delivery")]
         public static void PrepareForValidation()
         {

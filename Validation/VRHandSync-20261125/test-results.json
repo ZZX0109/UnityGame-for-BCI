@@ -1,0 +1,1060 @@
+{
+  "EditMode": {
+    "started_utc": "2026-11-25 09:42:56Z",
+    "finished_utc": "2026-11-25 09:42:57Z",
+    "passed": 185,
+    "failed": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_IsCaseInsensitive",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"sweater_mat\",\"Clothing\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"denim_pants\",\"Clothing\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"wool_jacket\",\"Clothing\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"knit_dress\",\"Clothing\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"cotton_sock\",\"Clothing\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"shoe\",\"Shoes\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"leather_boot\",\"Shoes\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"sneaker_01\",\"Shoes\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"sandal_left\",\"Shoes\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"skin\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"face\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"torso\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"eye_white\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"hair_mat\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_KeywordMapping(\"neck_skin\",\"Body\")",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_NameMatchingBothShoesAndClothing_PrefersShoes",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_NameMatchingClothingAndBody_PrefersClothing",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_NullOrEmpty_DefaultsToBody",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_ShoeMaterial_GoesToShoes",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_SkinMaterial_GoesToBody",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_SweaterMaterial_GoesToClothing",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.ClassifyPart_UnknownName_DefaultsToBody",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Editor.Tests.FullBodyBuilderTests.SavedPrefabHasDisjointBodyAndHeadAndMappedMaterials",
+        "result": "Passed"
+      },
+      {
+        "test": "AvatarBlueOutlineRenderTests.BlueStyleRendersSceneOcclusionAndRestoresOriginalMaterial",
+        "result": "Passed"
+      },
+      {
+        "test": "AvatarVisualStyleTests.BlueModeRestoresEveryOriginalMaterialSlot",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyAppearanceTests.FirstPersonSwitchRestoresInitialEnabledStates",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyAppearanceTests.FirstPersonSwitchWithEmptyArraysDoesNotThrow",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyAppearanceTests.RealisticModeRestoresTheSnapshotMaterialsExactly",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyAppearanceTests.SetModeIsIdempotentAndRoundTrips",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.ApplyPoseAcceptsKnownNamesCaseInsensitive",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.ApplyPoseDrivesRigTransforms",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.ApplyPoseRejectsUnknownNames",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.BothArmsForwardAppliesToBothArms",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.GetBodySpaceShoulderMatchesPresentationDefaults",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.GetBodySpaceWristTargetMatchesPosePresets",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.PoseTransitionBlendsInsteadOfSnapping",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.RepeatedSamePoseIsDeterministic",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.SeatedPropertyAutoSwitchesIdlePoses",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.BodyPoseControllerTests.TryGetSolvedArmReturnsReachableSolutions",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.BlendPathSlerpsWithThePositionBlendingFactor",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.BodySpaceYawIsFollowedEveryFrame",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.DegenerateDirectionsLeaveTheBoneUntouched",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.InstantPathAimsBoneAxisAlongSolvedShoulderToElbow",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.MissingUpperArmBindingsKeepArmPositionSolveIntact",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.RepeatedApplicationDoesNotAccumulateRotation",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.FullBodyUpperArmAlignmentTests.RotatedLocalFrameStillAimsAlongWorldDirection",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.HandAppearanceSwitchTests.LeavingBlueModeRestoresTheAuthoredMaterialsExactly",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.HandAppearanceSwitchTests.TwentyConsecutiveBlueTogglesDoNotLeakMaterialInstancesOrMoveObjects",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.HandMaterialContractTests.ElenaHandSkinMaterialIsMatte",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.SeatedHandSettingsPresenterTests.CancelDiscardsDraftAndReopenShowsSavedProfile",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.SeatedHandSettingsPresenterTests.NewerStoredSchemaIsNotOverwritten",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.SeatedHandSettingsPresenterTests.SaveThenReopenLoadsStagedChoicesAndPreservesOtherKeys",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.AutoBindsManifestBonesAndHoldsRestWhenIdle",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.AutoStrideMatchesZeroDriftCondition",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.GaitMathStanceStraightAndMidSwingPeak",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.MoveBlendRampIsFrameRateIndependent",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.PhaseFollowsMonotonicPathDistance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.RightThighIsExactAntiPhaseOfLeft",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.SerializedFieldNamesMatchBuilderContract",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkCycleDriverTests.StoppingBlendsBackToExactRest",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.BodyYawLagsHeadYaw",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.FullCycleKeepsFootBonesAboveGroundPlane",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.MidSwingLiftsFootAboveStanceHeight",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.PhaseRateScalesLinearlyWithSpeed",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.SmallYawRateIsDeadzoned",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.EditorTests.WalkQATests.TurnYawRateCapped",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.AvatarBodyCalibrationTests.NewerSchema_IsPreservedVerbatimAndCannotBeSaved",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.AvatarBodyCalibrationTests.NonFiniteAndNonPositiveValues_AreRejectedWithoutReplacingStoredData",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.AvatarBodyCalibrationTests.PlayerPrefsSaveLoad_PreservesExplicitMeasurementsAndSolverMath",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.HandMotionFrame_FrozenFields_MatchContractV1",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.HandRigProfile_OpenSampleIsTrueRest",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.IntentMapper_LeftRightBoth_MapToCorrectHands(\"left\",True,False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.IntentMapper_LeftRightBoth_MapToCorrectHands(\"right\",False,True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.IntentMapper_LeftRightBoth_MapToCorrectHands(\"both\",True,True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.IntentMapper_LeftRightBoth_MapToCorrectHands(\"rest\",False,False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.PoseLibrary_AllPoses_Are20ControlsInUnitRange",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.ReplayParse_MalformedLines_AreRejectedWithReason",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.ReplayParse_ValidGloveFrame_ParsesAllFields",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContractTests.TruthReference_IsSeparatedFromPredictions",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContralateralWristPoseMathTests.IdentityPoseAcrossVerticalSagittalPlaneKeepsIdentityOrientationAndLabelsProvenance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContralateralWristPoseMathTests.KnownYawAcrossVerticalSagittalPlaneChangesYawSignAndRestoresProperHandedness",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContralateralWristPoseMathTests.ReflectingTwiceAcrossSamePlaneRestoresSymmetricFrame",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContralateralWristPoseMathTests.RejectsUntrackedPoseInvalidSidesAndNonFiniteOrDegenerateInputs",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContralateralWristPoseMathTests.TiltedTranslatedPlaneReflectsPositionAndOrientationAxes",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.FirstPersonPrefabTests.BothAnatomicalWristsReachTheirGripPosesInAHostWithoutTheDemo",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.FirstPersonWristTests.AcceptsAncestorTrackingSpaceRejectsSelfAndDescendantsAndKeepsHandsIndependent",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.FirstPersonWristTests.AppliesGripSpaceOffsetsAndFollowsTrackingSpaceRecentering",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.FirstPersonWristTests.HidesOnLossOrInvalidPoseAndShowsAgainOnRecovery",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.FirstPersonWristTests.MapsPoseThroughRotatedOriginIndependentOfMountParentAndPreservesScale",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.ActionKeysNeverContainASlash",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.BindingAGameControlIsReportedAsAConflict",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.ConflictDetectionIgnoresEmptyBindings",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.CorruptStoredOverridesDoNotBreakStartup",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.DefaultProfileReportsNoConflicts",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.DuplicateBindingsInsideTheProfileAreReported",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.EveryShippedGameControlIsReserved",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.GeneratedAssetContainsEveryBindableAction",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.GeneratedJsonIsStableAndCarriesBothSides",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.RebindingAnActionChangesItsEffectivePathAndPersists",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.RebindingOntoATakenKeyReportsTheDisplacedAction",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.ResetToDefaultsDropsStoredOverridesAndRestoresAuthoredPaths",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.SavedOverridesSurviveAFreshProfileInstance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandActionBindingTests.SwitchingOneSideDoesNotTouchTheOther",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.AllChannelsUnmeasurable_FingerCurlKeepsFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.BendAtInterphalangealJoint_DoesNotSearTheBaseChannel",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.BendAtMetacarpophalangealJoint_FiresOnlyItsChannel",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.ChainOf_StillReturnsTheDocumentedChains",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.ControlsAreInvariantUnderRotationAndTranslation",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.DegenerateSegment_FallsBackInsteadOfReportingStraight",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.FillControls_WithoutAnyDataKeepsTheWholeFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.FingerCurl_AveragesTheMeasuredChannels",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.MissingMetacarpal_KeepsBaseChannelFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.MissingTip_MeasuresBaseChannelsAndKeepsDistalFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.NonFinitePosition_FallsBackInsteadOfReportingStraight",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Opposition_BeyondOnePalmLengthReportsZero",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Opposition_MissingThumbTipKeepsFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Opposition_ScalesWithGapNormalizedByPalmLength",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Opposition_TouchingTipsReportOne",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Opposition_WithoutPalmScaleKeepsFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_CurlDoesNotChangeSplay",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_DegenerateAxesAndSegmentsPreserveFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_MirroredHandProducesIdenticalControls",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_MissingKnuckleLinePreservesFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_NearVerticalCurlPreservesFallback",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_NeutralSegmentsReportHalf",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.Spread_OutwardAndInwardMoveOppositeAroundNeutral",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandJointRetargeterPositionTests.StraightFinger_AllThreeChannelsNearZero",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_ConflictDetectionReportsReservedAndDuplicate",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_DefaultLayoutCoversEveryPoseForBothHands",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_DefaultLayoutDoesNotCollideWithGameKeys",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_DefaultLayoutHasNoInternalDuplicates",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_GeneratedJsonContainsEveryBindingAndIsParseable",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_GeneratedJsonPinsIdsSoSavedOverridesSurvive",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Bindings_StableIdIsDeterministic",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.FillControls_RejectsWrongSizedDestination",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.FillControls_WritesAllTwentyValues",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.FingerCurl_AllJointsInvalidFallsBackInsteadOfReportingStraight",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Proportions_DefaultIsIdentity",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Proportions_LeavesOtherFingersAlone",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Proportions_MatchesRealBoneNamesForTheTunedFinger",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Proportions_MetacarpalScalesOnlyTheBaseBone",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Proportions_SkipsControlBonesAndWrist",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Retargeter_MappedBoneNamesExistInTheNativeRigProfile",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Retargeter_MapsEveryFingerJointToABone",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Retargeter_UnmappedJointsReturnNull",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Retargeter_WristAndPalmAreMapped",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Validity_HoldsCachedPoseForAFewMissingFramesThenExpires",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Validity_LosingTrackingNeverOpensTheHand",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Validity_RecoveryRequiresResync",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.HandSystemModuleTests.Validity_TwoSidesAreIndependent",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.FistControls_RotateBones",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.Place_RequiresContinuousRestInsideDropZone",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.Place_WithoutDropZone_NeverReleases",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.PoseApi_LivesOnPoseLibrary",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.ReplayController_Restart_FiresOnReset",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.ReplaySource_LoadFile_RejectsMissingAndRemote",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.ReplayUIBindings_SerializedRefs_StartTasksAfterReenable",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.RestControls_LeaveBonesNearRest",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.TaskController_Carry_ReachesLiftWithSeparatedAnchors",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.TaskController_Handoff_EntersTransferAndNeverDropsOnRelease",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.TaskController_ResetRestoresPoseAndPhysics",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.TaskController_WrongAnchorGeometry_NeverGrips",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.RigAndTaskTests.TaskInput_InvalidOrLowConfidence_NeverGrips",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedArmSolverTests.GeometryReachAndContinuity",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.CorruptJsonReturnsDefaultsWithoutRewritingStoredValue",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.FreshDefaultsAreUnspecifiedMeasuredAndZeroed",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.FutureVersionLoadsDefaultsAndCannotBeOverwrittenBySavingLoadedResult",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.InvalidEnumValuesReturnDefaultsWithoutRewritingStoredValue",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.LoadingSettingsDoesNotMutateALiveWrist",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.MissingJsonFieldsUseHarmlessDefaults",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.ResetChangesOnlyTheRequestedPreferenceKey",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.SaveAndLoadRoundTripKeepSidesOffsetsAndDisplayModeSeparate",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsTests.SaveRejectsNonFiniteValuesInvalidEnumsAndUnsupportedVersions",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.LeftAndRightInputsUseTheirOwnGripLocalOffsets",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.ReconstructsRotationNear180Degrees",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.RejectsNonFinitePositionsAndZeroOrNonFiniteRotations",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.RejectsUntrackedGripAndClearsOutput",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.SolvesAndReconstructsWithNonIdentityRotations",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristCalibrationTests.WrapsEulerAcrossThe180DegreeBoundary",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristNeutralCaptureTests.CapturesLeftIntoDraftAndCancelLeavesPreferencesUntouched",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristNeutralCaptureTests.CapturesRightWithoutRequiringALeftAnchor",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedWristNeutralCaptureTests.LostTrackingReportsErrorAndDoesNotChangeDraft",
+        "result": "Passed"
+      },
+      {
+        "test": "StreetCrossing.Tests.EditMode.StreetTrackedHandsOrientationTests.TrackedPalmRotationKeepsWristLandmarkAtBoneAndMovesPalmFrame(Left)",
+        "result": "Passed"
+      },
+      {
+        "test": "StreetCrossing.Tests.EditMode.StreetTrackedHandsOrientationTests.TrackedPalmRotationKeepsWristLandmarkAtBoneAndMovesPalmFrame(Right)",
+        "result": "Passed"
+      }
+    ]
+  },
+  "PlayMode": {
+    "started_utc": "2026-11-25 09:43:11Z",
+    "finished_utc": "2026-11-25 09:43:32Z",
+    "passed": 75,
+    "failed": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "test": "AvatarBodyCalibrationBindingPlayModeTests.AppliesValidatedDimensionsAndRetainsMeasurementSources",
+        "result": "Passed"
+      },
+      {
+        "test": "AvatarBodyCalibrationBindingPlayModeTests.ExistingHeadTransformIsRejectedWhenTrackingIsLost",
+        "result": "Passed"
+      },
+      {
+        "test": "AvatarBodyCalibrationBindingPlayModeTests.HeadNodsKeepBodyOriginAndShoulderLineUprightThroughVerticalGaze",
+        "result": "Passed"
+      },
+      {
+        "test": "AvatarBodyCalibrationBindingPlayModeTests.MissingHeadHidesPreviewOutputs",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.BothHandsAreTheSameSize",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.FistShowsNoObviousSelfIntersection(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.FistShowsNoObviousSelfIntersection(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.HandsAreMirrorImagesOfEachOther",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PinchBringsTheThumbAndIndexTipsTogether(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PinchBringsTheThumbAndIndexTipsTogether(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PinchDoesNotCollapseTheOtherFingersIntoThePalm(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PinchDoesNotCollapseTheOtherFingersIntoThePalm(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PointCurlsTheOtherThreeFingers(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.PointCurlsTheOtherThreeFingers(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandArtAcceptancePlayModeTests.WristCutSitsBelowTheFingerRoots",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.CurlingTheFingersReducesAdjacentClearance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.DetectionCanBeTurnedOffForPerformance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.KeyboardProviderFallsBackToRestWhileUiOwnsFocus",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.NormalPosesDoNotReportInterpenetrationAtTheDefaultThreshold",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.SelfIntersectionFlagAlwaysMatchesTheMeasuredClearance",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.SuppressionCanBeDisabledForHostsThatManageFocusThemselves",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.TogglingGuidanceOverlayDoesNotTouchThePlayersHands",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandDiagnosticsPlayModeTests.TurningTheOverlayOffIsIdempotent",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.InfinityInputIsRejectedAndTheLastTrustedPoseSurvives",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.IsValidControlArrayRejectsEveryMalformedShape",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.NaNInputIsRejectedAndTheLastTrustedPoseSurvives",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.OpenFistAndPinchProduceDistinctBoneConfigurations(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.OpenFistAndPinchProduceDistinctBoneConfigurations(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.OutOfRangeInputIsRejectedAndTheLastTrustedPoseSurvives",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.PointKeepsOnlyTheIndexFingerExtended(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.PointKeepsOnlyTheIndexFingerExtended(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.WristRotationDoesNotDisturbFingerLocalPose(True)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.WristRotationDoesNotDisturbFingerLocalPose(False)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.HandPoseBonePlayModeTests.WrongLengthInputIsIgnored",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.Carry_CompletesWithContinuousRestInsideDropZone",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.GloveReplay_IdentifiesAssistedDisplayAndRestoresPreview",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.Handoff_LToR_TransfersOwnershipWithoutDrop",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.Handoff_RToL_TransfersOwnershipWithoutDrop",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.ManualPinch_BothHandsHaveOpposingPadContact",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.RealReplay_CarriesAndHandsOffThroughSavedButtons",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.SavedDemo_NativeSpreadMovesOnlyItsFingerInBothDirections",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.SavedDemo_PlaysEachGloveClipOnNativeHands",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.PlayModeTaskTests.SavedScene_WiringSurvivesPlayMode",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.BothHandsLostAndRecoveredIndependently",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.ClosedHandRaisesExactlyOneGraspStart",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.FrameStreamIsMonotonicAndNeverReplaysAnEarlierFrame",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.ManualTickTwiceInOneFrameEmitsOnlyOneEdge",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.OpenHandNeverReportsAHeldGesture",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.OpticalPinchUsesMeasuredTipsAndClearsImmediatelyOnLoss",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.PauseStopsTheClockAndResumeContinuesFromTheSamePosition",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.RecoveryRequiresTheResyncWindowBeforeNewEdges",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.ResetHeldStateIsSilentAndNeverEmitsARelease",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.ResetPlaybackReturnsToTheStart",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.SingleHandLossDoesNotDisturbTheOther",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.SourceSwitchClearsPendingFramesAndRaisesTheEvent",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.TrackingLossNeverEmitsARelease",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.PlayTests.SimulatedTrackingPlayModeTests.TrackingOriginChangeIsObservableInTheFrame",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ContinuousArmSleevePlayModeTests.RealHandPrefabSleevesUpdateSmoothlyAndHideWhenLost",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ControllerIndexPointerTests.RealPrefabUsesTrackedIndexAndRestoresRegularGrip(Left)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ControllerIndexPointerTests.RealPrefabUsesTrackedIndexAndRestoresRegularGrip(Right)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.ControllerIndexPointerTests.SyntheticGripSampleBuildsRayFromCalibratedLandmarks",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.IntegratedBodyPreviewTests.IntegratedPreviewUsesPrefabSamplesAndTracksLossAndRecovery",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsPanelPrefabTests.SavedPrefab_BindsButtons_AndSupportsOpenCancelReopenAndSave",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.LoadsSavedOffsetsAndAppliesAnExplicitSaveToTheEnabledPair",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.MirrorModeShowsOnlyTheSelectedMeasuredSourceAndCreatesNoDerivedHand",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.MissingPreferencePreservesAuthoredWristOffsetsAndMeasuredDisplay",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.MissingSelectedWristDoesNotFallBackToTheOtherSide",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.NewerStoredSchemaLeavesAuthoredWristOffsetsUntouched",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.SingleOperatingHandWithUnspecifiedSideDisplaysNeitherHand",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedHandSettingsRuntimeTests.WristOffsetKeepsGripLocalAxesAndDoesNotInheritTrackingOriginScale",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedMirrorPlaybackTests.TrackedWristDrivesOppositeMeshAndTrackingLossClearsBoth(Left)",
+        "result": "Passed"
+      },
+      {
+        "test": "Neuralife.VirtualHand.Tests.SeatedMirrorPlaybackTests.TrackedWristDrivesOppositeMeshAndTrackingLossClearsBoth(Right)",
+        "result": "Passed"
+      },
+      {
+        "test": "StreetCrossing.Tests.PlayMode.FullBodyStreetCrossingTests.DefaultEyeCameraShowsBothHandsAndBRestoredHeadStaysCulled",
+        "result": "Passed"
+      },
+      {
+        "test": "StreetCrossing.Tests.PlayMode.FullBodyStreetCrossingTests.FullBodyStaysWiredAndVisibleAcrossS01ToS03",
+        "result": "Passed"
+      },
+      {
+        "test": "StreetCrossing.Tests.PlayMode.FullBodyStreetCrossingTests.RealPlayerMovementDrivesWalkCycleLegBones",
+        "result": "Passed"
+      }
+    ]
+  }
+}

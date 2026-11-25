@@ -60,7 +60,7 @@ namespace StreetCrossing.Integration.Tests
 
         StreetCrossingFullBodyBinding CreateWiredBinding()
         {
-            ExpectWiringSequence(); // every true wiring emits exactly the 7-line block
+            ExpectWiringSequence(); // every true wiring emits the alignment result
             _bindingHost = new GameObject("TestFullBodyBinding");
             var binding = _bindingHost.AddComponent<StreetCrossingFullBodyBinding>();
             Assert.IsTrue(binding.EnsureWiring(), "EnsureWiring must succeed once a PedestrianPlayerController exists.");
@@ -100,7 +100,7 @@ namespace StreetCrossing.Integration.Tests
             Assert.IsTrue(firstClone == null,
                 "The destroyed applier's OnDestroy must destroy the clones it produced.");
 
-            ExpectWiringSequence(); // a true re-wiring re-fires the 7-line block
+            ExpectWiringSequence(); // a true re-wiring re-fires the alignment result
             Assert.IsTrue(binding.EnsureWiring(), "EnsureWiring must re-wire after the body instance is destroyed.");
             Assert.IsNotNull(binding.BodyInstance, "Re-wiring must instantiate a fresh body.");
 
@@ -245,18 +245,7 @@ namespace StreetCrossing.Integration.Tests
 
         static void ExpectWiringSequence()
         {
-            // Replicated from Assets/StreetCrossing/Tests/PlayMode/FullBodyWiringLogs.cs
-            // (internal to another asmdef). Order matters: LogAssert.Expect is FIFO and
-            // must mirror the emission order of a true wiring, which interleaves the
-            // two hands (HP_L, native_L, HP_R, native_R — see FullBodyWiringLogs.cs
-            // and the V5078c/run-3 logs); grouping per message type desyncs the queue.
-            LogAssert.Expect(LogType.Log, new Regex(@"\[HandRigDriver\] HandProportions applied to \d+ bones on ElenaHand_[LR]\."));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[HandRigDriver\] native profile active \(\d+ bones, \d+ control bindings\)\."));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[HandRigDriver\] HandProportions applied to \d+ bones on ElenaHand_[LR]\."));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[HandRigDriver\] native profile active \(\d+ bones, \d+ control bindings\)\."));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[ElenaWristAligner\] [LR] 腕部补偿：.*"));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[ElenaWristAligner\] [LR] 腕部补偿：.*"));
-            LogAssert.Expect(LogType.Log, new Regex(@"\[StreetCrossingFullBodyBinding\] Elena wrist landmark alignment \d/2 hands \(target <2 cm residual\)\."));
+            LogAssert.Expect(LogType.Log, "[StreetCrossingFullBodyBinding] Elena wrist landmark alignment 2/2 hands (target <2 cm residual).");
         }
 
         GameObject _prefabCache;

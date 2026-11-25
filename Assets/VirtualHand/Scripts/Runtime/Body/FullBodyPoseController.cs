@@ -7,12 +7,9 @@ namespace Neuralife.VirtualHand.Body
     /// <summary>
     /// Drives whole-avatar arm poses in body space.  Body space is metres with the origin
     /// at the seated pelvis centre, +Y up, +X the wearer's right and +Z forward.
-    /// Per-pose wrist targets are turned into shoulder/elbow/wrist chains by the existing
-    /// pure <see cref="SeatedArmSolver"/>; this component only feeds inputs and keeps the
-    /// previous elbow per arm as the explicit continuity hint, so identical inputs always
-    /// reproduce identical solves.  The solver itself stays stateless.  Arms only: the legs
-    /// and pelvis are not animated here — <see cref="LowerBodyPoseController"/> integrates
-    /// planar locomotion and yaw, and no skeletal leg animation is driven by this package.
+    /// Skeletal rigs use measured segment lengths and joint rotations. The pelvis
+    /// supplies the origin; the avatar root supplies the anatomical axes. Independent
+    /// preview markers continue to use their explicit body-space transform.
     /// </summary>
     [AddComponentMenu("Neuralife/Virtual Hand/Body/Full Body Pose Controller")]
     [DisallowMultipleComponent]
@@ -25,10 +22,14 @@ namespace Neuralife.VirtualHand.Body
         public const string PoseStanding = "Standing";
         public const string PoseBothArmsForward = "BothArmsForward";
 
+        public const string PoseBothArmsRaised = "BothArmsRaised";
+        public const string PoseArmsCrossed = "ArmsCrossed";
+        public const string PoseDesktopHandsVisible = "DesktopHandsVisible";
+
         static readonly string[] KnownPoseNames =
         {
             PoseLeftArmForward, PoseRightArmForward, PoseHandsOnLap, PoseNaturalSeated, PoseStanding,
-            PoseBothArmsForward
+            PoseBothArmsForward, PoseBothArmsRaised, PoseArmsCrossed, PoseDesktopHandsVisible
         };
 
         [Header("Rig mapping (optional)")]
@@ -52,6 +53,14 @@ namespace Neuralife.VirtualHand.Body
         [Tooltip("When enabled, ApplyPose solves the new pose without snapping the bound transforms; call BlendTowardCurrent every frame to glide them toward the latest solution.")]
         public bool blendPoseTransitions = false;
 
+        sealed class ArmRest
+        {
+            public Transform upper, elbow;
+            public Quaternion upperLocal, elbowLocal;
+        }
+
+        readonly ArmRest _leftRest = new ArmRest();
+        readonly ArmRest _rightRest = new ArmRest();
         bool _seated = true;
         string _currentPoseName = PoseNaturalSeated;
         Vector3 _leftPreviousElbow;
@@ -83,7 +92,8 @@ namespace Neuralife.VirtualHand.Body
         /// <summary>
         /// Applies a known pose and re-solves both arm chains.  Unknown names are rejected
         /// without changing the current pose.  Known names: LeftArmForward, RightArmForward,
-        /// HandsOnLap, NaturalSeated, Standing and BothArmsForward (case-insensitive).
+        /// HandsOnLap, NaturalSeated, Standing, BothArmsForward, BothArmsRaised, ArmsCrossed
+        /// and DesktopHandsVisible.
         /// </summary>
         public bool ApplyPose(string poseName)
         {
@@ -95,6 +105,8 @@ namespace Neuralife.VirtualHand.Body
                 return false;
             }
 
+            if (_currentPoseName != resolved)
+                _hasLeftPreviousElbow = _hasRightPreviousElbow = false;
             _currentPoseName = resolved;
             SolveCurrentPose();
             return true;
@@ -129,6 +141,14 @@ namespace Neuralife.VirtualHand.Body
             float sideSign = side == SeatedHandSide.Left ? -1f : 1f;
             switch (ResolvePoseName(poseName))
             {
+                case PoseDesktopHandsVisible:
+                    // With the camera at the avatar's eye centre these wrists frame
+                    // the lower corners while leaving the crossing ahead unobstructed.
+                    return new Vector3(sideSign * 0.185f, 0.585f, 0.45f);
+                case PoseBothArmsRaised:
+                    return new Vector3(sideSign * 0.22f, 0.99f, 0.12f);
+                case PoseArmsCrossed:
+                    return new Vector3(-sideSign * 0.12f, 0.39f + sideSign * 0.035f, 0.22f);
                 case PoseStanding:
                     return new Vector3(sideSign * 0.17f, 0.16f, 0.20f);
                 case PoseHandsOnLap:
@@ -163,6 +183,12 @@ namespace Neuralife.VirtualHand.Body
 
         void SolveCurrentPose()
         {
+            // Prefabs serialized before the upper-arm fields were added still have both
+            // lower-arm bindings. Resolve their known FBX parents before applying a pose.
+            if (!leftUpperArm && leftElbow && leftElbow.parent && leftElbow.parent.name == "upperarm_l")
+                leftUpperArm = leftElbow.parent;
+            if (!rightUpperArm && rightElbow && rightElbow.parent && rightElbow.parent.name == "upperarm_r")
+                rightUpperArm = rightElbow.parent;
             AvatarBodyCalibration calibration = AvatarBodyCalibration.CreatePresentationDefaults();
             float upperArmLength = calibration.upperArmLength.meters;
             float lowerArmLength = calibration.forearmLength.meters;
@@ -175,6 +201,24 @@ namespace Neuralife.VirtualHand.Body
                 ref _rightPreviousElbow, ref _hasRightPreviousElbow);
         }
 
+        public bool ApplyTrackedWrist(SeatedHandSide side, Vector3 worldPosition)
+        {
+            bool left = side == SeatedHandSide.Left;
+            Transform upper = left ? leftUpperArm : rightUpperArm;
+            Transform elbow = left ? leftElbow : rightElbow;
+            Transform wrist = left ? leftWrist : rightWrist;
+            if (!upper || !IsBoneChain(elbow, wrist) || !elbow.IsChildOf(upper)) return false;
+            Quaternion toBody = Quaternion.Inverse(transform.rotation);
+            if (!SeatedArmSolver.TrySolve(toBody * (upper.position - PelvisOrigin),
+                toBody * (worldPosition - PelvisOrigin), Vector3.Distance(upper.position, elbow.position),
+                Vector3.Distance(elbow.position, wrist.position), side, stableElbowPole,
+                out var solution)) return false;
+            if (left) _leftSolution = solution;
+            else _rightSolution = solution;
+            BlendArm(side, solution, elbow, wrist, 1f, bodySpace != null ? bodySpace : transform);
+            return true;
+        }
+
         SeatedArmSolver.Solution SolveArm(
             SeatedHandSide side,
             Vector3 shoulderPosition,
@@ -185,6 +229,20 @@ namespace Neuralife.VirtualHand.Body
         {
             SeatedArmSolver.Solution solution;
             Vector3 wristTarget = GetBodySpaceWristTarget(_currentPoseName, side);
+            Transform upper = side == SeatedHandSide.Left ? leftUpperArm : rightUpperArm;
+            Transform elbow = side == SeatedHandSide.Left ? leftElbow : rightElbow;
+            Transform wrist = side == SeatedHandSide.Left ? leftWrist : rightWrist;
+            if (IsBoneChain(elbow, wrist) && upper != null && elbow.IsChildOf(upper))
+            {
+                shoulderPosition = Quaternion.Inverse(transform.rotation) * (upper.position - PelvisOrigin);
+                upperArmLength = Vector3.Distance(upper.position, elbow.position);
+                lowerArmLength = Vector3.Distance(elbow.position, wrist.position);
+                if (_currentPoseName == PoseStanding)
+                {
+                    float outward = side == SeatedHandSide.Left ? -0.065f : 0.065f;
+                    wristTarget = shoulderPosition + new Vector3(outward, -0.96f * (upperArmLength + lowerArmLength), 0.045f);
+                }
+            }
             bool solved = SeatedArmSolver.TrySolve(
                 shoulderPosition,
                 wristTarget,
@@ -213,13 +271,8 @@ namespace Neuralife.VirtualHand.Body
             if (blendPoseTransitions)
                 return;
             Transform space = bodySpace != null ? bodySpace : transform;
-            AlignUpperArm(side, solution, space, 1f);
-            Transform elbow = side == SeatedHandSide.Left ? leftElbow : rightElbow;
-            Transform wrist = side == SeatedHandSide.Left ? leftWrist : rightWrist;
-            if (elbow != null)
-                elbow.position = space.TransformPoint(solution.ElbowPositionMeters);
-            if (wrist != null)
-                wrist.position = space.TransformPoint(solution.SolvedWristPositionMeters);
+            BlendArm(side, solution, side == SeatedHandSide.Left ? leftElbow : rightElbow,
+                side == SeatedHandSide.Left ? leftWrist : rightWrist, 1f, space);
         }
 
         /// <summary>
@@ -249,49 +302,54 @@ namespace Neuralife.VirtualHand.Body
         {
             if (!solution.IsValid)
                 return;
-            AlignUpperArm(side, solution, space, k);
-            if (elbow != null)
+            Transform upper = side == SeatedHandSide.Left ? leftUpperArm : rightUpperArm;
+            if (IsBoneChain(elbow, wrist))
             {
-                Vector3 elbowTarget = space.TransformPoint(solution.ElbowPositionMeters);
-                elbow.position = elbow.position + (elbowTarget - elbow.position) * k;
+                if (upper == null || !elbow.IsChildOf(upper)) return;
+                Vector3 targetElbow = PelvisOrigin + transform.rotation * solution.ElbowPositionMeters;
+                Vector3 targetWrist = PelvisOrigin + transform.rotation * solution.SolvedWristPositionMeters;
+                // Solve from the authored axes every time. Chaining shortest-arc swings
+                // across unrelated poses otherwise accumulates roll in the sleeve and palm.
+                var rest = side == SeatedHandSide.Left ? _leftRest : _rightRest;
+                Quaternion upperBefore = upper.localRotation;
+                Quaternion elbowBefore = elbow.localRotation;
+                if (rest.upper != upper || rest.elbow != elbow)
+                {
+                    rest.upper = upper;
+                    rest.elbow = elbow;
+                    rest.upperLocal = upperBefore;
+                    rest.elbowLocal = elbowBefore;
+                }
+                upper.localRotation = rest.upperLocal;
+                elbow.localRotation = rest.elbowLocal;
+                AimBone(upper, elbow, targetElbow - upper.position, 1f);
+                AimBone(elbow, wrist, targetWrist - targetElbow, 1f);
+                upper.localRotation = Quaternion.Slerp(upperBefore, upper.localRotation, k);
+                elbow.localRotation = Quaternion.Slerp(elbowBefore, elbow.localRotation, k);
+                return;
             }
+            // Independent target markers used by unskinned preview rigs.
+            if (upper != null && elbow != null)
+                AimBone(upper, elbow, space.TransformDirection(solution.ElbowPositionMeters - solution.ShoulderPositionMeters), k);
+            if (elbow != null && (upper == null || !elbow.IsChildOf(upper)))
+                elbow.position = Vector3.Lerp(elbow.position, space.TransformPoint(solution.ElbowPositionMeters), k);
             if (wrist != null)
-            {
-                Vector3 wristTarget = space.TransformPoint(solution.SolvedWristPositionMeters);
-                wrist.position = wrist.position + (wristTarget - wrist.position) * k;
-            }
+                wrist.position = Vector3.Lerp(wrist.position, space.TransformPoint(solution.SolvedWristPositionMeters), k);
         }
 
-        /// <summary>
-        /// Rotates the bound upper arm bone so its current world axis aims along the solved
-        /// shoulder-to-elbow direction.  The bone's current axis is derived from the bound
-        /// elbow transform's world position, so any authoring bone orientation is handled.
-        /// The teleport path passes k = 1 for an exact alignment; the blend path passes the
-        /// same smoothing factor used for the position writes.  Missing bindings or degenerate
-        /// directions leave the bone untouched, so calling this every frame is idempotent.
-        /// Runs before the elbow/wrist position writes so the hands parented under the wrist
-        /// binding land on the final aligned bone chain.
-        /// </summary>
-        void AlignUpperArm(SeatedHandSide side, SeatedArmSolver.Solution solution, Transform space, float k)
+        Vector3 PelvisOrigin => bodySpace != null ? bodySpace.position : transform.position;
+
+        static bool IsBoneChain(Transform elbow, Transform wrist)
         {
-            Transform upperArm = side == SeatedHandSide.Left ? leftUpperArm : rightUpperArm;
-            Transform elbowBinding = side == SeatedHandSide.Left ? leftElbow : rightElbow;
-            if (upperArm == null || elbowBinding == null)
-                return;
-            Vector3 shoulderWorld = space.TransformPoint(GetBodySpaceShoulder(side));
-            Vector3 elbowWorld = space.TransformPoint(solution.ElbowPositionMeters);
-            Vector3 targetDirection = elbowWorld - shoulderWorld;
-            if (targetDirection.sqrMagnitude < 1e-12f)
-                return;
-            Vector3 currentAxis = elbowBinding.position - upperArm.position;
-            if (currentAxis.sqrMagnitude < 1e-12f)
-                return;
-            Quaternion targetRotation = Quaternion.FromToRotation(
-                currentAxis.normalized, targetDirection.normalized) * upperArm.rotation;
-            if (k >= 1f)
-                upperArm.rotation = targetRotation;
-            else
-                upperArm.rotation = Quaternion.Slerp(upperArm.rotation, targetRotation, k);
+            return elbow != null && wrist != null && wrist.IsChildOf(elbow);
+        }
+
+        static void AimBone(Transform joint, Transform child, Vector3 direction, float weight)
+        {
+            Vector3 axis = child.position - joint.position;
+            if (axis.sqrMagnitude < 1e-12f || direction.sqrMagnitude < 1e-12f) return;
+            Quaternion rotation = Quaternion.FromToRotation(axis, direction) * joint.rotation;
+            joint.rotation = Quaternion.Slerp(joint.rotation, rotation, weight);
         }
     }
 }

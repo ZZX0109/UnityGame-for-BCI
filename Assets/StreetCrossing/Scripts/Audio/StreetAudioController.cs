@@ -73,7 +73,12 @@ namespace StreetCrossing.Audio
                 if (!engines.TryGetValue(vehicle, out AudioSource source))
                 {
                     source = vehicle.gameObject.AddComponent<AudioSource>(); source.clip = engine; source.loop = true; source.playOnAwake = false;
-                    source.spatialBlend = 1; source.rolloffMode = AudioRolloffMode.Linear; source.minDistance = 3; source.maxDistance = 28; source.dopplerLevel = .15f; engines[vehicle] = source;
+                    // True 3D engine bed. Logarithmic rolloff follows the physical 1/d engine fade, so the
+                    // near/far lane contrast stays discriminable; Linear flattens the near field and hard-cuts
+                    // to 0 at max. Full volume inside one LaneWidth (LaneWidth=3.3), fading across the corridor
+                    // out to RoadHalfWidth*4=26.4 m (top of the 5–25 m vehicle–pedestrian band); the log tail
+                    // clamps at min/max≈0.12 gain, so off-corridor vehicles fade instead of snapping silent.
+                    source.spatialBlend = 1; source.rolloffMode = AudioRolloffMode.Logarithmic; source.minDistance = StreetLayout.LaneWidth; source.maxDistance = StreetLayout.RoadHalfWidth * 4f; source.dopplerLevel = .15f; engines[vehicle] = source;
                 }
                 source.volume = StreetPreferences.Volume * (.08f + vehicle.Motion.Speed * .012f);
                 source.pitch = .8f + vehicle.Motion.Speed * .055f;

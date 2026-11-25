@@ -1,0 +1,1 @@
+{"name":"HandSyncLab.Runtime","references":["StreetCrossing.Integration","Neuralife.PicoXR","Neuralife.VirtualHand.Runtime","Unity.ugui"]}

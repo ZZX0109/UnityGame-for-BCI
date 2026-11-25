@@ -189,6 +189,15 @@ namespace Neuralife.VirtualHand
         [SerializeField] bool _isMirrored;
         public bool IsMirrored { get => _isMirrored; private set => _isMirrored = value; }
 
+        // Demo hands use their authored geometry. Keep this opt-out serialized per
+        // instance so global proportion tuning remains the default for existing rigs.
+        [SerializeField] bool ignoreGlobalHandProportions;
+        public bool IgnoreGlobalHandProportions
+        {
+            get => ignoreGlobalHandProportions;
+            set => ignoreGlobalHandProportions = value;
+        }
+
         void Awake()
         {
             // Length tuning first: the native path derives spread axes, thumb
@@ -216,6 +225,9 @@ namespace Neuralife.VirtualHand
                 return;
             _proportionsApplied = true;
 
+            if (ignoreGlobalHandProportions)
+                return;
+
             if (!_proportionsLookupDone)
             {
                 _proportionsLookupDone = true;
@@ -228,7 +240,6 @@ namespace Neuralife.VirtualHand
             if (_cachedProportions == null || _cachedProportions.IsIdentity)
                 return;
 
-            int changed = 0;
             foreach (var bone in GetComponentsInChildren<Transform>(true))
             {
                 float scale = _cachedProportions.ScaleFor(bone.name);
@@ -236,10 +247,9 @@ namespace Neuralife.VirtualHand
                     continue;
 
                 bone.localPosition = bone.localPosition * scale;
-                changed++;
             }
 
-            Debug.Log("[HandRigDriver] HandProportions applied to " + changed + " bones on " + name + ".");
+
         }
 
         /// <summary>Find bones under this hand root (direct name or name.name.side suffix).</summary>
@@ -427,8 +437,7 @@ namespace Neuralife.VirtualHand
                 Array.Copy(_profileOpen, _target, 20);
             }
             ApplyNative(_current);
-            Debug.Log("[HandRigDriver] native profile active (" + _nativeTransforms.Length + " bones, " +
-                      nativeProfile.bindings.Length + " control bindings).");
+
             return true;
         }
 

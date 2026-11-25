@@ -13,6 +13,12 @@ TagManager:
   - UI
   - 
   - 
+  - WalkableGround
+  - PlayerObstacle
+  - VehicleObstacle
+  - TrafficVisibilityOccluder
+  - VisualOnly
+  - TriggerZone
   - 
   - 
   - 
@@ -28,13 +34,7 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - LocalAvatarHead
   - 
   - 
   m_SortingLayers:

@@ -159,13 +159,17 @@ namespace BCI.RuntimeValidation
             QualitySettings.SetQualityLevel(high, true);
             report.actualQuality = QualitySettings.names[QualitySettings.GetQualityLevel()];
             yield return null;
-            yield return adapter.Prepare();
-            ticking = true;
             int[,] sizes = { {1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160} };
             for (int i = 0; i < sizes.GetLength(0); i++)
             {
                 int width = sizes[i, 0], height = sizes[i, 1];
                 yield return SetResolution(width, height);
+                if (i == 0)
+                {
+                    // The gallery in Prepare reads the backbuffer and needs a settled player window.
+                    yield return adapter.Prepare();
+                    ticking = true;
+                }
                 yield return new WaitForEndOfFrame();
                 Texture2D image = ScreenCapture.CaptureScreenshotAsTexture();
                 if (image == null) throw new InvalidOperationException("ScreenCapture did not produce real pixels.");
