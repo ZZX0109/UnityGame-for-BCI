@@ -149,6 +149,13 @@ namespace StreetCrossing.Integration
                 // cancels it once in the hand instance's parent local space (<2 cm residual).
                 int wristAligned = ElenaWristAligner.HealBody(BodyInstance.transform);
                 Debug.Log($"[StreetCrossingFullBodyBinding] Elena wrist landmark alignment {wristAligned}/2 hands (target <2 cm residual).");
+
+                // M2: match the body skin tone to the hand skin. Silent by design — the smoke
+                // test consumes exactly the 7 wiring log lines above (FIFO LogAssert), so any
+                // extra log here would fail the gate. Runs before any V-key toggle can enter
+                // Blue mode; if Blue IS active the applier defers and retries via Update().
+                BodySkinTintApplier skinTint = BodyInstance.AddComponent<BodySkinTintApplier>();
+                skinTint.Apply();
             }
 
             if (Adapter == null)
