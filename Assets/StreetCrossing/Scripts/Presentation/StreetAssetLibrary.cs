@@ -468,6 +468,9 @@ namespace StreetCrossing.Presentation
                 SetImportedModel(assetName, loaded);
             }
             importedAssetLoaded = true;
+            if (StreetImportedAssetProfile.TryGet(assetName, out StreetImportedAssetProfile profile)
+                && profile.PreserveImportTransform)
+                return SpawnImportedStandardized(parent, loaded, assetName, localPosition, targetHeight, profile);
             GameObject instance = Object.Instantiate(loaded, parent, false);
             instance.name = assetName + " (imported)";
             instance.transform.localPosition = Vector3.zero;
@@ -483,6 +486,65 @@ namespace StreetCrossing.Presentation
             instance.transform.localPosition = new Vector3(
                 localPosition.x - centre.x, localPosition.y - basePoint.y, localPosition.z - centre.z);
             return instance.transform;
+        }
+        /// <summary>
+        /// §2.2 standardised spawn for assets whose import transform chain carries the correct
+        /// orientation (street_lamp_01: -90°X rotation and 100x scale on the model node, confirmed
+        /// by parsing the FBX binary on 2026-11-25; bakeAxisConversion=0 in every .meta). Two
+        /// interpretations are measured — the prefab chain exactly as imported, and the legacy
+        /// identity reset — and the vertical-dominant one wins; scaling and base-anchoring are
+        /// then derived from the measured world bounds, so no rotation constant is assumed.
+        /// Returns null when neither interpretation is upright, engaging the caller's procedural
+        /// fallback exactly as §2.2 requires.
+        /// </summary>
+        private Transform SpawnImportedStandardized(Transform parent, GameObject loaded, string assetName,
+            Vector3 localPosition, float targetHeight, StreetImportedAssetProfile profile)
+        {
+            GameObject asImported = Object.Instantiate(loaded, parent, false);
+            asImported.name = assetName + " (imported)";
+            asImported.transform.localPosition = Vector3.zero;
+            ApplyImportedMaterial(asImported, assetName);
+            Bounds asImportedBounds = BoundsOf(asImported);
+
+            GameObject identity = Object.Instantiate(loaded, parent, false);
+            identity.name = assetName + " (imported)";
+            identity.transform.localPosition = Vector3.zero;
+            identity.transform.localRotation = Quaternion.identity;
+            identity.transform.localScale = Vector3.one;
+            ApplyImportedMaterial(identity, assetName);
+            Bounds identityBounds = BoundsOf(identity);
+
+            bool importedUpright = IsVerticalDominant(asImportedBounds);
+            bool identityUpright = IsVerticalDominant(identityBounds);
+            GameObject winner;
+            if (importedUpright) winner = asImported;
+            else if (identityUpright) winner = identity;
+            else
+            {
+                Debug.LogWarning(string.Format(
+                    "imported model '{0}' is not upright under either interpretation (as-imported {1} vs identity {2}); using procedural fallback",
+                    assetName, asImportedBounds.size, identityBounds.size));
+                Object.DestroyImmediate(asImported);
+                Object.DestroyImmediate(identity);
+                return null;
+            }
+            Object.DestroyImmediate(winner == asImported ? identity : asImported);
+
+            float height = BoundsOf(winner).size.y;
+            if (height > .001f) winner.transform.localScale = winner.transform.localScale * (targetHeight / height);
+            // Seat the scaled model: footprint centre on localPosition, base resting at localPosition.y.
+            Bounds world = BoundsOf(winner);
+            Vector3 centre = parent.InverseTransformPoint(world.center);
+            Vector3 basePoint = parent.InverseTransformPoint(new Vector3(world.center.x, world.min.y, world.center.z));
+            winner.transform.localPosition = new Vector3(
+                localPosition.x - centre.x, localPosition.y - basePoint.y, localPosition.z - centre.z);
+            return winner.transform;
+        }
+        /// <summary>The §2.2 toppled-model detector: the up extent must dominate the footprint.</summary>
+        private static bool IsVerticalDominant(Bounds bounds)
+        {
+            float footprint = Mathf.Max(bounds.size.x, bounds.size.z);
+            return bounds.size.y >= .7f * footprint;
         }
         /// <summary>
         /// Replace the FBX's untextured materials with Standard PBR materials built from the CC0

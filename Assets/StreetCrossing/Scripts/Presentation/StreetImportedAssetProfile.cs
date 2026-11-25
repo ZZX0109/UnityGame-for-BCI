@@ -27,9 +27,12 @@ namespace StreetCrossing.Presentation
 
                 // Slim upright pole with a head arm (StreetWorld.cs:778, targetHeight 3.9).
                 // Vertical dominance is the §2.2 toppled-lamp detector; the footprint band stays
-                // wide so a large lamp-head arm still passes.
+                // wide so a large lamp-head arm still passes. The FBX binary carries a -90°X
+                // rotation and 100x scale on its model node (fbx_probe evidence, 2026-11-25),
+                // so the standardised spawn preserves the import transform chain instead of
+                // wiping it (PreserveImportTransform).
                 { "street_lamp_01", new StreetImportedAssetProfile(
-                    "street_lamp_01", 1.95f, 6.24f, .2f, 1.6f, .25f, true, true) },
+                    "street_lamp_01", 1.95f, 6.24f, .2f, 1.6f, .25f, true, true, true) },
 
                 // Pedal bin replacing the procedural envelope (~1.04 m tall x 0.62 m wide,
                 // StreetFurnitureBuilder.cs:121, targetHeight 1.04). About as wide as tall, so
@@ -106,9 +109,17 @@ namespace StreetCrossing.Presentation
         /// </summary>
         public readonly bool IsVerticalDominant;
 
+        /// <summary>
+        /// True when the FBX's own import transform chain carries the correct orientation
+        /// (fbx_probe evidence on the binary), so the spawn must preserve the chain and pick
+        /// the vertical-dominant interpretation by measurement instead of force-resetting the
+        /// root to identity (§2.2). False keeps the legacy identity-reset spawn untouched.
+        /// </summary>
+        public readonly bool PreserveImportTransform;
+
         private StreetImportedAssetProfile(string assetId, float minVerticalSize, float maxVerticalSize,
             float minFootprintMaxEdge, float maxFootprintMaxEdge, float baseAnchorTolerance,
-            bool isGrounded, bool isVerticalDominant)
+            bool isGrounded, bool isVerticalDominant, bool preserveImportTransform = false)
         {
             AssetId = assetId;
             MinVerticalSize = minVerticalSize;
@@ -118,6 +129,7 @@ namespace StreetCrossing.Presentation
             BaseAnchorTolerance = baseAnchorTolerance;
             IsGrounded = isGrounded;
             IsVerticalDominant = isVerticalDominant;
+            PreserveImportTransform = preserveImportTransform;
         }
 
         /// <summary>Look up the expectation profile registered for an imported prop id.</summary>

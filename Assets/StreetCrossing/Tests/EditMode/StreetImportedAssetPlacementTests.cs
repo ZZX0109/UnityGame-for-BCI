@@ -88,6 +88,50 @@ namespace StreetCrossing.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// §2.2 acceptance lock: the standardised spawn must produce an upright 3.9 m lamp whose
+        /// base rests on the placement point — measured from the spawned world bounds, not assumed.
+        /// A null return means the procedural fallback engaged (§2.2 escape clause) and fails here
+        /// so a silently broken FBX chain can never pass as "fixed".
+        /// </summary>
+        [Test]
+        public void StreetLampStandardisedSpawnIsUprightAtTargetHeight()
+        {
+            var library = new StreetAssetLibrary();
+            var parent = new GameObject("Lamp standardisation test root").transform;
+            try
+            {
+                var placement = new Vector3(2f, 0f, 3f);
+                Transform lamp = library.SpawnImported(parent, "street_lamp_01", placement, 3.9f);
+                Assert.NotNull(lamp,
+                    "street_lamp_01 must standardise upright; null means neither import interpretation was vertical-dominant");
+
+                Bounds world = default;
+                bool hasBounds = false;
+                foreach (Renderer renderer in lamp.GetComponentsInChildren<Renderer>())
+                {
+                    if (!hasBounds) { world = renderer.bounds; hasBounds = true; }
+                    else world.Encapsulate(renderer.bounds);
+                }
+                Assert.IsTrue(hasBounds, "the standardised lamp must render something");
+                TestContext.Out.WriteLine(string.Format(
+                    "street_lamp_01 standardised: size=({0:F3}, {1:F3}, {2:F3}) minY={3:F3} renderers={4}",
+                    world.size.x, world.size.y, world.size.z, world.min.y,
+                    lamp.GetComponentsInChildren<Renderer>().Length));
+
+                Assert.AreEqual(3.9f, world.size.y, .05f,
+                    "up extent must equal the 3.9 m target height after standardisation");
+                float footprint = Mathf.Max(world.size.x, world.size.z);
+                Assert.GreaterOrEqual(world.size.y, .7f * footprint,
+                    "the standardised lamp must be vertical-dominant (not toppled)");
+                Assert.LessOrEqual(footprint, 1.6f,
+                    "the lamp footprint must not be abnormally widened (the 'giant lamp' signature)");
+                Assert.AreEqual(placement.y, world.min.y, .05f,
+                    "the lamp base must rest on the placement height");
+            }
+            finally { Object.DestroyImmediate(parent.gameObject); }
+        }
+
         /// <summary>Full measurement line for the edit-test log: id, renderer count, bounds, chain.</summary>
         private static void LogMeasurement(string assetId, ImportedAssetReport report)
         {
