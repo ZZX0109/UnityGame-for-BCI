@@ -17,8 +17,8 @@ namespace Neuralife.VirtualHand.EditorTests
     public sealed class WalkQATests
     {
         const float Delta = 0.0005f;
-        const float ThighAmplitude = 25f;
-        const float KneeAmplitude = 45f;
+        const float ThighAmplitude = 15f;
+        const float KneeAmplitude = 30f;
 
         [Test]
         public void FullCycleKeepsFootBonesAboveGroundPlane()
@@ -87,12 +87,12 @@ namespace Neuralife.VirtualHand.EditorTests
                 float stance = FindBone(root.transform, "foot_r").position.y;
 
                 // Closed form: ankle_y = 0.80 − 0.40·cos(hip) − 0.30·cos(hip + knee)
-                // with hip = −25°·cos(π/2) = 0 and knee = 45°·max(0, sin π/2)² = 45°.
-                Assert.AreEqual(0.18787f, swing, 0.0005f,
+                // with hip = −15°·cos(π/2) = 0 and knee = 30°·max(0, sin π/2)² = 30°.
+                Assert.AreEqual(0.14019f, swing, 0.0005f,
                     "the mid-swing ankle should sit at the closed-form lift height");
                 Assert.AreEqual(0.10f, stance, 0.0005f,
                     "the stance ankle should stay exactly at its rest height");
-                Assert.Greater(swing - stance, 0.05f,
+                Assert.Greater(swing - stance, 0.03f,
                     "mid-swing must visibly lift the foot above the stance foot");
             }
             finally

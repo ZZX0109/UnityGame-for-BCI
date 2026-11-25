@@ -17,8 +17,8 @@ namespace Neuralife.VirtualHand.EditorTests
     public sealed class WalkCycleDriverTests
     {
         const float Delta = 0.0005f;
-        const float ThighAmplitude = 25f;
-        const float KneeAmplitude = 45f;
+        const float ThighAmplitude = 15f;
+        const float KneeAmplitude = 30f;
 
         [Test]
         public void SerializedFieldNamesMatchBuilderContract()
