@@ -120,7 +120,17 @@ namespace StreetCrossing.Presentation
         public Transform CreateLodgedTree(Transform parent, Vector3 position, int variant)
         {
             Transform tree = CreateRefinedTree(parent, position, variant);
-            return ApplyLodChain(tree, position);
+            tree = ApplyLodChain(tree, position);
+            // §4.2: neither LOD level carries a collider (StreetTreeLodTests keeps it that way),
+            // so the player could walk straight through the stem. Add a world-true slim box as a
+            // sibling of the (possibly scaled/yawed) tree root; the flat tree-pit box stays the
+            // step-over planter surface below it.
+            GameObject trunkBounds = new GameObject("Tree trunk bounds");
+            trunkBounds.transform.SetParent(parent, false);
+            trunkBounds.transform.localPosition = position + new Vector3(0, 1.3f, 0);
+            trunkBounds.layer = StreetPhysicsLayers.PlayerObstacle;
+            trunkBounds.AddComponent<BoxCollider>().size = new Vector3(.24f, 2.6f, .24f);
+            return tree;
         }
 
         /// <summary>Apply the two-level LOD chain to an already created refined tree. Safe to
