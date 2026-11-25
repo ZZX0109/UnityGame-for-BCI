@@ -818,8 +818,8 @@ MonoBehaviour:
   rightCalf: {fileID: 5486576146661627639}
   rightFoot: {fileID: 2243395802824747803}
   strideLengthMeters: 0
-  thighAmplitudeDegrees: 25
-  kneeAmplitudeDegrees: 45
+  thighAmplitudeDegrees: 15
+  kneeAmplitudeDegrees: 30
   blendTauSeconds: 0.05
 --- !u!114 &8062962120702635302
 MonoBehaviour:

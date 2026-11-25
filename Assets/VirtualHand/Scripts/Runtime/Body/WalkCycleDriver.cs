@@ -46,10 +46,10 @@ namespace Neuralife.VirtualHand.Body
         [Header("Gait tuning")]
         [Tooltip("Metres of travelled path per full gait cycle (two steps). 0 auto-computes from leg length.")]
         [SerializeField] float strideLengthMeters = 0f;
-        [Tooltip("Thigh swing amplitude in degrees (peak forward/backward).")]
-        [SerializeField] float thighAmplitudeDegrees = 25f;
-        [Tooltip("Knee flexion amplitude in degrees (peak at mid-swing only).")]
-        [SerializeField] float kneeAmplitudeDegrees = 45f;
+        [Tooltip("Thigh swing amplitude in degrees (peak forward/backward). V5-075 fix②: 25→15 removes crotch clipping on the shipped rig.")]
+        [SerializeField] float thighAmplitudeDegrees = 15f;
+        [Tooltip("Knee flexion amplitude in degrees (peak at mid-swing only). V5-075 fix②: 45→30 removes knee clipping on the shipped rig.")]
+        [SerializeField] float kneeAmplitudeDegrees = 30f;
         [Tooltip("Exponential blend time constant to/from rest, seconds.")]
         [SerializeField] float blendTauSeconds = 0.05f;
 
