@@ -40,6 +40,9 @@ namespace Neuralife.VirtualHand.Body
         [Tooltip("Optional wrist transforms driven with solved body-space positions.")]
         public Transform leftWrist;
         public Transform rightWrist;
+        [Tooltip("Optional upper arm transforms rotated so the bone aims along the solved shoulder-to-elbow direction.")]
+        public Transform leftUpperArm;
+        public Transform rightUpperArm;
 
         [Header("Solver")]
         [Tooltip("Body-space direction that keeps the elbow bend hemisphere stable.")]
@@ -210,6 +213,7 @@ namespace Neuralife.VirtualHand.Body
             if (blendPoseTransitions)
                 return;
             Transform space = bodySpace != null ? bodySpace : transform;
+            AlignUpperArm(side, solution, space, 1f);
             Transform elbow = side == SeatedHandSide.Left ? leftElbow : rightElbow;
             Transform wrist = side == SeatedHandSide.Left ? leftWrist : rightWrist;
             if (elbow != null)
@@ -219,7 +223,8 @@ namespace Neuralife.VirtualHand.Body
         }
 
         /// <summary>
-        /// Glides the bound elbow/wrist transforms toward the latest solved pose.  Returns false
+        /// Glides the bound elbow/wrist transforms toward the latest solved pose and blends the
+        /// bound upper arm bones toward the solved shoulder-to-elbow alignment.  Returns false
         /// when <paramref name="deltaTime"/> is not positive or <see cref="blendPoseTransitions"/>
         /// is off; otherwise applies one exponential smoothing step (τ = 0.15 s) and returns true.
         /// </summary>
@@ -229,15 +234,22 @@ namespace Neuralife.VirtualHand.Body
                 return false;
             float k = 1f - Mathf.Exp(-deltaTime / 0.15f);
             Transform space = bodySpace != null ? bodySpace : transform;
-            BlendArm(_leftSolution, leftElbow, leftWrist, k, space);
-            BlendArm(_rightSolution, rightElbow, rightWrist, k, space);
+            BlendArm(SeatedHandSide.Left, _leftSolution, leftElbow, leftWrist, k, space);
+            BlendArm(SeatedHandSide.Right, _rightSolution, rightElbow, rightWrist, k, space);
             return true;
         }
 
-        void BlendArm(SeatedArmSolver.Solution solution, Transform elbow, Transform wrist, float k, Transform space)
+        void BlendArm(
+            SeatedHandSide side,
+            SeatedArmSolver.Solution solution,
+            Transform elbow,
+            Transform wrist,
+            float k,
+            Transform space)
         {
             if (!solution.IsValid)
                 return;
+            AlignUpperArm(side, solution, space, k);
             if (elbow != null)
             {
                 Vector3 elbowTarget = space.TransformPoint(solution.ElbowPositionMeters);
@@ -248,6 +260,38 @@ namespace Neuralife.VirtualHand.Body
                 Vector3 wristTarget = space.TransformPoint(solution.SolvedWristPositionMeters);
                 wrist.position = wrist.position + (wristTarget - wrist.position) * k;
             }
+        }
+
+        /// <summary>
+        /// Rotates the bound upper arm bone so its current world axis aims along the solved
+        /// shoulder-to-elbow direction.  The bone's current axis is derived from the bound
+        /// elbow transform's world position, so any authoring bone orientation is handled.
+        /// The teleport path passes k = 1 for an exact alignment; the blend path passes the
+        /// same smoothing factor used for the position writes.  Missing bindings or degenerate
+        /// directions leave the bone untouched, so calling this every frame is idempotent.
+        /// Runs before the elbow/wrist position writes so the hands parented under the wrist
+        /// binding land on the final aligned bone chain.
+        /// </summary>
+        void AlignUpperArm(SeatedHandSide side, SeatedArmSolver.Solution solution, Transform space, float k)
+        {
+            Transform upperArm = side == SeatedHandSide.Left ? leftUpperArm : rightUpperArm;
+            Transform elbowBinding = side == SeatedHandSide.Left ? leftElbow : rightElbow;
+            if (upperArm == null || elbowBinding == null)
+                return;
+            Vector3 shoulderWorld = space.TransformPoint(GetBodySpaceShoulder(side));
+            Vector3 elbowWorld = space.TransformPoint(solution.ElbowPositionMeters);
+            Vector3 targetDirection = elbowWorld - shoulderWorld;
+            if (targetDirection.sqrMagnitude < 1e-12f)
+                return;
+            Vector3 currentAxis = elbowBinding.position - upperArm.position;
+            if (currentAxis.sqrMagnitude < 1e-12f)
+                return;
+            Quaternion targetRotation = Quaternion.FromToRotation(
+                currentAxis.normalized, targetDirection.normalized) * upperArm.rotation;
+            if (k >= 1f)
+                upperArm.rotation = targetRotation;
+            else
+                upperArm.rotation = Quaternion.Slerp(upperArm.rotation, targetRotation, k);
         }
     }
 }
