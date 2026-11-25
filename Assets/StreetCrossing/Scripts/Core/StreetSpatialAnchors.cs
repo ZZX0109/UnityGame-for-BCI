@@ -261,14 +261,16 @@ namespace StreetCrossing.Core
 
             // ---- Tactile guide path (盲道) ------------------------------------------
             // StreetFurnitureBuilder.cs:18,22,45: directional paving at Z(side, 6.7) =
-            // SidewalkZ(side * 6.7) = ±10.0, seven 9.7 × 0.34 segments per side centred on
-            // x = segment * 10 for segment in -3..3. The S03 turning-traffic variant replaces the
-            // segment at x = -10 with three bridging spans on the same line (StreetFurnitureBuilder.cs:23-44).
+            // SidewalkZ(side * 6.7) = ±10.0, seven 10.0 × 0.34 segments per side centred on
+            // x = segment * 10 for segment in -3..3, butt-jointing at x = ±5/±15/±25. The S03
+            // turning-traffic variant replaces the segment at x = -10 with three bridging spans
+            // rendering the same x ∈ [-15, -5] union (StreetFurnitureBuilder.cs:23-44), so the
+            // single anchor below describes both variants.
             float tactileZ = StreetLayout.SidewalkZ(6.7f);
             for (int segment = -3; segment <= 3; segment++)
                 for (int side = -1; side <= 1; side += 2)
                     anchors.Add(new SpatialAnchor($"tactile.{segment}.{(side > 0 ? "n" : "s")}", AnchorKind.TactilePath, side,
-                        new Vector3(segment * 10f, 0f, side * tactileZ), new Vector2(9.7f, 0.34f)));
+                        new Vector3(segment * 10f, 0f, side * tactileZ), new Vector2(10.0f, 0.34f)));
 
             // ---- Crossing entrance / kerb -------------------------------------------
             // StreetWorld.cs:380: CrossingRegion.Entry z = ∓width = ±6.6 with 3.6 × 0.35 crosswalk
