@@ -296,7 +296,7 @@ namespace StreetCrossing.Presentation
                 float z = s.LaneZ(lane);
                 laneRoadTargets[lane] = new[] { new Vector3(-14 * direction, 1.1f, z), new Vector3(-20 * direction, 1.1f, z), new Vector3(-28 * direction, 1.1f, z) };
             }
-            Box("Road asphalt", new Vector3(0, -0.16f, 0), new Vector3(s.roadHalfLength * 2 + 4, 0.3f, width * 2), "53534D");
+            Box("Road asphalt", new Vector3(0, -0.16f, 0), new Vector3(s.roadHalfLength * 2 + 4, 0.3f, width * 2), "53534D").layer = StreetPhysicsLayers.WalkableGround;
             for (int side = -1; side <= 1; side += 2)
             {
                 BuildFootway(s, side);
@@ -689,6 +689,7 @@ namespace StreetCrossing.Presentation
             Transform geometry = root.Find("Additional world geometry");
             if (geometry == null) { geometry = new GameObject("Additional world geometry").transform; geometry.SetParent(root, false); }
             GameObject obstacle = new GameObject(name); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = centre;
+            obstacle.layer = StreetPhysicsLayers.PlayerObstacle;
             obstacle.AddComponent<BoxCollider>().size = size;
         }
         private void BuildFurnitureBounds(StreetScenarioDefinition s)
@@ -731,6 +732,7 @@ namespace StreetCrossing.Presentation
                 Vector3 corner = new Vector3(s.turningTraffic ? (-9 - 8.4f) * s.DirectionForLane(0) : 36, height * .5f, StreetLayout.SidewalkZ(side * (s.turningTraffic ? 12 : 11.3f)));
                 Transform geometry = root.Find("Additional world geometry");
                 GameObject obstacle = new GameObject("Corner building bounds"); obstacle.transform.SetParent(geometry, false); obstacle.transform.localPosition = corner;
+                obstacle.layer = StreetPhysicsLayers.PlayerObstacle;
                 obstacle.transform.localRotation = Quaternion.Euler(0, side > 0 ? 0 : 180, 0);
                 // Match the visible cut corner rather than leaving an invisible rectangular obstruction outside its doorway.
                 obstacle.AddComponent<MeshCollider>().sharedMesh = CornerMesh(new Vector3(s.turningTraffic ? 6.6f : 7.1f, height, 4), side > 0 ? 1.15f : .7f, side > 0);
@@ -787,6 +789,14 @@ namespace StreetCrossing.Presentation
                     Box("Street name blade", p + new Vector3(0, 3.02f, face * .10f), new Vector3(.55f, .14f, .025f), "3D5A4C", false);
                     Label("梧桐里街", p + new Vector3(0, 3.02f, face * .115f), .05f, "F3EBDD", null, face > 0 ? 0 : 180, .5f, .12f);
                 }
+                // §4.2: the imported lamp ships without any collider; give the pole an accurate
+                // slim capsule-scale box and leave the head collision-free (no air wall). Kept
+                // outside the scaled imported root so the collider stays world-true.
+                GameObject poleBounds = new GameObject("Street lamp pole bounds");
+                poleBounds.transform.SetParent(root, false);
+                poleBounds.transform.localPosition = p + new Vector3(0, 1.95f, 0);
+                poleBounds.layer = StreetPhysicsLayers.PlayerObstacle;
+                poleBounds.AddComponent<BoxCollider>().size = new Vector3(.18f, 3.9f, .18f);
                 return;
             }
             Shape(PrimitiveType.Cylinder, "Streetlight pole", root, p + Vector3.up * 2.2f, new Vector3(0.09f, 2.2f, 0.09f), "686D60");

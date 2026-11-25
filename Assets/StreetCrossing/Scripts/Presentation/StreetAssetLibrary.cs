@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using StreetCrossing.Core;
 using UnityEngine;
 
 namespace StreetCrossing.Presentation
@@ -240,6 +241,7 @@ namespace StreetCrossing.Presentation
             Vector3 displayScale = go.transform.lossyScale;
             GameObject proxy = new GameObject("Collision proxy");
             proxy.transform.SetParent(go.transform, false);
+            proxy.layer = StreetPhysicsLayers.PlayerObstacle;
             proxy.transform.localScale = new Vector3(
                 1f / Mathf.Max(.0001f, displayScale.x),
                 1f / Mathf.Max(.0001f, displayScale.y),
