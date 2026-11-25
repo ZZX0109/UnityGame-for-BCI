@@ -103,6 +103,9 @@ namespace StreetCrossing.Editor
         // check 6: connector parts whose overlaps are structural, not erroneous.
         private static readonly string[] StructuralNames = { "bolt", "gusset", "bracket", "pole", "arm" };
 
+        /// <summary>P0-§3: dynamic actors move at runtime, so their AABBs are not static-placement errors.</summary>
+        private static readonly string[] DynamicActorNames = { "street vehicle", "reusable vehicle", "animated pedestrian" };
+
         [MenuItem("Street Crossing/Spatial Audit/Run Full Audit")]
         public static void RunFullAudit()
         {
@@ -258,6 +261,53 @@ namespace StreetCrossing.Editor
                     f.physicsConfirmed = confirmed;
                     result.findings.Add(f);
                 }
+            }
+
+            // P0-§3 checks i/j: static objects intruding into the carriageway or
+            // blocking a route-derived turning envelope. This is an incremental
+            // loop; the existing check 5 corridor scan above is untouched.
+            StreetGameManager[] auditManagers = FilterScene(UnityEngine.Object.FindObjectsByType<StreetGameManager>(FindObjectsSortMode.None), scene);
+            foreach (StreetGameManager manager in auditManagers)
+            {
+                if (manager == null || manager.scenario == null) continue;
+                StreetScenarioDefinition auditScenario = manager.scenario;
+                List<Vector2[]> aprons = StreetJunctionGeometry.TurnAprons(auditScenario);
+                foreach (Renderer r in renderers)
+                {
+                    if (r == null) continue;
+                    string name = r.gameObject.name;
+                    if (NameContains(name, DynamicActorNames) || NameContains(name, CorridorExemptNames)) continue;
+                    Bounds box = r.bounds;
+
+                    // check i: carriageway_intrusion
+                    if (SpatialAuditPredicates.IntrudesIntoCarriageway(box, auditScenario.roadHalfLength, StreetLayout.RoadHalfWidth))
+                    {
+                        StreetSpatialAuditFinding f = Finding("carriageway_intrusion", "warning", PathOf(r.transform),
+                            $"static renderer AABB intrudes into the carriageway band |z| < {StreetLayout.RoadHalfWidth:0.###} within |x| < {auditScenario.roadHalfLength:0.###}");
+                        f.aabbCenter = box.center;
+                        f.aabbSize = box.size;
+                        result.findings.Add(f);
+                    }
+
+                    // check j: turn_envelope_block (no-op when scenario.turningTraffic is false: aprons empty)
+                    if (aprons.Count > 0 && !NameContains(name, OverhangNames) && !NameContains(name, StructuralNames))
+                    {
+                        bool blocked = false;
+                        foreach (Vector2[] hull in aprons)
+                        {
+                            if (SpatialAuditPredicates.OverlapsPlanar(box, hull)) { blocked = true; break; }
+                        }
+                        if (blocked)
+                        {
+                            StreetSpatialAuditFinding f = Finding("turn_envelope_block", "error", PathOf(r.transform),
+                                $"static renderer AABB blocks a route-derived turning envelope (vehicle half length {StreetJunctionGeometry.VehicleHalfLength:0.###} m + {StreetJunctionGeometry.Clearance:0.###} m clearance sweep)");
+                            f.aabbCenter = box.center;
+                            f.aabbSize = box.size;
+                            result.findings.Add(f);
+                        }
+                    }
+                }
+                break; // one scenario is sufficient; extra managers would duplicate findings
             }
 
             // dataPath is <repo>/Assets; the "/../../" specified by rectification
