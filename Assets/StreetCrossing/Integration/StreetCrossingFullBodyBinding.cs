@@ -142,6 +142,13 @@ namespace StreetCrossing.Integration
                 BodyInstance.transform.SetParent(PlayerRoot, false);
                 BodyInstance.transform.localPosition = Vector3.zero;
                 BodyInstance.transform.localRotation = Quaternion.identity;
+
+                // V5-075 fix (1) (ClipAudit DEFECT (1)): the shipped prefab was built by the old
+                // builder, so the Elena hand instances still carry the ~2.8 m intrinsic wrist
+                // offset. HealBody is idempotent: it measures landmark-vs-bone world delta and
+                // cancels it once in the hand instance's parent local space (<2 cm residual).
+                int wristAligned = ElenaWristAligner.HealBody(BodyInstance.transform);
+                Debug.Log($"[StreetCrossingFullBodyBinding] Elena wrist landmark alignment {wristAligned}/2 hands (target <2 cm residual).");
             }
 
             if (Adapter == null)
