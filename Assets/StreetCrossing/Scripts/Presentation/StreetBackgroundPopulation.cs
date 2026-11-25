@@ -4,6 +4,26 @@ using UnityEngine;
 
 namespace StreetCrossing.Presentation
 {
+    /// <summary>
+    /// §5.1/§5.2 pedestrian motion states, derived purely from the analytic route time-function.
+    /// Seven states (spec text says "8 态" but enumerates seven): a traversing shuttle passes
+    /// StartWalk → Walk → SlowDown → Stop → Turn → (next half-cycle) StartWalk…; waiting routes
+    /// report Waiting for their whole duration. <c>Idle</c> is the standing baseline kept for
+    /// stationary placements that do not shuttle (reserved - the shuttle itself parks in Stop/Turn,
+    /// which already select the real Idle take). Every consumer (position, orientation, cadence,
+    /// Motion clip) reads the same Segment() windows, so the model can never drift from the motion.
+    /// </summary>
+    public enum PedestrianMotionState
+    {
+        Idle,
+        StartWalk,
+        Walk,
+        SlowDown,
+        Stop,
+        Turn,
+        Waiting
+    }
+
     public struct StreetBackgroundRoute
     {
         public Vector3 start, end;
@@ -73,6 +93,45 @@ namespace StreetCrossing.Presentation
             float t = Mathf.Repeat(seconds, 2f * half);
             leg = t < half ? 0 : 1;
             u = t - leg * half;
+        }
+
+        /// <summary>
+        /// Pure function of (route, time): classifies the instantaneous motion state from the same
+        /// Segment() windows that Position/TryTurnYaw already consume, so the animation model can
+        /// never drift from the analytic traversal. Waiting routes report Waiting for their whole
+        /// duration; a shuttle reports StartWalk during the ½at² start-up ramp, Walk while at cruise
+        /// speed, SlowDown while braking into the far end, Stop during the full pause and Turn while
+        /// pivoting. Idle is reserved for stationary placements that do not shuttle - the shuttle's
+        /// own stationary windows map to Stop/Turn, which Apply renders with the same Idle take.
+        /// </summary>
+        public PedestrianMotionState MotionStateAt(float seconds)
+        {
+            if (waiting) return PedestrianMotionState.Waiting;
+            Segment(seconds, out int _, out float u, out float accelTime, out float cruiseTime, out float _);
+            float brakeEnd = accelTime + cruiseTime + accelTime; // end of the braking window
+            float turnStart = brakeEnd + RestTime;               // pivot start, matching TryTurnYaw's window
+            if (u < accelTime) return PedestrianMotionState.StartWalk;
+            if (u < accelTime + cruiseTime) return PedestrianMotionState.Walk;
+            if (u < brakeEnd) return PedestrianMotionState.SlowDown;
+            if (u < turnStart) return PedestrianMotionState.Stop;
+            return PedestrianMotionState.Turn;
+        }
+
+        /// <summary>
+        /// Instantaneous travel speed, the analytic derivative of the Position() piecewise integral,
+        /// so animation cadence tracks ground speed instead of a constant playback rate. Zero whenever
+        /// the body is stationary (waiting, paused or pivoting), which keeps stopped feet still once
+        /// Apply scales it into animator.speed.
+        /// </summary>
+        public float SpeedAt(float seconds)
+        {
+            if (waiting) return 0f;
+            Segment(seconds, out int _, out float u, out float accelTime, out float cruiseTime, out float _);
+            if (u < accelTime) return Accel * u;                                    // start-up ramp: v = a·t
+            if (u < accelTime + cruiseTime) return speed;                           // cruise
+            if (u < accelTime + cruiseTime + accelTime)
+                return Accel * (2f * accelTime + cruiseTime - u);                   // braking: v = a·(t_brake_end − t)
+            return 0f;                                                              // paused, then pivoting
         }
 
         private static float YawOf(Vector3 dir) => Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg; // Unity yaw of LookRotation(dir)
@@ -227,10 +286,10 @@ namespace StreetCrossing.Presentation
                     animator.SetInteger("Motion", routes[i].waiting ? (i % 2 == 0 ? 2 : 3) : 1);
                     if (!routes[i].waiting)
                     {
-                        // Cadence matched to travel speed (walk clip authored at ~0.8 m/s) so feet stay planted.
-                        animator.speed = routes[i].speed / WalkClipSpeed;
                         // The Motion Int parameter offers no normalizedTime control, so start the walk
-                        // state at the route's random phase to desynchronise pedestrian strides.
+                        // state at the route's random phase to desynchronise pedestrian strides. Cadence
+                        // and clip selection are owned by the analytic state (Apply(0) immediately
+                        // re-asserts them, starting every shuttle paused at zero cadence).
                         animator.Play("Walk", 0, routes[i].phase);
                     }
                 }
@@ -265,10 +324,21 @@ namespace StreetCrossing.Presentation
         {
             foreach (Actor actor in actors)
             {
-                // Re-assert cadence every pass so pedestrians unfrozen after a pause resume at their
-                // own walk rate (waiters animate at full speed).
+                // §5.1/§5.2 single source of truth: the same analytic route windows that drive position
+                // and heading also classify the motion state and the instantaneous ground speed, so the
+                // Walk cadence ramps 0→cruise→0 in sync with the ½at² start-up/braking profile while
+                // every stationary window settles on the standing takes instead of marching in place.
+                PedestrianMotionState state = actor.route.MotionStateAt(seconds);
                 if (actor.animator != null)
-                    actor.animator.speed = actor.route.waiting ? 1f : actor.route.speed / WalkClipSpeed;
+                {
+                    // Moving windows rate-scale the Walk take to ground speed; stationary windows play
+                    // the Idle/Texting/PhoneCall standing takes at their authored rate (a zero animator
+                    // speed would also freeze the pending Walk→Idle crossfade mid-stride).
+                    bool moving = state == PedestrianMotionState.StartWalk || state == PedestrianMotionState.Walk
+                        || state == PedestrianMotionState.SlowDown;
+                    actor.animator.speed = moving ? actor.route.SpeedAt(seconds) / WalkClipSpeed : 1f;
+                    actor.animator.SetInteger("Motion", MotionClipFor(state, actor.root.GetSiblingIndex()));
+                }
                 Vector3 p = actor.route.Position(seconds);
                 Vector3 tangent = actor.route.Position(seconds + .04f) - p;
                 actor.root.localPosition = p;
@@ -279,9 +349,28 @@ namespace StreetCrossing.Presentation
                     actor.root.localRotation = Quaternion.Euler(0, yaw, 0);
                 else if (tangent.sqrMagnitude > .000001f) actor.root.localRotation = Quaternion.LookRotation(tangent);
                 else if (actor.route.waiting) actor.root.localRotation = Quaternion.Euler(0, actor.restYaw, 0);
-                if (actor.animator != null)
-                    actor.animator.SetInteger("Motion", actor.route.waiting
-                        ? (actor.root.GetSiblingIndex() % 2 == 0 ? 2 : 3) : 1);
+            }
+        }
+
+        /// <summary>
+        /// Maps a motion state onto the controller's Motion Int (0 idle, 1 walk, 2 texting, 3 phone
+        /// call). Moving states share the Walk take whose playback rate animator.speed already scales;
+        /// the shuttle's stationary windows (Stop/Turn) share the Idle take with the reserved Idle
+        /// state so feet stay planted while parked or pivoting; Waiting keeps the sibling-parity
+        /// in-place Texting/PhoneCall standing takes.
+        /// </summary>
+        private static int MotionClipFor(PedestrianMotionState state, int siblingIndex)
+        {
+            switch (state)
+            {
+                case PedestrianMotionState.StartWalk:
+                case PedestrianMotionState.Walk:
+                case PedestrianMotionState.SlowDown:
+                    return 1;
+                case PedestrianMotionState.Waiting:
+                    return siblingIndex % 2 == 0 ? 2 : 3;
+                default: // Idle, Stop, Turn - standing poses, no leg motion
+                    return 0;
             }
         }
     }
